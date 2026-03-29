@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Forest background -->
+  <rect width="32" height="32" rx="7" fill="#404E3B"/>
+  <!-- Bus body (sage) -->
+  <rect x="3" y="11" width="26" height="12" rx="2.5" fill="#7B9669"/>
+  <!-- Windows (white surfaces) -->
+  <rect x="5"  y="13" width="5" height="4" rx="1" fill="#F9F8F5"/>
+  <rect x="12" y="13" width="5" height="4" rx="1" fill="#F9F8F5"/>
+  <rect x="19" y="13" width="5" height="4" rx="1" fill="#BAC8B1"/>
+  <!-- Wheels (ink) -->
+  <circle cx="9"  cy="24" r="3" fill="#2A2A2A"/>
+  <circle cx="23" cy="24" r="3" fill="#2A2A2A"/>
+  <!-- Wheel rims (slate) -->
+  <circle cx="9"  cy="24" r="1.2" fill="#6C8480"/>
+  <circle cx="23" cy="24" r="1.2" fill="#6C8480"/>
+</svg>

@@ -1,0 +1,225 @@
+/* ── Buses Page ──────────────────────────────────────────────────────────── */
+.buses-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* ── Add-Bus Form Card ───────────────────────────────────────────────────── */
+.bus-form-card {
+  background-color: var(--white);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-8);
+  max-width: 760px;
+}
+
+.bus-form-heading {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-regular);
+  color: var(--forest);
+  margin-bottom: var(--space-6);
+}
+
+.bus-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4) var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.form-label {
+  font-size: var(--text-subheading);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.form-input {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--white);
+  color: var(--ink);
+  font-size: var(--text-body);
+  transition: border-color var(--motion-micro);
+}
+
+.form-input:focus {
+  border-color: var(--sage);
+  outline: none;
+}
+
+.form-optional {
+  font-size: var(--text-caption);
+  color: var(--slate);
+  font-weight: var(--weight-regular);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.bus-form-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.bus-form-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ── Ghost / Danger Buttons ──────────────────────────────────────────────── */
+.btn-ghost {
+  background-color: transparent;
+  color: var(--slate);
+  border: 1px solid var(--mist);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: background-color var(--motion-micro), color var(--motion-micro);
+}
+
+.btn-ghost:hover {
+  background-color: var(--stone);
+  color: var(--ink);
+}
+
+.btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Non-destructive inline text button — Assign / Change actions */
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--sage);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+  transition: color var(--motion-micro);
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-text:hover:not(:disabled) {
+  color: var(--forest);
+}
+
+.btn-text:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-text-danger {
+  background: none;
+  border: none;
+  color: var(--gold);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+  transition: color var(--motion-micro);
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-text-danger:hover:not(:disabled) {
+  color: var(--forest);
+}
+
+.btn-text-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Buses Table ─────────────────────────────────────────────────────────── */
+.buses-table-wrapper {
+  background-color: var(--white);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+
+.buses-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-body);
+  table-layout: fixed;
+}
+
+.buses-table th {
+  text-align: left;
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  background-color: var(--stone);
+  border-bottom: 1px solid var(--mist);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.buses-table td {
+  padding: var(--space-4) var(--space-6);
+  color: var(--ink);
+  border-bottom: 1px solid var(--stone);
+  vertical-align: middle;
+  overflow: hidden;
+}
+
+.buses-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.buses-table tbody tr {
+  transition: background-color var(--motion-micro);
+}
+
+.buses-table tbody tr:hover {
+  background-color: rgba(186, 200, 177, 0.12);
+}
+
+.buses-table-reg {
+  font-family: monospace;
+  font-size: var(--text-code);
+  color: var(--sage);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.buses-table-make {
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.buses-table-nowrap {
+  white-space: nowrap;
+}
+
+
+/* ── Extra Status Badges for buses ───────────────────────────────────────── */
+.status-badge--inactive {
+  background-color: rgba(230, 230, 230, 0.7);
+  color: var(--slate);
+}
+
+.status-badge--maintenance {
+  background-color: rgba(194, 168, 120, 0.15);
+  color: var(--gold);
+}

@@ -1,0 +1,151 @@
+/* ── Schools Page ───────────────────────────────────────────────────────── */
+.schools-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.page-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+/* ── CTA Button ─────────────────────────────────────────────────────────── */
+.btn-primary {
+  display: inline-block;
+  padding: var(--space-3) var(--space-6);
+  background-color: var(--sage);
+  color: var(--white);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: opacity var(--motion-micro);
+  white-space: nowrap;
+}
+
+.btn-primary:hover {
+  opacity: 0.88;
+  color: var(--white);
+}
+
+/* ── Schools Table ──────────────────────────────────────────────────────── */
+.schools-table-wrapper {
+  background-color: var(--white);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+
+.schools-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-body);
+}
+
+.schools-table th {
+  text-align: left;
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  background-color: var(--stone);
+  border-bottom: 1px solid var(--mist);
+}
+
+.schools-table td {
+  padding: var(--space-4) var(--space-6);
+  color: var(--ink);
+  border-bottom: 1px solid var(--stone);
+  vertical-align: middle;
+}
+
+.schools-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.schools-table tbody tr {
+  transition: background-color var(--motion-micro);
+}
+
+.schools-table tbody tr:hover {
+  background-color: rgba(186, 200, 177, 0.12);
+}
+
+/* ── Action Link ────────────────────────────────────────────────────────── */
+.action-link {
+  color: var(--sage);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  transition: color var(--motion-micro);
+}
+
+.action-link:hover {
+  color: var(--forest);
+}
+
+/* ── Empty State ────────────────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: var(--space-20) var(--space-8);
+  background-color: var(--white);
+  border-radius: var(--radius-md);
+}
+
+.empty-state-message {
+  font-size: var(--text-body);
+  color: var(--slate);
+  margin-bottom: var(--space-4);
+}
+
+/* ── Loading State ──────────────────────────────────────────────────────── */
+.table-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-16);
+}
+
+/* ── Sections (Pending / Active) ── */
+.schools-section {
+  margin-bottom: var(--space-10);
+}
+
+.schools-section-heading {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  color: var(--forest);
+  font-weight: var(--weight-regular);
+  margin-bottom: var(--space-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.schools-section-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 var(--space-2);
+  border-radius: 12px;
+  background: var(--mist);
+  color: var(--forest);
+  font-family: var(--font-body);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+}
+
+.schools-section-caption {
+  font-size: var(--text-body);
+  color: var(--slate);
+  margin-bottom: var(--space-4);
+}

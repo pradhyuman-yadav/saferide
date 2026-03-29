@@ -1,0 +1,729 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --sage:   #7B9669;
+    --forest: #404E3B;
+    --mist:   #BAC8B1;
+    --slate:  #6C8480;
+    --stone:  #E6E6E6;
+    --gold:   #C2A878;
+    --white:  #F9F8F5;
+    --ink:    #2A2A2A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body, .brand-root {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: transparent;
+    color: var(--color-text-primary);
+  }
+
+  .brand-root { padding: 0 0 3rem; }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--forest);
+    padding: 3rem 2rem 2.5rem;
+    border-radius: 16px;
+    margin-bottom: 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-rings {
+    position: absolute;
+    right: -60px; top: -60px;
+    width: 260px; height: 260px;
+    border-radius: 50%;
+    border: 40px solid rgba(123,150,105,0.18);
+    pointer-events: none;
+  }
+  .hero-rings::after {
+    content: '';
+    position: absolute;
+    inset: -50px;
+    border-radius: 50%;
+    border: 30px solid rgba(194,168,120,0.10);
+  }
+  .hero-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mist);
+    opacity: 0.7;
+    margin-bottom: 0.75rem;
+    font-weight: 400;
+  }
+  .hero-name {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 52px;
+    font-weight: 400;
+    color: var(--white);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+  .hero-tagline {
+    font-size: 14px;
+    color: var(--mist);
+    font-weight: 300;
+    opacity: 0.85;
+    margin-bottom: 2rem;
+    letter-spacing: 0.01em;
+  }
+  .hero-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .hero-pill {
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+  }
+  .pill-sage   { background: rgba(123,150,105,0.25); color: #BAC8B1; }
+  .pill-gold   { background: rgba(194,168,120,0.2);  color: #DFC89E; }
+  .pill-slate  { background: rgba(108,132,128,0.2);  color: #9DBAB6; }
+
+  /* ── SECTION HEADERS ── */
+  .sec-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .section { margin-bottom: 2.5rem; }
+
+  /* ── COLOR SWATCHES ── */
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+  .swatch {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 0.5px solid var(--color-border-tertiary);
+  }
+  .swatch-block {
+    height: 72px;
+  }
+  .swatch-info {
+    padding: 10px 12px;
+    background: var(--color-background-primary);
+  }
+  .swatch-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin-bottom: 2px;
+  }
+  .swatch-hex {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    font-family: monospace;
+  }
+  .swatch-role {
+    font-size: 10px;
+    color: var(--color-text-tertiary);
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+  .swatch-primary { background: var(--sage); }
+  .swatch-forest  { background: var(--forest); }
+  .swatch-mist    { background: var(--mist); }
+  .swatch-slate   { background: var(--slate); }
+  .swatch-stone   { background: var(--stone); }
+  .swatch-gold    { background: var(--gold); }
+
+  /* ── CONTRAST NOTE ── */
+  .contrast-note {
+    background: var(--color-background-secondary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    margin-top: 10px;
+  }
+  .contrast-note strong { color: var(--color-text-primary); font-weight: 500; }
+
+  .contrast-pairs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+  .cp {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 0.5px solid var(--color-border-tertiary);
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .cp-bg { padding: 6px 10px; }
+  .cp-arrow { padding: 6px 4px; background: var(--color-background-primary); color: var(--color-text-secondary); }
+  .cp-fg { padding: 6px 10px; }
+
+  /* ── TYPOGRAPHY ── */
+  .type-row {
+    padding: 16px 0;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .type-row:last-child { border-bottom: none; }
+  .type-meta {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-tertiary);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .t-display {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 38px;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--forest);
+  }
+  .t-heading {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--forest);
+    line-height: 1.25;
+  }
+  .t-subheading {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--slate);
+  }
+  .t-body {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.7;
+    color: var(--color-text-primary);
+  }
+  .t-caption {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    letter-spacing: 0.02em;
+    line-height: 1.5;
+  }
+  .t-mono {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--sage);
+    background: color-mix(in srgb, var(--sage) 10%, transparent);
+    padding: 2px 7px;
+    border-radius: 5px;
+  }
+
+  /* ── VOICE ── */
+  .voice-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .voice-card {
+    border-radius: 10px;
+    padding: 14px 16px;
+    border: 0.5px solid var(--color-border-tertiary);
+    background: var(--color-background-primary);
+  }
+  .voice-icon {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+  .voice-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+  }
+  .voice-desc {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+
+  /* ── UI PREVIEW ── */
+  .ui-preview {
+    background: var(--stone);
+    border-radius: 14px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .ui-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 16px;
+    border: 0.5px solid rgba(64,78,59,0.12);
+  }
+  .ui-card-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--slate);
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .ui-card-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 20px;
+    color: var(--forest);
+    line-height: 1.2;
+    margin-bottom: 6px;
+    font-weight: 400;
+  }
+  .ui-card-body {
+    font-size: 12px;
+    color: #6B7B6A;
+    line-height: 1.6;
+  }
+  .ui-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .ui-stat {
+    flex: 1;
+    background: var(--white);
+    border-radius: 10px;
+    padding: 12px 14px;
+    border: 0.5px solid rgba(64,78,59,0.12);
+  }
+  .ui-stat-num {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 26px;
+    color: var(--forest);
+    font-weight: 400;
+    line-height: 1;
+  }
+  .ui-stat-label {
+    font-size: 10px;
+    color: var(--slate);
+    margin-top: 4px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .ui-btn-primary {
+    background: var(--forest);
+    color: var(--mist);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: 0.03em;
+  }
+  .ui-btn-secondary {
+    background: transparent;
+    color: var(--forest);
+    border: 1px solid var(--sage);
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: 0.03em;
+  }
+  .ui-btn-ghost {
+    background: color-mix(in srgb, var(--gold) 15%, transparent);
+    color: var(--forest);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .ui-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+  .badge-active { background: color-mix(in srgb, var(--sage) 18%, transparent); color: var(--forest); }
+  .badge-alert  { background: color-mix(in srgb, var(--gold) 20%, transparent); color: #7A5C1E; }
+  .badge-muted  { background: color-mix(in srgb, var(--slate) 15%, transparent); color: var(--slate); }
+
+  /* ── DO/DONT ── */
+  .dd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .dd-card {
+    border-radius: 10px;
+    padding: 14px 16px;
+    border: 0.5px solid var(--color-border-tertiary);
+  }
+  .dd-do { border-left: 3px solid var(--sage); }
+  .dd-dont { border-left: 3px solid #B87B6A; }
+  .dd-head {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .dd-do .dd-head { color: var(--sage); }
+  .dd-dont .dd-head { color: #B87B6A; }
+  .dd-item {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    line-height: 1.55;
+    margin-bottom: 4px;
+    padding-left: 10px;
+    position: relative;
+  }
+  .dd-item::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    opacity: 0.5;
+  }
+
+  /* ── MOTION PRINCIPLE ── */
+  .motion-row {
+    display: flex;
+    gap: 10px;
+  }
+  .motion-card {
+    flex: 1;
+    background: var(--color-background-secondary);
+    border-radius: 10px;
+    padding: 12px 14px;
+    border: 0.5px solid var(--color-border-tertiary);
+  }
+  .motion-val {
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--sage);
+    font-weight: 500;
+    margin-bottom: 3px;
+  }
+  .motion-desc {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+  }
+
+  /* ── SPACING ── */
+  .spacing-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+  .sp-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .sp-rect {
+    background: color-mix(in srgb, var(--sage) 30%, transparent);
+    border-radius: 3px;
+    width: 24px;
+  }
+  .sp-label {
+    font-size: 9px;
+    color: var(--color-text-tertiary);
+    font-family: monospace;
+  }
+</style>
+
+<div class="brand-root">
+
+  <!-- ── HERO ── -->
+  <div class="hero">
+    <div class="hero-rings"></div>
+    <p class="hero-eyebrow">Brand Identity System · v1.0</p>
+    <h1 class="hero-name">SafeRide</h1>
+    <p class="hero-tagline">Jade pebble morning · calm · grounded · premium</p>
+    <div class="hero-pills">
+      <span class="hero-pill pill-sage">Natural</span>
+      <span class="hero-pill pill-slate">Trustworthy</span>
+      <span class="hero-pill pill-gold">Premium</span>
+      <span class="hero-pill pill-sage">Minimal</span>
+    </div>
+  </div>
+
+  <!-- ── COLOR SYSTEM ── -->
+  <div class="section">
+    <p class="sec-label">Color system</p>
+    <div class="swatches">
+      <div class="swatch">
+        <div class="swatch-block swatch-primary"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Sage</div>
+          <div class="swatch-hex">#7B9669</div>
+          <div class="swatch-role">Primary brand · buttons · active states</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block swatch-forest"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Forest</div>
+          <div class="swatch-hex">#404E3B</div>
+          <div class="swatch-role">Headers · text · CTAs · depth</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block swatch-mist"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Mist</div>
+          <div class="swatch-hex">#BAC8B1</div>
+          <div class="swatch-role">Cards · secondary backgrounds</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block swatch-slate"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Slate</div>
+          <div class="swatch-hex">#6C8480</div>
+          <div class="swatch-role">Accent · meta text · icons</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block swatch-stone"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Stone</div>
+          <div class="swatch-hex">#E6E6E6</div>
+          <div class="swatch-role">Base · whitespace · dividers</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-block swatch-gold"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Gold</div>
+          <div class="swatch-hex">#C2A878</div>
+          <div class="swatch-role">Premium highlights · alerts · warmth</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="contrast-note">
+      <strong>Contrast guidance —</strong> Never use Sage (#7B9669) text on Mist (#BAC8B1) — the difference is too subtle. Approved text pairings below.
+    </div>
+
+    <div class="contrast-pairs">
+      <div class="cp">
+        <div class="cp-bg" style="background:#404E3B; color:#BAC8B1; font-size:11px; font-weight:500;">Forest</div>
+        <div class="cp-arrow">→</div>
+        <div class="cp-fg" style="background:#F9F8F5; color:#404E3B; font-size:11px;">Stone</div>
+      </div>
+      <div class="cp">
+        <div class="cp-bg" style="background:#404E3B; color:#BAC8B1; font-size:11px; font-weight:500;">Forest</div>
+        <div class="cp-arrow">→</div>
+        <div class="cp-fg" style="background:#BAC8B1; color:#404E3B; font-size:11px;">Mist</div>
+      </div>
+      <div class="cp">
+        <div class="cp-bg" style="background:#7B9669; color:#fff; font-size:11px; font-weight:500;">Sage</div>
+        <div class="cp-arrow">→</div>
+        <div class="cp-fg" style="background:#F9F8F5; color:#404E3B; font-size:11px;">Forest text</div>
+      </div>
+      <div class="cp">
+        <div class="cp-bg" style="background:#E6E6E6; color:#404E3B; font-size:11px; font-weight:500;">Stone</div>
+        <div class="cp-arrow">→</div>
+        <div class="cp-fg" style="background:#fff; color:#404E3B; font-size:11px;">Forest text</div>
+      </div>
+      <div class="cp">
+        <div class="cp-bg" style="background:#C2A878; color:#fff; font-size:11px; font-weight:500;">Gold</div>
+        <div class="cp-arrow">→</div>
+        <div class="cp-fg" style="background:#F9F8F5; color:#404E3B; font-size:11px;">Forest text</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TYPOGRAPHY ── -->
+  <div class="section">
+    <p class="sec-label">Typography</p>
+
+    <div class="type-row">
+      <div class="type-meta">Display · DM Serif Display · 38px / 400</div>
+      <div class="t-display">Every child arrives safely.</div>
+    </div>
+
+    <div class="type-row">
+      <div class="type-meta">Heading · DM Serif Display · 24px / 400</div>
+      <div class="t-heading">Your child's bus, live.</div>
+    </div>
+
+    <div class="type-row">
+      <div class="type-meta">Subheading · DM Sans · 14px / 500 · tracked</div>
+      <div class="t-subheading">Route Overview</div>
+    </div>
+
+    <div class="type-row">
+      <div class="type-meta">Body · DM Sans · 14px / 400</div>
+      <div class="t-body">SafeRide gives parents real-time visibility into their child's school bus — calm, clear, and always there when it matters.</div>
+    </div>
+
+    <div class="type-row">
+      <div class="type-meta">Caption · DM Sans · 11px / 400</div>
+      <div class="t-caption">Last updated 12 seconds ago · Bus 7 · Route A · Indiranagar Depot</div>
+    </div>
+
+    <div class="type-row" style="border-bottom:none;">
+      <div class="type-meta">Code / data · monospace</div>
+      <span class="t-mono">bus_007</span>&nbsp;
+      <span class="t-mono">ETA 4 min</span>&nbsp;
+      <span class="t-mono">48.2 km/h</span>
+    </div>
+  </div>
+
+  <!-- ── UI COMPONENTS ── -->
+  <div class="section">
+    <p class="sec-label">UI components preview</p>
+    <div class="ui-preview">
+
+      <div class="ui-card">
+        <div class="ui-card-label">Live Tracking</div>
+        <div class="ui-card-title">Bus 7 is 4 minutes away</div>
+        <div class="ui-card-body">Approaching your stop at Indira Nagar 5th Cross. Last updated just now.</div>
+        <div style="margin-top:10px; display:flex; gap:6px; align-items:center;">
+          <span class="ui-badge badge-active">On Route</span>
+          <span class="ui-badge badge-alert">4 min away</span>
+          <span class="ui-badge badge-muted">48 km/h</span>
+        </div>
+      </div>
+
+      <div class="ui-row">
+        <div class="ui-stat">
+          <div class="ui-stat-num">200</div>
+          <div class="ui-stat-label">Buses tracked</div>
+        </div>
+        <div class="ui-stat">
+          <div class="ui-stat-num">4,800</div>
+          <div class="ui-stat-label">Parents active</div>
+        </div>
+        <div class="ui-stat">
+          <div class="ui-stat-num">99.9%</div>
+          <div class="ui-stat-label">Uptime</div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="ui-btn-primary">Track now</button>
+        <button class="ui-btn-secondary">View route</button>
+        <button class="ui-btn-ghost">Contact school</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── VOICE & TONE ── -->
+  <div class="section">
+    <p class="sec-label">Voice & tone</p>
+    <div class="voice-grid">
+      <div class="voice-card">
+        <div class="voice-title">Calm, never cold</div>
+        <div class="voice-desc">Reassuring like a trusted neighbour. Never sterile or corporate. Parents are anxious — we make them feel held.</div>
+      </div>
+      <div class="voice-card">
+        <div class="voice-title">Precise, never terse</div>
+        <div class="voice-desc">Every word earns its place. Short sentences. No filler. But never so clipped it feels robotic.</div>
+      </div>
+      <div class="voice-card">
+        <div class="voice-title">Grounded, never showy</div>
+        <div class="voice-desc">Premium through restraint. No exclamation marks. No "Amazing!". Let the product speak.</div>
+      </div>
+      <div class="voice-card">
+        <div class="voice-title">Human, never casual</div>
+        <div class="voice-desc">Warm and personal but always professional. This is a child's safety. We take that weight seriously.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MOTION ── -->
+  <div class="section">
+    <p class="sec-label">Motion & timing</p>
+    <div class="motion-row">
+      <div class="motion-card">
+        <div class="motion-val">200ms ease-out</div>
+        <div class="motion-desc">Micro interactions — buttons, badges, hover states</div>
+      </div>
+      <div class="motion-card">
+        <div class="motion-val">350ms ease-in-out</div>
+        <div class="motion-desc">Panel transitions, card reveals, map pans</div>
+      </div>
+      <div class="motion-card">
+        <div class="motion-val">No bounce</div>
+        <div class="motion-desc">Spring animations are playful. This brand is still water.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SPACING ── -->
+  <div class="section">
+    <p class="sec-label">Spacing scale</p>
+    <div class="spacing-row">
+      <div class="sp-block"><div class="sp-rect" style="height:4px;"></div><div class="sp-label">4</div></div>
+      <div class="sp-block"><div class="sp-rect" style="height:8px;"></div><div class="sp-label">8</div></div>
+      <div class="sp-block"><div class="sp-rect" style="height:12px;"></div><div class="sp-label">12</div></div>
+      <div class="sp-block"><div class="sp-rect" style="height:16px;"></div><div class="sp-label">16</div></div>
+      <div class="sp-block"><div class="sp-rect" style="height:24px;"></div><div class="sp-label">24</div></div>
+      <div class="sp-block"><div class="sp-rect" style="height:32px;"></div><div class="sp-label">32</div></div>
+      <div class="sp-block"><div class="sp-rect" style="height:40px;"></div><div class="sp-label">40</div></div>
+      <div class="sp-block"><div class="sp-rect" style="height:48px;"></div><div class="sp-label">48</div></div>
+      <div class="sp-block"><div class="sp-rect" style="height:64px;"></div><div class="sp-label">64</div></div>
+      <div class="sp-block"><div class="sp-rect" style="height:80px;"></div><div class="sp-label">80</div></div>
+    </div>
+    <p style="font-size:11px; color:var(--color-text-tertiary); margin-top:10px;">Base-4 scale. Prefer multiples of 8 for layout. Never use arbitrary values like 13px or 22px.</p>
+  </div>
+
+  <!-- ── DO / DON'T ── -->
+  <div class="section">
+    <p class="sec-label">Do & don't</p>
+    <div class="dd-grid">
+      <div class="dd-card dd-do">
+        <div class="dd-head">Do</div>
+        <div class="dd-item">Use Forest on Stone or Mist for all body text</div>
+        <div class="dd-item">Use DM Serif Display for emotional moments</div>
+        <div class="dd-item">Use gold sparingly — alerts, premium badges, warmth accents</div>
+        <div class="dd-item">Keep UI surfaces mostly Stone + White</div>
+        <div class="dd-item">Use Slate for metadata, timestamps, supporting info</div>
+        <div class="dd-item">Let whitespace breathe — never crowd elements</div>
+      </div>
+      <div class="dd-card dd-dont">
+        <div class="dd-head">Don't</div>
+        <div class="dd-item">Never use Sage text on Mist background — low contrast</div>
+        <div class="dd-item">Never use gradients, shadows, or blur effects</div>
+        <div class="dd-item">Never use more than 3 palette colors in a single component</div>
+        <div class="dd-item">Never use ALL CAPS in body copy — subheadings only</div>
+        <div class="dd-item">Never use red — use Gold for alerts (red breaks the calm)</div>
+        <div class="dd-item">Never use font-weight 700+ — 500 is the heaviest</div>
+      </div>
+    </div>
+  </div>
+
+</div>

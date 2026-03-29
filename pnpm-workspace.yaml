@@ -1,0 +1,12 @@
+packages:
+  - 'packages/*'
+  - 'web-admin'
+  - 'auth-service'
+  - 'tenant-service'
+  - 'route-service'
+  - 'trip-service'
+  # mobile uses Expo/npm toolchain separately — not part of pnpm workspace
+allowBuilds:
+  '@firebase/util': true
+  esbuild: true
+  protobufjs: true

@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "../",
+    "paths": {
+      "@saferide/types":          ["../packages/types/src/index.ts"],
+      "@saferide/logger":         ["../packages/logger/src/index.ts"],
+      "@saferide/firebase-admin": ["../packages/firebase-admin/src/index.ts"],
+      "@saferide/middleware":     ["../packages/middleware/src/index.ts"]
+    }
+  },
+  "include": ["src", "../packages/middleware/src/types.d.ts"]
+}

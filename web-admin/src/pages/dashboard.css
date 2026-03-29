@@ -1,0 +1,319 @@
+/* ── Super Admin Dashboard ───────────────────────────────────────────────── */
+
+.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+/* ── Welcome row ─────────────────────────────────────────────────────────── */
+
+.sa-welcome {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.sa-welcome-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.sa-welcome-heading {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: var(--weight-regular);
+  color: var(--forest);
+  line-height: var(--leading-tight);
+}
+
+.sa-welcome-sub {
+  font-size: var(--text-body);
+  color: var(--slate);
+}
+
+/* ── Stat cards ──────────────────────────────────────────────────────────── */
+
+.sa-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-4);
+}
+
+.sa-stat-card {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  text-decoration: none;
+  transition: background-color var(--motion-micro);
+}
+
+.sa-stat-card:hover {
+  background: var(--mist);
+}
+
+.sa-stat-label {
+  font-size: var(--text-subheading);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.sa-stat-value {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: var(--weight-regular);
+  color: var(--forest);
+  line-height: 1;
+  margin-top: var(--space-2);
+}
+
+.sa-stat-value--sage { color: var(--sage); }
+.sa-stat-value--gold { color: var(--gold); }
+
+/* ── Loading skeletons ───────────────────────────────────────────────────── */
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1;    }
+  50%       { opacity: 0.4; }
+}
+
+.stat-card-skeleton {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-value {
+  height: 38px;
+  width: 56px;
+  background: var(--stone);
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-label {
+  height: 11px;
+  width: 88px;
+  background: var(--stone);
+  border-radius: var(--radius-sm);
+}
+
+/* ── Main grid ───────────────────────────────────────────────────────────── */
+
+.sa-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* ── Card shell ──────────────────────────────────────────────────────────── */
+
+.sa-card {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-8);
+}
+
+.sa-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+}
+
+.sa-card-heading {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-regular);
+  color: var(--forest);
+}
+
+.sa-card-link {
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--sage);
+  text-decoration: none;
+  transition: color var(--motion-micro);
+}
+
+.sa-card-link:hover { color: var(--forest); }
+
+/* ── Recent schools table ────────────────────────────────────────────────── */
+
+.sa-schools-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-body);
+}
+
+.sa-schools-table th {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-subheading);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  border-bottom: 1px solid var(--mist);
+  white-space: nowrap;
+}
+
+.sa-schools-table td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--stone);
+  vertical-align: middle;
+}
+
+.sa-schools-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.sa-schools-table tbody tr {
+  transition: background-color var(--motion-micro);
+}
+
+.sa-schools-table tbody tr:hover {
+  background: rgba(186, 200, 177, 0.1);
+}
+
+.sa-school-link {
+  font-weight: var(--weight-medium);
+  color: var(--forest);
+  text-decoration: none;
+  transition: color var(--motion-micro);
+}
+
+.sa-school-link:hover { color: var(--sage); }
+
+.sa-cell-muted {
+  color: var(--slate);
+  font-size: var(--text-body);
+}
+
+.sa-cell-date {
+  color: var(--slate);
+  font-size: var(--text-caption);
+  white-space: nowrap;
+}
+
+/* ── Plan badge ──────────────────────────────────────────────────────────── */
+
+.sa-plan-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.sa-plan-badge--trial {
+  background: rgba(194, 168, 120, 0.15);
+  color: var(--gold);
+}
+
+.sa-plan-badge--basic {
+  background: rgba(108, 132, 128, 0.12);
+  color: var(--slate);
+}
+
+.sa-plan-badge--pro {
+  background: rgba(123, 150, 105, 0.15);
+  color: var(--sage);
+}
+
+/* ── Needs attention ─────────────────────────────────────────────────────── */
+
+.sa-empty-msg {
+  font-size: var(--text-body);
+  color: var(--slate);
+}
+
+.sa-all-clear {
+  font-size: var(--text-body);
+  color: var(--sage);
+  font-weight: var(--weight-medium);
+}
+
+.sa-alert-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.sa-alert-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sa-alert-group-label {
+  display: block;
+  font-size: var(--text-subheading);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-1);
+}
+
+.sa-alert-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.sa-alert-name {
+  font-size: var(--text-body);
+  color: var(--ink);
+  text-decoration: none;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: color var(--motion-micro);
+}
+
+.sa-alert-name:hover { color: var(--sage); }
+
+.sa-alert-chip {
+  flex-shrink: 0;
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.sa-alert-chip--warn {
+  background: rgba(194, 168, 120, 0.2);
+  color: var(--gold);
+}
+
+.sa-alert-chip--neutral {
+  background: rgba(108, 132, 128, 0.12);
+  color: var(--slate);
+}
+
+/* ── Legacy kept for shared use ──────────────────────────────────────────── */
+
+/* .page-heading is used by other pages that import this file */
+.page-heading {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-regular);
+  color: var(--forest);
+}

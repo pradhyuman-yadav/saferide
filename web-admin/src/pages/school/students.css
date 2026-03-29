@@ -1,0 +1,81 @@
+/* ── Students Page ──────────────────────────────────────────────────────── */
+
+/* Parent name cell */
+.student-parent-name {
+  color: var(--slate);
+  font-size: var(--text-body);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Email cell */
+.student-email {
+  font-size: var(--text-body);
+  color: var(--slate);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Stop / Route stacked cell */
+.student-stop-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.student-stop-name {
+  display: block;
+  font-size: var(--text-body);
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.student-route-name {
+  display: block;
+  font-size: var(--text-caption);
+  color: var(--slate);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Assignment panel row ───────────────────────────────────────────────── */
+
+.student-assign-row {
+  background-color: var(--stone);
+}
+
+/* Remove default td padding — the panel provides its own */
+.student-assign-cell {
+  padding: var(--space-3) var(--space-6) !important;
+  border-top: 1px solid var(--color-border);
+}
+
+.student-assign-panel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.student-assign-label {
+  font-size: var(--text-subheading);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  white-space: nowrap;
+  margin-right: var(--space-1);
+}
+
+.student-assign-select {
+  min-width: 180px;
+  max-width: 260px;
+  padding: var(--space-2) var(--space-3);
+  height: 36px;
+}

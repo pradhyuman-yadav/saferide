@@ -1,0 +1,209 @@
+/* ── Routes Page ─────────────────────────────────────────────────────────── */
+.routes-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* ── Route form grid (2-col for wider inputs) ────────────────────────────── */
+.route-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  max-width: 480px;
+}
+
+/* ── Route table row states ──────────────────────────────────────────────── */
+.route-row--selected td {
+  background-color: rgba(123, 150, 105, 0.07);
+}
+
+.route-row-name {
+  font-weight: var(--weight-medium);
+  color: var(--forest);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.route-row-desc {
+  color: var(--slate);
+  font-size: var(--text-body);
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.route-row-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* ── Action button (Manage Stops toggle) ─────────────────────────────────── */
+.action-btn {
+  background: none;
+  border: 1px solid var(--mist);
+  color: var(--sage);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color var(--motion-micro), color var(--motion-micro);
+  white-space: nowrap;
+}
+
+.action-btn:hover {
+  background-color: rgba(123, 150, 105, 0.1);
+}
+
+.action-btn--active {
+  background-color: rgba(123, 150, 105, 0.15);
+  color: var(--forest);
+  border-color: var(--sage);
+}
+
+/* ── Stops Panel ─────────────────────────────────────────────────────────── */
+.stops-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  background-color: var(--stone);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-8);
+}
+
+.stops-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.stops-panel-heading {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-regular);
+  color: var(--forest);
+}
+
+/* ── Side-by-side layout: form | map ─────────────────────────────────────── */
+
+.stops-panel-split {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: var(--space-6);
+  align-items: stretch;    /* both columns same height */
+}
+
+/* ── Left column: add-stop form ──────────────────────────────────────────── */
+
+.stops-form-col {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(186, 200, 177, 0.5);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.stops-form-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: var(--weight-regular);
+  color: var(--forest);
+  margin: 0;
+}
+
+.stops-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.stops-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.stops-form-submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: auto;          /* push to bottom when form col is taller */
+}
+
+.stops-seq-hint {
+  font-size: var(--text-caption);
+  color: var(--slate);
+  margin: 0;
+}
+
+.stops-empty {
+  padding: var(--space-8) 0;
+  text-align: center;
+}
+
+/* ── Stop table cells ────────────────────────────────────────────────────── */
+.stop-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stop-seq {
+  font-family: monospace;
+  font-size: var(--text-code);
+  color: var(--sage);
+  font-weight: var(--weight-medium);
+  width: 40px;
+  text-align: center;
+}
+
+.stop-coords {
+  font-family: monospace;
+  font-size: var(--text-code);
+  color: var(--slate);
+  white-space: nowrap;
+}
+
+/* ── Stop location display (replaces lat/lon inputs) ─────────────────────── */
+
+.stop-location-display {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--stone);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body);
+  color: var(--slate);
+  min-height: 36px;
+  font-style: italic;
+}
+
+.stop-location-display--set {
+  background: rgba(123, 150, 105, 0.08);
+  border-color: rgba(123, 150, 105, 0.3);
+  font-style: normal;
+}
+
+.stop-location-coords {
+  font-family: monospace;
+  font-size: var(--text-code);
+  color: var(--forest);
+  letter-spacing: 0.03em;
+}
+
+.stop-location-ok {
+  font-size: var(--text-caption);
+  color: var(--sage);
+  font-weight: var(--weight-medium);
+  margin-left: auto;
+}

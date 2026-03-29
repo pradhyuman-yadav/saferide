@@ -1,0 +1,150 @@
+/* ── Onboard School Page ────────────────────────────────────────────────── */
+.onboard-page {}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--slate);
+  font-size: var(--text-body);
+  text-decoration: none;
+  margin-bottom: var(--space-6);
+  transition: color var(--motion-micro);
+}
+
+.back-link:hover {
+  color: var(--forest);
+}
+
+/* ── Form Card ──────────────────────────────────────────────────────────── */
+.onboard-card {
+  background-color: var(--white);
+  border-radius: var(--radius-md);
+  padding: var(--space-8);
+  max-width: 720px;
+}
+
+/* ── Form Grid ──────────────────────────────────────────────────────────── */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+}
+
+.form-grid .form-field--full {
+  grid-column: 1 / -1;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.form-label {
+  font-size: var(--text-subheading);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.form-label .required-mark {
+  color: var(--gold);
+  margin-left: 2px;
+}
+
+.form-input,
+.form-select {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--mist);
+  border-radius: var(--radius-sm);
+  background-color: var(--white);
+  color: var(--ink);
+  font-size: var(--text-body);
+  transition: border-color var(--motion-micro);
+  outline: none;
+  width: 100%;
+}
+
+.form-input:focus,
+.form-select:focus {
+  border-color: var(--sage);
+}
+
+.form-input.error,
+.form-select.error {
+  border-color: var(--gold);
+}
+
+.form-error {
+  font-size: var(--text-caption);
+  color: var(--gold);
+  margin-top: var(--space-1);
+}
+
+/* ── Form Actions ───────────────────────────────────────────────────────── */
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--stone);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-8);
+  background-color: var(--sage);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: opacity var(--motion-micro);
+  text-decoration: none;
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.88;
+  color: var(--white);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  display: inline-block;
+  padding: var(--space-3) var(--space-6);
+  background-color: transparent;
+  color: var(--slate);
+  border: 1px solid var(--mist);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color var(--motion-micro), color var(--motion-micro);
+}
+
+.btn-secondary:hover {
+  color: var(--forest);
+  border-color: var(--slate);
+}
+
+/* ── Global form error banner ───────────────────────────────────────────── */
+.form-banner-error {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
+  background-color: rgba(194, 168, 120, 0.08);
+  color: var(--gold);
+  font-size: var(--text-body);
+  margin-bottom: var(--space-6);
+}

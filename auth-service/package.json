@@ -1,0 +1,33 @@
+{
+  "name": "saferide-auth-service",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch --env-file=.env src/index.ts",
+    "build": "tsc",
+    "start": "node --env-file=.env dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@saferide/firebase-admin": "workspace:*",
+    "@saferide/logger": "workspace:*",
+    "@saferide/middleware": "workspace:*",
+    "@saferide/types": "workspace:*",
+    "cors": "^2.8.5",
+    "express": "^4.19.0",
+    "helmet": "^8.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^2.1.0",
+    "tsx": "^4.19.0",
+    "typescript": "~5.5.3",
+    "vitest": "^2.1.0"
+  }
+}

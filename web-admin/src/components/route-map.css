@@ -1,0 +1,107 @@
+/* ── Route Map ────────────────────────────────────────────────────────────── */
+
+.route-map-wrapper {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--stone);
+  background: var(--stone);
+  /* Fill the grid cell when inside a stretch-aligned grid row */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 420px;        /* standalone fallback */
+}
+
+/* Crosshair cursor when in pin-placement mode */
+.route-map-wrapper--interactive .route-map-canvas {
+  cursor: crosshair;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+
+.route-map-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  background: var(--white);
+  border-bottom: 1px solid var(--stone);
+}
+
+.route-map-search {
+  flex: 1;
+  height: 32px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-body);
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--stone);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color var(--motion-micro), background-color var(--motion-micro);
+}
+
+.route-map-search:focus {
+  border-color: var(--sage);
+  background: var(--white);
+}
+
+.route-map-search::placeholder {
+  color: var(--slate);
+}
+
+.route-map-hint {
+  font-size: var(--text-caption);
+  color: var(--slate);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Map stage (canvas + overlay) ────────────────────────────────────────── */
+
+.route-map-stage {
+  position: relative;
+  flex: 1;          /* fills wrapper after toolbar */
+  min-height: 0;    /* lets flex children shrink */
+}
+
+.route-map-canvas {
+  height: 100%;     /* fills the stage */
+  min-height: 380px;
+  width: 100%;
+  display: block;
+}
+
+.route-map-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--stone);
+  font-size: var(--text-body);
+  color: var(--slate);
+  pointer-events: none;
+}
+
+/* ── No-key fallback ─────────────────────────────────────────────────────── */
+
+.route-map-no-key {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 420px;
+  background: var(--stone);
+  font-size: var(--text-body);
+  color: var(--slate);
+  text-align: center;
+  padding: var(--space-8);
+}
+
+.route-map-no-key small {
+  font-size: var(--text-caption);
+  color: var(--slate);
+}

@@ -1,0 +1,144 @@
+/* ── School Detail Page ─────────────────────────────────────────────────── */
+.school-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.detail-heading-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+/* ── Info Card ──────────────────────────────────────────────────────────── */
+.detail-section {
+  background-color: var(--white);
+  border-radius: var(--radius-md);
+  padding: var(--space-8);
+}
+
+.detail-section-heading {
+  font-size: var(--text-subheading);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--stone);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+}
+
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.detail-field-label {
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.detail-field-value {
+  font-size: var(--text-body);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+.detail-field-value--mono {
+  font-family: monospace;
+  font-size: var(--text-code);
+  color: var(--sage);
+}
+
+/* ── Danger Zone ────────────────────────────────────────────────────────── */
+.detail-section--danger {
+  border: 1px solid var(--gold);
+}
+
+.detail-section--danger .detail-section-heading {
+  color: var(--gold);
+  border-bottom-color: rgba(194, 168, 120, 0.2);
+}
+
+.danger-description {
+  font-size: var(--text-body);
+  color: var(--slate);
+  margin-bottom: var(--space-6);
+  line-height: var(--leading-relaxed);
+}
+
+/* ── Action Buttons ─────────────────────────────────────────────────────── */
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  background-color: var(--gold);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: opacity var(--motion-micro);
+}
+
+.btn-danger:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-reactivate {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  background-color: var(--sage);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: opacity var(--motion-micro);
+}
+
+.btn-reactivate:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.btn-reactivate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Loading / Error ────────────────────────────────────────────────────── */
+.detail-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-20);
+}
+
+.detail-not-found {
+  padding: var(--space-10);
+  text-align: center;
+  color: var(--slate);
+  font-size: var(--text-body);
+}

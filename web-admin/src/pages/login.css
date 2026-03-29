@@ -1,0 +1,183 @@
+/* ── Login Page ─────────────────────────────────────────────────────────── */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-background);
+}
+
+/* ── Header Band ────────────────────────────────────────────────────────── */
+.login-header {
+  background-color: var(--forest);
+  padding: var(--space-12) var(--space-8);
+  text-align: center;
+}
+
+.login-header-title {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: var(--weight-regular);
+  color: var(--white);
+  line-height: var(--leading-tight);
+}
+
+.login-header-caption {
+  font-size: var(--text-subheading);
+  font-weight: var(--weight-medium);
+  color: var(--mist);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-top: var(--space-2);
+}
+
+/* ── Card ───────────────────────────────────────────────────────────────── */
+.login-body {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--space-12) var(--space-4);
+}
+
+.login-card {
+  background-color: var(--white);
+  border-radius: var(--radius-md);
+  padding: var(--space-10) var(--space-8);
+  width: 100%;
+  max-width: 420px;
+}
+
+.login-card-heading {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-regular);
+  color: var(--forest);
+  margin-bottom: var(--space-8);
+}
+
+/* ── Form ───────────────────────────────────────────────────────────────── */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.form-label {
+  font-size: var(--text-subheading);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.form-input {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--mist);
+  border-radius: var(--radius-sm);
+  background-color: var(--white);
+  color: var(--ink);
+  font-size: var(--text-body);
+  transition: border-color var(--motion-micro);
+}
+
+.form-input:focus {
+  border-color: var(--sage);
+  outline: none;
+}
+
+/* ── Error Message ──────────────────────────────────────────────────────── */
+.login-error {
+  font-size: var(--text-body);
+  color: var(--gold);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
+  background-color: rgba(194, 168, 120, 0.08);
+}
+
+/* ── Submit Button ──────────────────────────────────────────────────────── */
+.login-submit-btn {
+  width: 100%;
+  padding: var(--space-4);
+  background-color: var(--sage);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: opacity var(--motion-micro);
+  margin-top: var(--space-2);
+}
+
+.login-submit-btn:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.login-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.login-submit-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+/* ── Setup page hint text ────────────────────────────────────────────────── */
+.login-setup-hint {
+  font-size: var(--text-body);
+  color: var(--slate);
+  line-height: var(--leading-normal);
+  margin-bottom: var(--space-6);
+}
+
+/* ── Awaiting invite claim (post-signup holding state) ──────────────────── */
+.login-awaiting-setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-6);
+  padding: var(--space-10) 0;
+  min-height: 160px;
+}
+
+.login-awaiting-setup-text {
+  font-size: var(--text-body);
+  color: var(--slate);
+  text-align: center;
+  line-height: var(--leading-normal);
+}
+
+/* ── Mode Switch ─────────────────────────────────────────────────────────── */
+.login-mode-switch {
+  margin-top: var(--space-6);
+  font-size: var(--text-body);
+  color: var(--slate);
+  text-align: center;
+}
+
+.login-mode-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--sage);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.login-mode-link:hover {
+  opacity: 0.8;
+}

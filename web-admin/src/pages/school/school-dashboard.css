@@ -1,0 +1,293 @@
+/* ── School Dashboard ────────────────────────────────────────────────────── */
+
+.school-dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+/* ── Welcome ─────────────────────────────────────────────────────────────── */
+
+.dashboard-welcome {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.dashboard-welcome-heading {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: var(--weight-regular);
+  color: var(--forest);
+  line-height: var(--leading-tight);
+}
+
+.dashboard-welcome-school {
+  font-size: var(--text-body);
+  color: var(--slate);
+}
+
+/* ── Stat cards ──────────────────────────────────────────────────────────── */
+
+.dashboard-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+}
+
+.dashboard-stat-card {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  text-decoration: none;
+  transition: background-color var(--motion-micro);
+}
+
+.dashboard-stat-card:hover {
+  background: var(--mist);
+}
+
+.stat-label {
+  font-size: var(--text-subheading);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: var(--weight-regular);
+  color: var(--forest);
+  line-height: 1;
+  margin-top: var(--space-2);
+}
+
+.stat-footnote {
+  font-size: var(--text-caption);
+  color: var(--slate);
+  margin-top: var(--space-1);
+}
+
+/* ── Main grid ───────────────────────────────────────────────────────────── */
+
+.dashboard-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* ── Card shell ──────────────────────────────────────────────────────────── */
+
+.dashboard-card {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-8);
+}
+
+.dashboard-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+}
+
+.dashboard-card-heading {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-regular);
+  color: var(--forest);
+}
+
+/* When heading has no paired link, add bottom margin directly */
+.dashboard-card > .dashboard-card-heading {
+  margin-bottom: var(--space-6);
+}
+
+.dashboard-card-link {
+  font-size: var(--text-body);
+  color: var(--sage);
+  text-decoration: none;
+  font-weight: var(--weight-medium);
+  transition: color var(--motion-micro);
+}
+
+.dashboard-card-link:hover {
+  color: var(--forest);
+}
+
+/* ── Fleet table ─────────────────────────────────────────────────────────── */
+
+.dashboard-fleet-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-body);
+}
+
+.dashboard-fleet-table th {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-subheading);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  border-bottom: 1px solid var(--mist);
+}
+
+.dashboard-fleet-table td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--stone);
+  vertical-align: middle;
+}
+
+.dashboard-fleet-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.fleet-bus-reg {
+  display: block;
+  font-size: var(--text-code);
+  font-family: monospace;
+  font-weight: var(--weight-medium);
+  color: var(--forest);
+  letter-spacing: 0.04em;
+}
+
+.fleet-bus-model {
+  display: block;
+  font-size: var(--text-caption);
+  color: var(--slate);
+  margin-top: 2px;
+}
+
+.fleet-cell-value {
+  color: var(--ink);
+  font-size: var(--text-body);
+}
+
+.fleet-cell-missing {
+  color: var(--gold);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-body);
+}
+
+/* ── Needs attention ─────────────────────────────────────────────────────── */
+
+.dashboard-empty-msg {
+  font-size: var(--text-body);
+  color: var(--slate);
+}
+
+.dashboard-all-clear {
+  font-size: var(--text-body);
+  color: var(--sage);
+  font-weight: var(--weight-medium);
+  margin-bottom: var(--space-6);
+}
+
+.dashboard-alert-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.dashboard-alert-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.dashboard-alert-badge {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--white);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-alert-text {
+  flex: 1;
+  font-size: var(--text-body);
+  color: var(--ink);
+}
+
+.dashboard-alert-action {
+  flex-shrink: 0;
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--sage);
+  text-decoration: none;
+  transition: color var(--motion-micro);
+}
+
+.dashboard-alert-action:hover {
+  color: var(--forest);
+}
+
+/* ── Route coverage ──────────────────────────────────────────────────────── */
+
+.dashboard-coverage {
+  border-top: 1px solid var(--stone);
+  padding-top: var(--space-6);
+}
+
+.dashboard-coverage-label {
+  display: block;
+  font-size: var(--text-subheading);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-4);
+}
+
+.dashboard-coverage-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.dashboard-coverage-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.dashboard-coverage-route {
+  font-size: var(--text-body);
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-coverage-ok {
+  flex-shrink: 0;
+  font-size: var(--text-code);
+  font-family: monospace;
+  color: var(--sage);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.04em;
+}
+
+.dashboard-coverage-gap {
+  flex-shrink: 0;
+  font-size: var(--text-body);
+  color: var(--gold);
+  font-weight: var(--weight-medium);
+}

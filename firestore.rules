@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users may read only their own profile.
+    // All writes go through the backend Admin SDK (bypasses these rules).
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+
+    // Any authenticated user may read tenant documents.
+    // All writes go through the backend Admin SDK.
+    match /tenants/{tenantId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Pending invites are exclusively managed by the backend Admin SDK.
+    // No client may read or write these directly.
+    match /pendingInvites/{inviteKey} {
+      allow read, write: if false;
+    }
+
+    // Buses — authenticated users may read; all writes go through the backend Admin SDK.
+    // Tenant isolation is enforced at the API layer (route-service).
+    match /buses/{busId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Routes — authenticated users may read; all writes go through the backend Admin SDK.
+    match /routes/{routeId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Stops — authenticated users may read; all writes go through the backend Admin SDK.
+    match /stops/{stopId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Drivers — authenticated users may read; all writes go through the backend Admin SDK.
+    match /drivers/{driverId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Students — authenticated users may read; all writes go through the backend Admin SDK.
+    match /students/{studentId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Trips — authenticated users may read; all writes go through the backend Admin SDK.
+    // Tenant isolation and role checks are enforced at the API layer (trip-service).
+    match /trips/{tripId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // GPS telemetry — no direct client access; served via trip-service API only.
+    match /gpsTelemetry/{docId} {
+      allow read, write: if false;
+    }
+
+    // Deny everything else by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
