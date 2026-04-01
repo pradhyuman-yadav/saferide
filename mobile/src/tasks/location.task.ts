@@ -52,8 +52,24 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
   try {
     await tripClient.recordLocation(tripId, ping);
   } catch (err) {
-    // Log and continue — GPS should never crash the background task
-    console.warn('[LocationTask] failed to send ping:', (err as Error).message);
+    const msg = (err as Error).message;
+
+    if (msg === 'Not authenticated') {
+      // No valid Firebase session — stale key left over from a crash or force-kill.
+      // Self-heal: clear the key and stop the task so it never fires again until
+      // the driver explicitly starts a new trip.
+      console.warn('[LocationTask] no active session — clearing stale trip key and stopping task');
+      await SecureStore.deleteItemAsync(ACTIVE_TRIP_KEY);
+      try {
+        await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
+      } catch {
+        // Ignore — task may already be stopping
+      }
+      return;
+    }
+
+    // Transient network/server error — log and continue; next interval will retry
+    console.warn('[LocationTask] failed to send ping:', msg);
   }
 });
 

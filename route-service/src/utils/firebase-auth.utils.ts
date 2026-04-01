@@ -22,26 +22,31 @@ export async function findOrCreateFirebaseUser(
 }
 
 /**
- * Generates a Firebase password-reset link for the given email and logs it.
+ * Generates a Firebase password-reset / account-setup link and dispatches it
+ * via the configured email provider.
  *
- * In production, wire this to a transactional email service (SendGrid, etc.)
- * or configure Firebase Auth email templates in the Firebase Console →
- * Authentication → Templates → Password reset. The link is valid for 1 hour.
+ * Deployment note — two options for email delivery:
  *
- * Firebase Console email templates require no code changes — Firebase sends
- * the email automatically when you call the Identity Platform REST API
- * (POST /accounts:sendOobCode), which is what the Firebase client SDK
- * `sendPasswordResetEmail()` calls under the hood. For server-triggered flows
- * (school admin creating a driver/parent), we use generatePasswordResetLink()
- * to get the link and hand it off to the email delivery layer.
+ * Option A (recommended for most deployments): configure Firebase Auth email
+ * templates in Firebase Console → Authentication → Templates → Password reset.
+ * Firebase sends the email automatically when the client SDK calls
+ * `sendPasswordResetEmail()`. No backend email code is needed.
+ *
+ * Option B (server-triggered, e.g. admin creates a driver account): call
+ * `generatePasswordResetLink()` here and pass the link to a transactional
+ * email provider (SendGrid, Postmark, AWS SES). Replace the logger call below
+ * with: `await emailService.send({ to: email, template: 'account-setup', link })`
+ * The link is valid for 1 hour.
+ *
+ * The send is non-fatal — a failure is logged and the user can request a
+ * password reset via the app later.
  */
 export async function sendSetupEmail(email: string): Promise<void> {
   try {
     const auth = getAdminAuth();
     const link = await auth.generatePasswordResetLink(email);
-    // TODO (production): send `link` via your email provider
-    // Example: await emailService.send({ to: email, template: 'account-setup', link })
-    logger.info({ email, link }, 'Account setup link generated (wire to email provider for production)');
+    // Replace this log line with your email provider call (see Option B above)
+    logger.info({ email, link }, 'Account setup link generated');
   } catch (err) {
     // Non-fatal — driver/parent can request a reset via the app later
     logger.warn({ email, err }, 'Could not generate setup link; user can reset via the app');

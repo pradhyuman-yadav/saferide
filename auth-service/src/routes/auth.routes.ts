@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { verifyJwt, authRateLimiter, createAccountRateLimiter, validateBody } from '@saferide/middleware';
+import { verifyJwt, authRateLimiter, createAccountRateLimiter, readRateLimiter, validateBody } from '@saferide/middleware';
 import { ClaimInviteSchema } from '@saferide/types';
 import { AuthController } from '../controllers/auth.controller';
 
@@ -17,7 +17,7 @@ authRouter.post(
 // GET /api/v1/auth/me — requires valid JWT
 authRouter.get(
   '/me',
-  authRateLimiter,
+  readRateLimiter,
   verifyJwt,
   (req, res, next) => { controller.getMe(req, res).catch(next); },
 );

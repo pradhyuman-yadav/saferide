@@ -24,6 +24,10 @@ export const TripSchema = z.object({
   latestHeading:      z.number().optional(),
   latestRecordedAt:   z.number().optional(),
 
+  /** SOS — set by driver, cleared when driver cancels or trip ends. */
+  sosActive:      z.boolean().optional(),
+  sosTriggeredAt: z.number().optional(),
+
   createdAt: z.number(),
   updatedAt: z.number(),
 });

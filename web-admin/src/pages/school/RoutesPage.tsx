@@ -25,6 +25,9 @@ export function RoutesPage() {
   const [routeFormError,    setRouteFormError]    = useState<string | null>(null);
   const [isSubmittingRoute, setIsSubmittingRoute] = useState(false);
 
+  // ── Map expand state ──────────────────────────────────────────────────────
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
+
   // ── Stops state ───────────────────────────────────────────────────────────
   const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
   const [stops,           setStops]           = useState<Stop[]>([]);
@@ -206,6 +209,67 @@ export function RoutesPage() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="routes-page">
+
+      {/* ── Floating add-stop panel (only visible when map is fullscreen) ── */}
+      {isMapExpanded && selectedRoute !== null && (
+        <div className="map-stop-overlay">
+          <div className="map-stop-overlay-header">
+            <span className="map-stop-overlay-route">{selectedRoute.name}</span>
+            <span className="map-stop-overlay-seq">Stop #{stops.length + 1}</span>
+          </div>
+
+          {stopFormError !== null && (
+            <p className="page-error map-stop-overlay-error" role="alert">{stopFormError}</p>
+          )}
+
+          <form onSubmit={handleCreateStop} noValidate className="map-stop-overlay-form">
+            <input
+              className="form-input"
+              type="text"
+              placeholder="Stop name"
+              maxLength={100}
+              value={stopName}
+              onChange={(e) => setStopName(e.target.value)}
+              disabled={isSubmittingStop}
+              autoFocus
+              aria-label="Stop name"
+            />
+
+            <div className={`map-stop-overlay-pin ${draftLat !== null ? 'map-stop-overlay-pin--set' : ''}`}>
+              {draftLat !== null && draftLon !== null ? (
+                <>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                    <circle cx="12" cy="9" r="2.5"/>
+                  </svg>
+                  <span>{draftLat.toFixed(4)}, {draftLon.toFixed(4)}</span>
+                </>
+              ) : (
+                <>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/>
+                    <line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/>
+                  </svg>
+                  <span>Click the map to place stop</span>
+                </>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              className="btn-primary map-stop-overlay-submit"
+              disabled={isSubmittingStop || draftLat === null || !stopName.trim()}
+            >
+              {isSubmittingStop ? (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span className="spinner spinner--sm" /> Adding
+                </span>
+              ) : 'Add stop'}
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* ── Header ── */}
       <div className="page-header-row">
@@ -459,10 +523,8 @@ export function RoutesPage() {
               draftLat={draftLat}
               draftLon={draftLon}
               onPinDrop={(lat, lon) => { setDraftLat(lat); setDraftLon(lon); }}
-              onNameSuggestion={(name) => {
-                // Only auto-fill if the user hasn't typed anything yet
-                setStopName((prev) => prev.trim() === '' ? name : prev);
-              }}
+              onNameSuggestion={(name) => setStopName(name)}
+              onExpandChange={setIsMapExpanded}
               interactive
             />
 

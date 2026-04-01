@@ -36,6 +36,9 @@ const config = {
 
   android: {
     package: 'in.saferide.app',
+    minSdkVersion: 24,   // Android 7.0 (2016) — covers ~97% of active devices
+    targetSdkVersion: 35,
+    compileSdkVersion: 35,
     config: {
       googleMaps: {
         // Read from .env at build time — never embed a hardcoded key or the
@@ -64,6 +67,7 @@ const config = {
           'SafeRide uses your location in the background to broadcast the bus position to parents during an active trip.',
         locationWhenInUsePermission:
           'SafeRide uses your location to show parents where the bus is.',
+        isAndroidBackgroundLocationEnabled: true,
       },
     ],
     'expo-secure-store',

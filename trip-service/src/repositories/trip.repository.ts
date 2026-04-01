@@ -84,4 +84,22 @@ export class TripRepository {
     // suppress TS — tenantId param kept for interface consistency
     void tenantId;
   }
+
+  /** Set or clear the SOS flag on a trip document. */
+  async setSosStatus(
+    id: string,
+    tenantId: string,
+    active: boolean,
+    triggeredAt?: number,
+  ): Promise<void> {
+    const patch: Record<string, unknown> = {
+      sosActive:  active,
+      updatedAt:  Date.now(),
+    };
+    if (active && triggeredAt !== undefined) {
+      patch['sosTriggeredAt'] = triggeredAt;
+    }
+    await this.docRef(id).update(patch);
+    void tenantId;
+  }
 }

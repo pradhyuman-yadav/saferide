@@ -89,7 +89,7 @@ describe('StudentRepository', () => {
   it('findById() returns null when document does not exist', async () => {
     mockDocRef.get.mockResolvedValue({ exists: false, id: 'missing', data: () => undefined });
 
-    const result = await repo.findById('missing-id');
+    const result = await repo.findById('missing-id', 'tenant-001');
 
     expect(result).toBeNull();
   });
@@ -98,7 +98,7 @@ describe('StudentRepository', () => {
     const data = makeStudentData();
     mockDocRef.get.mockResolvedValue({ exists: true, id: 'student-001', data: () => data });
 
-    const result = await repo.findById('student-001');
+    const result = await repo.findById('student-001', 'tenant-001');
 
     expect(result).toMatchObject({ id: 'student-001', name: 'Arjun Sharma' });
   });
@@ -116,7 +116,7 @@ describe('StudentRepository', () => {
   it('update() calls doc.update() with the given fields plus updatedAt', async () => {
     mockDocRef.update.mockResolvedValue(undefined);
 
-    await repo.update('student-001', { parentPhone: '9999999999' });
+    await repo.update('student-001', 'tenant-001', { parentPhone: '9999999999' });
 
     expect(mockCollection.doc).toHaveBeenCalledWith('student-001');
     expect(mockDocRef.update).toHaveBeenCalledWith({
@@ -129,7 +129,7 @@ describe('StudentRepository', () => {
     mockDocRef.update.mockResolvedValue(undefined);
 
     const before = Date.now();
-    await repo.update('student-001', { isActive: false });
+    await repo.update('student-001', 'tenant-001', { isActive: false });
     const after = Date.now();
 
     const callArg = mockDocRef.update.mock.calls[0]![0] as Record<string, unknown>;

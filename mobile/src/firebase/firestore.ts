@@ -1,8 +1,12 @@
 import {
+  collection,
   doc,
   getDoc,
+  getDocs,
+  query,
   setDoc,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 import { db } from './config';
 import type { UserProfile, UserRole } from '@/types/user';
@@ -112,4 +116,23 @@ export async function redeemInviteCode(
   const profile = await getUserProfile(uid);
   if (!profile) throw new Error('Something went wrong. Please try again.');
   return profile;
+}
+
+/**
+ * Fetch the student record linked to a parent's Firebase UID.
+ * Returns the child's name, assigned bus, and stop — or null if not yet linked.
+ */
+export async function getStudentForParent(
+  parentUid: string,
+): Promise<{ busId: string; childName: string; stopId: string } | null> {
+  const q    = query(collection(db, 'students'), where('parentFirebaseUid', '==', parentUid));
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+
+  const data = snap.docs[0]!.data() as { name?: string; busId?: string; stopId?: string };
+  return {
+    busId:     data.busId     ?? '',
+    childName: data.name      ?? '',
+    stopId:    data.stopId    ?? '',
+  };
 }

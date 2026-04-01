@@ -106,9 +106,10 @@ describe('TelemetryService', () => {
       expect.objectContaining({ lat: validPing.lat, lon: validPing.lon, tripId: 'trip-001' }),
     );
 
-    // Denormalize on trip doc
+    // Denormalize on trip doc — repo.update takes (id, tenantId, updates)
     expect(tripRepoMock.update).toHaveBeenCalledWith(
       'trip-001',
+      'tenant-001',
       expect.objectContaining({ latestLat: validPing.lat, latestLon: validPing.lon }),
     );
 

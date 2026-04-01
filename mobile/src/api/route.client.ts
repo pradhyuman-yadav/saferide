@@ -91,9 +91,17 @@ export interface Driver {
 // ── API methods ───────────────────────────────────────────────────────────────
 
 export const routeClient = {
+  /** Get all buses for the tenant (manager / school_admin). */
+  listBuses: () =>
+    apiFetch<Bus[]>('/api/v1/buses'),
+
   /** Get a single bus by ID. */
   getBus: (id: string) =>
     apiFetch<Bus>(`/api/v1/buses/${id}`),
+
+  /** Get all routes for the tenant. */
+  listRoutes: () =>
+    apiFetch<Route[]>('/api/v1/routes'),
 
   /** Get a single route by ID. */
   getRoute: (id: string) =>
@@ -102,6 +110,10 @@ export const routeClient = {
   /** Get all stops for a route, ordered by sequence. */
   listStops: (routeId: string) =>
     apiFetch<Stop[]>(`/api/v1/routes/${routeId}/stops`),
+
+  /** Get all drivers for the tenant (manager / school_admin). */
+  listDrivers: () =>
+    apiFetch<Driver[]>('/api/v1/drivers'),
 
   /** Get a single driver by ID. */
   getDriver: (id: string) =>

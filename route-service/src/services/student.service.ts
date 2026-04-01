@@ -15,7 +15,10 @@ export class StudentService {
 
   /** Returns the student if it exists and belongs to tenantId; null otherwise. */
   async findStudent(id: string, tenantId: string): Promise<Student | null> {
-    return repo.findById(id, tenantId);
+    const student = await repo.findById(id, tenantId);
+    // Defense-in-depth: verify tenantId even if repo enforces it at query level
+    if (student !== null && student.tenantId !== tenantId) return null;
+    return student;
   }
 
   /** Like findStudent but throws STUDENT_NOT_FOUND instead of returning null. */

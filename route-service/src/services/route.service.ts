@@ -9,7 +9,10 @@ export class RouteService {
   }
 
   async findRoute(id: string, tenantId: string): Promise<Route | null> {
-    return repo.findById(id, tenantId);
+    const route = await repo.findById(id, tenantId);
+    // Defense-in-depth: verify tenantId even if repo enforces it at query level
+    if (route !== null && route.tenantId !== tenantId) return null;
+    return route;
   }
 
   async getRoute(id: string, tenantId: string): Promise<Route> {

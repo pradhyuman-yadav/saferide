@@ -1,8 +1,11 @@
 import type { Trip, StartTripInput } from '@saferide/types';
 import { getRtdb } from '@saferide/firebase-admin';
+import { logger } from '@saferide/logger';
 import { TripRepository } from '../repositories/trip.repository';
+import { NotificationService } from './notification.service';
 
-const repo = new TripRepository();
+const repo         = new TripRepository();
+const notifications = new NotificationService();
 
 export class TripService {
   /** Recent trips for the calling driver, newest first. */
@@ -26,7 +29,12 @@ export class TripService {
   }
 
   async findTrip(id: string, tenantId: string): Promise<Trip | null> {
-    return repo.findById(id, tenantId);
+    const trip = await repo.findById(id, tenantId);
+    if (trip === null) return null;
+    // Defense-in-depth: verify tenantId even though the repo query already filters.
+    // Prevents cross-tenant reads if a caller ever passes a stale or crafted ID.
+    if (trip.tenantId !== tenantId) return null;
+    return trip;
   }
 
   async getTrip(id: string, tenantId: string): Promise<Trip> {
@@ -57,6 +65,14 @@ export class TripService {
 
     const created = await repo.findById(tripId, tenantId);
     if (created === null) throw new Error('Failed to retrieve created trip');
+
+    // Notify parents that the bus is on the way (fire-and-forget)
+    void notifications.notifyParentsOfBus(
+      created.busId, tenantId,
+      'Bus is on the way',
+      'Your child\'s bus has started. Track it live in SafeRide.',
+    );
+
     return created;
   }
 
@@ -74,6 +90,68 @@ export class TripService {
     // Remove RTDB node — connected clients receive null immediately,
     // which the mobile hook interprets as "bus offline"
     await getRtdb().ref(`liveLocation/${trip.busId}`).remove();
+
+    // Notify parents the trip is over (fire-and-forget)
+    void notifications.notifyParentsOfBus(
+      trip.busId, tenantId,
+      'Bus trip ended',
+      'The bus has completed its route for today.',
+    );
+
+    const updated = await repo.findById(tripId, tenantId);
+    if (updated === null) throw new Error('Failed to retrieve updated trip');
+    return updated;
+  }
+
+  /**
+   * Activates SOS for a trip. Only the owning driver on an active trip may call this.
+   *
+   * Side-effects (when notification service is wired in Phase 3):
+   *   - Push notification → transport manager(s) in the same tenant
+   *   - Audit event written by the caller (controller)
+   *
+   * The trip document gains `sosActive: true` and `sosTriggeredAt` so that:
+   *   - Parent app can show a visual SOS indicator on the live map
+   *   - Manager dashboard can highlight the bus immediately
+   */
+  async sendSOS(tripId: string, driverId: string, tenantId: string): Promise<Trip> {
+    const trip = await this.getTrip(tripId, tenantId);
+    if (trip.driverId !== driverId)  throw new Error('TRIP_NOT_OWNED');
+    if (trip.status === 'ended')     throw new Error('TRIP_ALREADY_ENDED');
+
+    const now = Date.now();
+    await repo.setSosStatus(tripId, tenantId, true, now);
+
+    // Notify managers of SOS (fire-and-forget)
+    void notifications.notifyManagersOfTenant(
+      tenantId,
+      'SOS Alert',
+      'A driver has triggered an SOS alert. Open SafeRide to respond.',
+    );
+    logger.warn({ tripId, busId: trip.busId, tenantId }, 'SOS activated');
+
+    const updated = await repo.findById(tripId, tenantId);
+    if (updated === null) throw new Error('Failed to retrieve updated trip');
+    return updated;
+  }
+
+  /**
+   * Cancels an active SOS. Only the owning driver may cancel.
+   * Trip does not need to be active — a driver may cancel SOS just before ending the trip.
+   */
+  async cancelSOS(tripId: string, driverId: string, tenantId: string): Promise<Trip> {
+    const trip = await this.getTrip(tripId, tenantId);
+    if (trip.driverId !== driverId) throw new Error('TRIP_NOT_OWNED');
+
+    await repo.setSosStatus(tripId, tenantId, false);
+
+    // Notify managers SOS is cleared (fire-and-forget)
+    void notifications.notifyManagersOfTenant(
+      tenantId,
+      'SOS Resolved',
+      'The SOS alert has been cancelled by the driver.',
+    );
+    logger.info({ tripId, tenantId }, 'SOS cancelled');
 
     const updated = await repo.findById(tripId, tenantId);
     if (updated === null) throw new Error('Failed to retrieve updated trip');

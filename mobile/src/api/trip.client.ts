@@ -50,6 +50,8 @@ export interface Trip {
   latestSpeed?:      number;
   latestHeading?:    number;
   latestRecordedAt?: number;
+  sosActive?:        boolean;
+  sosTriggeredAt?:   number;
   createdAt:         number;
   updatedAt:         number;
 }
@@ -114,4 +116,12 @@ export const tripClient = {
   /** Parent: latest GPS location for a trip. */
   getLatestLocation: (tripId: string) =>
     apiFetch<GpsTelemetry | null>(`/api/v1/trips/${tripId}/location/latest`),
+
+  /** Driver: send an SOS alert for the active trip. */
+  sendSOS: (tripId: string) =>
+    apiFetch<void>(`/api/v1/trips/${tripId}/sos`, { method: 'POST' }),
+
+  /** Driver: cancel an active SOS alert. */
+  cancelSOS: (tripId: string) =>
+    apiFetch<void>(`/api/v1/trips/${tripId}/sos/cancel`, { method: 'POST' }),
 };

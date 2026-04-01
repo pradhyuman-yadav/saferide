@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import { DMSans_300Light, DMSans_400Regular, DMSans_500Medium } from '@expo-google-fonts/dm-sans';
@@ -11,10 +11,17 @@ import { StatusBar } from 'expo-status-bar';
 // before the app renders or any navigation occurs.
 import '@/tasks/location.task';
 
+import { setupNotificationHandler, registerForPushNotifications } from '@/notifications/push';
+
+// Configure foreground notification display before any notification can arrive
+setupNotificationHandler();
+
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const { isLoading, initialize } = useAuthStore();
+  const { isLoading, initialize, user } = useAuthStore();
+  const router   = useRouter();
+  const segments = useSegments();
 
   const [fontsLoaded] = useFonts({
     DMSans_300Light,
@@ -28,11 +35,32 @@ export default function RootLayout() {
     return unsubscribe;
   }, []);
 
+  // Register for push notifications whenever a user signs in
+  useEffect(() => {
+    if (user) {
+      void registerForPushNotifications(user.uid);
+    }
+  }, [user?.uid]);
+
   useEffect(() => {
     if (!isLoading && fontsLoaded) {
       SplashScreen.hideAsync();
     }
   }, [isLoading, fontsLoaded]);
+
+  // ── Global auth guard ──────────────────────────────────────────────────────
+  // Runs whenever auth state changes, from any screen in the app.
+  // index.tsx handles the initial role-based route; this handles sign-out.
+  useEffect(() => {
+    if (isLoading || !fontsLoaded) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!user && !inAuthGroup) {
+      // User signed out (or session expired) from inside the app — send to login
+      router.replace('/(auth)/login');
+    }
+  }, [user, isLoading, fontsLoaded, segments]);
 
   if (!fontsLoaded) return null;
 

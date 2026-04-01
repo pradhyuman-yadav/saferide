@@ -118,4 +118,74 @@ export class TripController {
     const trip = await service.findActiveForBus(busId, tenantId);
     res.json({ success: true, data: trip });
   }
+
+  /** POST /api/v1/trips/:id/sos — driver triggers an SOS alert */
+  async sos(req: Request, res: Response): Promise<void> {
+    const { uid: driverId, tenantId } = req.user;
+    if (tenantId === null) {
+      res.status(403).json({ success: false, error: { code: 'FORBIDDEN', message: 'A school context is required.' } });
+      return;
+    }
+
+    const { id } = req.params as { id: string };
+    try {
+      const trip = await service.sendSOS(id, driverId, tenantId);
+      auditLog({
+        action:    'SOS_TRIGGERED',
+        actorId:   driverId,
+        actorRole: req.user.role,
+        tenantId,
+        targetId:  id,
+        meta:      { busId: trip.busId, routeId: trip.routeId },
+      });
+      res.json({ success: true, data: trip });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'TRIP_NOT_FOUND') {
+        res.status(404).json({ success: false, error: { code: 'TRIP_NOT_FOUND', message: 'Trip not found.' } });
+        return;
+      }
+      if (err instanceof Error && err.message === 'TRIP_NOT_OWNED') {
+        res.status(403).json({ success: false, error: { code: 'TRIP_NOT_OWNED', message: 'You can only trigger SOS on your own trip.' } });
+        return;
+      }
+      if (err instanceof Error && err.message === 'TRIP_ALREADY_ENDED') {
+        res.status(409).json({ success: false, error: { code: 'TRIP_ALREADY_ENDED', message: 'Cannot trigger SOS on an ended trip.' } });
+        return;
+      }
+      throw err;
+    }
+  }
+
+  /** POST /api/v1/trips/:id/sos/cancel — driver cancels their SOS alert */
+  async cancelSOS(req: Request, res: Response): Promise<void> {
+    const { uid: driverId, tenantId } = req.user;
+    if (tenantId === null) {
+      res.status(403).json({ success: false, error: { code: 'FORBIDDEN', message: 'A school context is required.' } });
+      return;
+    }
+
+    const { id } = req.params as { id: string };
+    try {
+      const trip = await service.cancelSOS(id, driverId, tenantId);
+      auditLog({
+        action:    'SOS_CANCELLED',
+        actorId:   driverId,
+        actorRole: req.user.role,
+        tenantId,
+        targetId:  id,
+        meta:      { busId: trip.busId },
+      });
+      res.json({ success: true, data: trip });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'TRIP_NOT_FOUND') {
+        res.status(404).json({ success: false, error: { code: 'TRIP_NOT_FOUND', message: 'Trip not found.' } });
+        return;
+      }
+      if (err instanceof Error && err.message === 'TRIP_NOT_OWNED') {
+        res.status(403).json({ success: false, error: { code: 'TRIP_NOT_OWNED', message: 'You can only cancel SOS on your own trip.' } });
+        return;
+      }
+      throw err;
+    }
+  }
 }

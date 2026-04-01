@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { signInWithEmail, createAccount, resetPassword } from '@/firebase/auth';
+import { signInWithEmail, resetPassword } from '@/firebase/auth';
 import { SRText } from '@/components/ui/SRText';
 import { SRButton } from '@/components/ui/SRButton';
 import { colors, spacing, radius, typography } from '@/theme';
@@ -20,7 +20,6 @@ export default function LoginScreen() {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
-  const [isNew, setIsNew]       = useState(false);
 
   async function handleSubmit() {
     if (!email.trim() || !password.trim()) {
@@ -30,11 +29,7 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      if (isNew) {
-        await createAccount(email.trim(), password);
-      } else {
-        await signInWithEmail(email.trim(), password);
-      }
+      await signInWithEmail(email.trim(), password);
       // Send back to index — it reads the updated auth store and routes to the correct section
       router.replace('/');
     } catch (err: unknown) {
@@ -68,12 +63,10 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <SRText variant="heading" style={{ marginBottom: spacing[1] }}>
-            {isNew ? 'Create account' : 'Welcome back'}
+            Welcome back
           </SRText>
           <SRText variant="caption" style={{ marginBottom: spacing[6] }}>
-            {isNew
-              ? 'Enter your email to get started.'
-              : 'Sign in to see your child\'s bus.'}
+            Sign in to see your child's bus.
           </SRText>
 
           <SRText variant="label" color={colors.slate} style={{ marginBottom: spacing[1] }}>
@@ -103,39 +96,29 @@ export default function LoginScreen() {
           />
 
           <SRButton
-            label={isNew ? 'Create account' : 'Continue'}
+            label="Continue"
             onPress={handleSubmit}
             loading={loading}
             style={{ marginTop: spacing[6] }}
             size="lg"
           />
 
-          {!isNew && (
-            <SRButton
-              label="Forgot password?"
-              variant="ghost"
-              onPress={async () => {
-                if (!email.trim()) {
-                  Alert.alert('Enter your email', 'Type your email address above, then tap Forgot password.');
-                  return;
-                }
-                try {
-                  await resetPassword(email.trim());
-                  Alert.alert('Email sent', 'Check your inbox for a password reset link.');
-                } catch (err: unknown) {
-                  Alert.alert('Error', err instanceof Error ? err.message : 'Something went wrong.');
-                }
-              }}
-              style={{ marginTop: spacing[2] }}
-              size="lg"
-            />
-          )}
-
           <SRButton
-            label={isNew ? 'Already have an account? Sign in' : 'New here? Create an account'}
-            variant="secondary"
-            onPress={() => setIsNew((v) => !v)}
-            style={{ marginTop: spacing[3] }}
+            label="Forgot password?"
+            variant="ghost"
+            onPress={async () => {
+              if (!email.trim()) {
+                Alert.alert('Enter your email', 'Type your email address above, then tap Forgot password.');
+                return;
+              }
+              try {
+                await resetPassword(email.trim());
+                Alert.alert('Email sent', 'Check your inbox for a password reset link.');
+              } catch (err: unknown) {
+                Alert.alert('Error', err instanceof Error ? err.message : 'Something went wrong.');
+              }
+            }}
+            style={{ marginTop: spacing[2] }}
             size="lg"
           />
         </ScrollView>

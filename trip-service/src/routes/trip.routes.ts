@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { verifyJwt, requireRole, validateBody, gpsRateLimiter } from '@saferide/middleware';
+import { verifyJwt, requireRole, validateBody, readRateLimiter, gpsRateLimiter } from '@saferide/middleware';
 import { StartTripInputSchema, CreateTelemetryInputSchema } from '@saferide/types';
 import { TripController } from '../controllers/trip.controller';
 import { TelemetryController } from '../controllers/telemetry.controller';
@@ -9,7 +9,8 @@ const telemetryCtrl = new TelemetryController();
 
 export const tripRouter = Router();
 
-// All trip endpoints require authentication
+// All trip endpoints — rate limited then authenticated
+tripRouter.use(readRateLimiter);
 tripRouter.use(verifyJwt);
 
 // ── Trip lifecycle ─────────────────────────────────────────────────────────────
@@ -57,6 +58,21 @@ tripRouter.post(
   '/:id/end',
   requireRole('driver'),
   (req, res, next) => tripCtrl.end(req, res).catch(next),
+);
+
+// POST /api/v1/trips/:id/sos — driver triggers SOS alert
+// Note: sos/cancel must be registered before /:id/sos so Express doesn't treat
+// "cancel" as a second path segment under a different route pattern.
+tripRouter.post(
+  '/:id/sos/cancel',
+  requireRole('driver'),
+  (req, res, next) => tripCtrl.cancelSOS(req, res).catch(next),
+);
+
+tripRouter.post(
+  '/:id/sos',
+  requireRole('driver'),
+  (req, res, next) => tripCtrl.sos(req, res).catch(next),
 );
 
 // ── GPS telemetry ──────────────────────────────────────────────────────────────

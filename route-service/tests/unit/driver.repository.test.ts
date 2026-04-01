@@ -87,7 +87,7 @@ describe('DriverRepository', () => {
   it('findById() returns null when document does not exist', async () => {
     mockDocRef.get.mockResolvedValue({ exists: false, id: 'missing', data: () => undefined });
 
-    const result = await repo.findById('missing-id');
+    const result = await repo.findById('missing-id', 'tenant-001');
 
     expect(result).toBeNull();
   });
@@ -96,7 +96,7 @@ describe('DriverRepository', () => {
     const data = makeDriverData();
     mockDocRef.get.mockResolvedValue({ exists: true, id: 'driver-001', data: () => data });
 
-    const result = await repo.findById('driver-001');
+    const result = await repo.findById('driver-001', 'tenant-001');
 
     expect(result).toMatchObject({ id: 'driver-001', name: 'Raju Kumar' });
   });
@@ -114,7 +114,7 @@ describe('DriverRepository', () => {
   it('update() calls doc.update() with the given fields plus updatedAt', async () => {
     mockDocRef.update.mockResolvedValue(undefined);
 
-    await repo.update('driver-001', { phone: '9999999999' });
+    await repo.update('driver-001', 'tenant-001', { phone: '9999999999' });
 
     expect(mockCollection.doc).toHaveBeenCalledWith('driver-001');
     expect(mockDocRef.update).toHaveBeenCalledWith({
@@ -127,7 +127,7 @@ describe('DriverRepository', () => {
     mockDocRef.update.mockResolvedValue(undefined);
 
     const before = Date.now();
-    await repo.update('driver-001', { isActive: false });
+    await repo.update('driver-001', 'tenant-001', { isActive: false });
     const after = Date.now();
 
     const callArg = mockDocRef.update.mock.calls[0]![0] as Record<string, unknown>;

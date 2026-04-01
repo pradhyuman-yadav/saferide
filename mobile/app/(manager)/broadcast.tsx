@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   TextInput,
@@ -9,10 +9,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CheckCircle } from 'lucide-react-native';
-import { MOCK_FLEET } from '@/mocks/bus.mock';
 import { SRText } from '@/components/ui/SRText';
 import { SRButton } from '@/components/ui/SRButton';
 import { colors, spacing, radius, typography, iconSize } from '@/theme';
+import { routeClient, type Route } from '@/api/route.client';
 
 const TEMPLATES = [
   { id: 't1', label: 'Delay',         text: 'Bus is running approximately 15 minutes late due to traffic. Updated ETA will be sent shortly.' },
@@ -26,8 +26,18 @@ export default function BroadcastScreen() {
   const [message, setMessage]             = useState('');
   const [sending, setSending]             = useState(false);
   const [sent, setSent]                   = useState(false);
+  const [apiRoutes, setApiRoutes]         = useState<Route[]>([]);
 
-  const routes = [{ id: 'all', name: 'All routes' }, ...MOCK_FLEET.map((b) => ({ id: b.busId, name: b.routeName }))];
+  useEffect(() => {
+    routeClient.listRoutes()
+      .then(setApiRoutes)
+      .catch(() => { /* silent — "All routes" is always available */ });
+  }, []);
+
+  const routes = [
+    { id: 'all', name: 'All routes' },
+    ...apiRoutes.filter((r) => r.isActive).map((r) => ({ id: r.id, name: r.name })),
+  ];
 
   async function handleSend() {
     if (!selectedRoute || !message.trim()) {
@@ -64,7 +74,12 @@ export default function BroadcastScreen() {
         <SRText variant="label" color={colors.slate} style={styles.sectionLabel}>
           Send to
         </SRText>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.routeScroll}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.routeScroll}
+          contentContainerStyle={styles.routeScrollContent}
+        >
           {routes.map((r) => {
             const active = selectedRoute === r.id;
             return (
@@ -117,7 +132,7 @@ export default function BroadcastScreen() {
           numberOfLines={4}
           textAlignVertical="top"
         />
-        <SRText variant="caption" style={{ marginTop: spacing[1] }}>
+        <SRText variant="caption" color={colors.slate} style={styles.charCount}>
           {message.length} / 280 characters
         </SRText>
 
@@ -135,7 +150,7 @@ export default function BroadcastScreen() {
             onPress={handleSend}
             loading={sending}
             size="lg"
-            style={{ marginTop: spacing[5] }}
+            style={styles.sendBtn}
           />
         )}
       </ScrollView>
@@ -154,15 +169,19 @@ const styles = StyleSheet.create({
     marginBottom:     spacing[2],
   },
   sectionLabel: { paddingHorizontal: spacing[6] },
-  routeScroll:  { marginTop: spacing[2], paddingLeft: spacing[6] },
+  routeScroll:        { marginTop: spacing[2] },
+  routeScrollContent: {
+    paddingLeft:  spacing[6],
+    paddingRight: spacing[6],   // prevents last chip clipping at right edge
+    gap:          spacing[2],
+  },
   routeChip:    {
-    paddingVertical:  spacing[1] + 2,
+    paddingVertical:   spacing[1] + 2,
     paddingHorizontal: spacing[3],
-    borderRadius:     radius.full,
-    borderWidth:      0.5,
-    borderColor:      colors.stone,
-    marginRight:      spacing[2],
-    backgroundColor:  colors.surface,
+    borderRadius:      radius.full,
+    borderWidth:       0.5,
+    borderColor:       colors.stone,
+    backgroundColor:   colors.surface,
   },
   routeChipActive: {
     borderColor:     colors.sage,
@@ -197,11 +216,20 @@ const styles = StyleSheet.create({
     backgroundColor:  colors.surface,
     height:           120,
   },
+  charCount: {
+    marginTop:        spacing[1],
+    paddingHorizontal: spacing[6],   // aligns with the textarea above
+  },
+  sendBtn: {
+    marginTop:        spacing[5],
+    marginHorizontal: spacing[6],   // same 24px inset as textarea / section labels
+  },
   sentRow: {
-    flexDirection:  'row',
-    alignItems:     'center',
-    justifyContent: 'center',
-    gap:            spacing[2],
-    marginTop:      spacing[5],
+    flexDirection:    'row',
+    alignItems:       'center',
+    justifyContent:   'center',
+    gap:              spacing[2],
+    marginTop:        spacing[5],
+    marginHorizontal: spacing[6],   // matches sendBtn inset
   },
 });

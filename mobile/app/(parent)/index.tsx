@@ -11,6 +11,7 @@ import { BusMarker } from '@/components/map/BusMarker';
 import { SRText } from '@/components/ui/SRText';
 import { SRBadge } from '@/components/ui/SRBadge';
 import { colors, spacing, radius, iconSize } from '@/theme';
+import { JADE_PEBBLE_MAP_STYLE } from '@/theme/mapStyle';
 
 // Default map region — Bengaluru (shown when bus is offline)
 const DEFAULT_REGION = {
@@ -82,6 +83,7 @@ export default function ParentHomeScreen() {
         style={StyleSheet.absoluteFillObject}
         initialRegion={DEFAULT_REGION}
         mapType="standard"
+        customMapStyle={JADE_PEBBLE_MAP_STYLE}
         showsUserLocation
         showsMyLocationButton={false}
         showsCompass={false}
@@ -92,6 +94,7 @@ export default function ParentHomeScreen() {
             coords={busCoords}
             busNumber={busLabel}
             isActive={isConnected}
+            heading={location?.heading !== null ? location?.heading : undefined}
           />
         )}
       </MapView>

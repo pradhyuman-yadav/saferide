@@ -76,14 +76,14 @@ describe('RouteRepository', () => {
 
   it('findById() returns null when document does not exist', async () => {
     mockDocRef.get.mockResolvedValue({ exists: false, id: 'missing', data: () => undefined });
-    expect(await repo.findById('missing')).toBeNull();
+    expect(await repo.findById('missing', 'tenant-001')).toBeNull();
   });
 
   it('findById() returns a parsed Route when document exists', async () => {
     const data = makeRouteData();
     mockDocRef.get.mockResolvedValue({ exists: true, id: 'route-001', data: () => data });
 
-    const result = await repo.findById('route-001');
+    const result = await repo.findById('route-001', 'tenant-001');
     expect(result).toMatchObject({ id: 'route-001', name: 'Morning Route A' });
   });
 
@@ -99,7 +99,7 @@ describe('RouteRepository', () => {
     mockDocRef.update.mockResolvedValue(undefined);
 
     const before = Date.now();
-    await repo.update('route-001', { name: 'Evening Route' });
+    await repo.update('route-001', 'tenant-001', { name: 'Evening Route' });
     const after = Date.now();
 
     const arg = mockDocRef.update.mock.calls[0]![0] as Record<string, unknown>;

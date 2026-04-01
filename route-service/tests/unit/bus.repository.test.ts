@@ -102,7 +102,7 @@ describe('BusRepository', () => {
   it('findById() returns null when document does not exist', async () => {
     mockDocRef.get.mockResolvedValue({ exists: false, id: 'missing', data: () => undefined });
 
-    const result = await repo.findById('missing-id');
+    const result = await repo.findById('missing-id', 'tenant-001');
 
     expect(result).toBeNull();
   });
@@ -111,7 +111,7 @@ describe('BusRepository', () => {
     const data = makeBusData();
     mockDocRef.get.mockResolvedValue({ exists: true, id: 'bus-001', data: () => data });
 
-    const result = await repo.findById('bus-001');
+    const result = await repo.findById('bus-001', 'tenant-001');
 
     expect(result).toMatchObject({ id: 'bus-001', registrationNumber: 'KA01AB1234' });
   });
@@ -131,7 +131,7 @@ describe('BusRepository', () => {
   it('update() calls doc.update() with the given fields plus updatedAt', async () => {
     mockDocRef.update.mockResolvedValue(undefined);
 
-    await repo.update('bus-001', { capacity: 45 });
+    await repo.update('bus-001', 'tenant-001', { capacity: 45 });
 
     expect(mockCollection.doc).toHaveBeenCalledWith('bus-001');
     expect(mockDocRef.update).toHaveBeenCalledWith({
@@ -144,7 +144,7 @@ describe('BusRepository', () => {
     mockDocRef.update.mockResolvedValue(undefined);
 
     const before = Date.now();
-    await repo.update('bus-001', { capacity: 45 });
+    await repo.update('bus-001', 'tenant-001', { capacity: 45 });
     const after = Date.now();
 
     const callArg = mockDocRef.update.mock.calls[0]![0] as Record<string, unknown>;
@@ -155,7 +155,7 @@ describe('BusRepository', () => {
   it('update() passes null driverId through to Firestore (does not filter nulls)', async () => {
     mockDocRef.update.mockResolvedValue(undefined);
 
-    await repo.update('bus-001', { driverId: null });
+    await repo.update('bus-001', 'tenant-001', { driverId: null });
 
     const callArg = mockDocRef.update.mock.calls[0]![0] as Record<string, unknown>;
     expect(callArg['driverId']).toBeNull();

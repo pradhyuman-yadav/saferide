@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Map, AlertTriangle, Megaphone } from 'lucide-react-native';
+import { Map, AlertTriangle, Megaphone, User } from 'lucide-react-native';
 import { colors, iconSize } from '@/theme';
 
 export default function ManagerLayout() {
@@ -30,7 +30,6 @@ export default function ManagerLayout() {
         name="alerts"
         options={{
           title: 'Alerts',
-          tabBarBadge: 2,
           tabBarIcon: ({ color }) => <AlertTriangle size={iconSize.lg} color={color} strokeWidth={2} />,
         }}
       />
@@ -39,6 +38,13 @@ export default function ManagerLayout() {
         options={{
           title: 'Broadcast',
           tabBarIcon: ({ color }) => <Megaphone size={iconSize.lg} color={color} strokeWidth={2} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <User size={iconSize.lg} color={color} strokeWidth={2} />,
         }}
       />
     </Tabs>

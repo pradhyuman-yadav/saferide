@@ -207,3 +207,100 @@
   font-weight: var(--weight-medium);
   margin-left: auto;
 }
+
+/* ── Floating add-stop panel (rendered over expanded fullscreen map) ──────── */
+
+.map-stop-overlay {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 1010;
+  width: 280px;
+  background: var(--white);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  animation: overlayAppear 220ms ease-out;
+}
+
+@keyframes overlayAppear {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+.map-stop-overlay-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.map-stop-overlay-route {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: var(--weight-regular);
+  color: var(--forest);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.map-stop-overlay-seq {
+  font-size: var(--text-caption);
+  color: var(--sage);
+  font-weight: var(--weight-medium);
+  font-family: monospace;
+  flex-shrink: 0;
+}
+
+.map-stop-overlay-error {
+  margin: 0;
+  font-size: var(--text-caption);
+}
+
+.map-stop-overlay-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Pin status row */
+.map-stop-overlay-pin {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-caption);
+  color: var(--slate);
+  background: var(--stone);
+  border: 1px solid transparent;
+  min-height: 32px;
+  font-style: italic;
+}
+
+.map-stop-overlay-pin--set {
+  background: rgba(123, 150, 105, 0.09);
+  border-color: rgba(123, 150, 105, 0.3);
+  color: var(--forest);
+  font-style: normal;
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.map-stop-overlay-pin svg {
+  flex-shrink: 0;
+  color: var(--sage);
+}
+
+.map-stop-overlay-pin--set svg {
+  color: var(--sage);
+}
+
+.map-stop-overlay-submit {
+  width: 100%;
+  justify-content: center;
+}

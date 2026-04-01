@@ -19,7 +19,10 @@ export class BusService {
 
   /** Returns the bus if it exists and belongs to tenantId; null otherwise. */
   async findBus(id: string, tenantId: string): Promise<Bus | null> {
-    return repo.findById(id, tenantId);
+    const bus = await repo.findById(id, tenantId);
+    // Defense-in-depth: verify tenantId even if repo enforces it at query level
+    if (bus !== null && bus.tenantId !== tenantId) return null;
+    return bus;
   }
 
   /** Like findBus but throws BUS_NOT_FOUND instead of returning null. */
@@ -81,7 +84,7 @@ export class BusService {
 
     if (driverId !== null) {
       const driver = await driverRepo.findById(driverId, tenantId);
-      if (driver === null) throw new Error('DRIVER_NOT_FOUND');
+      if (driver === null || driver.tenantId !== tenantId) throw new Error('DRIVER_NOT_FOUND');
 
       // 1. Clear the previous driver's busId (they're no longer on this bus)
       if (bus.driverId !== null && bus.driverId !== driverId) {
@@ -124,7 +127,7 @@ export class BusService {
 
     if (routeId !== null) {
       const route = await routeRepo.findById(routeId, tenantId);
-      if (route === null) throw new Error('ROUTE_NOT_FOUND');
+      if (route === null || route.tenantId !== tenantId) throw new Error('ROUTE_NOT_FOUND');
 
       // Enforce one bus per route
       const existing = await repo.findByRouteId(routeId, tenantId);

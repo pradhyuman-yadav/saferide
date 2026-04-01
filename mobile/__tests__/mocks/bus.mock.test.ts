@@ -1,4 +1,4 @@
-import { MOCK_BUS, MOCK_FLEET, simulateBusMovement } from '@/mocks/bus.mock';
+import { MOCK_BUS, MOCK_FLEET, simulateBusMovement } from '../fixtures/bus.fixture';
 
 describe('MOCK_BUS', () => {
   it('has all required BusState fields', () => {

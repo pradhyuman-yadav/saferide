@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react-native';
 import ManagerFleetScreen from '@app/(manager)/index';
-import { MOCK_FLEET } from '@/mocks/bus.mock';
+import { MOCK_FLEET } from '../../fixtures/bus.fixture';
 
 describe('Manager Fleet Screen', () => {
   it('renders "Fleet overview" label', () => {

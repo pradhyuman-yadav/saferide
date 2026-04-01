@@ -17,6 +17,18 @@
   cursor: crosshair;
 }
 
+/* Hide Google Maps' built-in controls that conflict with our own UI.
+   rotateControl:false / fullscreenControl:false in the constructor is the
+   primary suppression; CSS rules below are a fallback.
+   The camera/tilt button is targeted by title attribute — more stable than
+   internal class names that change between Maps API versions. */
+.gm-fullscreen-control,
+.gm-compass,
+[title="Map camera controls"],
+[aria-label="Map camera controls"] {
+  display: none !important;
+}
+
 /* ── Toolbar ─────────────────────────────────────────────────────────────── */
 
 .route-map-toolbar {
@@ -104,4 +116,122 @@
 .route-map-no-key small {
   font-size: var(--text-caption);
   color: var(--slate);
+}
+
+/* ── Map controls (floating buttons) ────────────────────────────────────── */
+
+.map-controls {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10;
+  /* Opacity is managed on individual buttons by anime.js — container stays visible */
+}
+
+.map-ctrl-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  animation: mapCtrlBtnIn 280ms ease-out both;
+}
+
+.map-ctrl-btn:nth-child(2) { animation-delay: 60ms; }
+.map-ctrl-btn:nth-child(3) { animation-delay: 120ms; }
+
+@keyframes mapCtrlBtnIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* ── SVG icons — explicit stroke so Google Maps CSS cannot override them */
+.map-ctrl-btn svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  stroke: #404E3B; /* --forest — dark enough to read on any map tile */
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(255,255,255,0.8));  /* subtle halo so icon is legible over light & dark map areas */
+}
+
+.map-ctrl-btn:hover svg {
+  stroke: #7B9669; /* --sage */
+}
+
+.map-ctrl-btn:active {
+  transform: scale(0.9);
+}
+
+/* Expand button — sage icon at rest, forest on hover */
+.map-ctrl-btn--primary {
+  background: transparent;
+  box-shadow: none;
+}
+
+.map-ctrl-btn--primary svg {
+  stroke: #7B9669; /* --sage — distinguishes it from the grey crosshair */
+}
+
+.map-ctrl-btn--primary:hover svg {
+  stroke: #404E3B; /* --forest */
+}
+
+/* Spin animation while geolocating — toggled via .is-locating class on the button */
+.map-ctrl-btn.is-locating svg {
+  animation: mapCtrlSpin 700ms linear infinite;
+}
+
+@keyframes mapCtrlSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Expanded (fullscreen) map wrapper ───────────────────────────────────── */
+
+.route-map-wrapper--expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  border-radius: 0;
+  border: none;
+  min-height: 0;
+  height: 100dvh;
+}
+
+.route-map-wrapper--expanded .route-map-toolbar {
+  border-bottom: 1px solid var(--stone);
+}
+
+.route-map-wrapper--expanded .route-map-canvas {
+  min-height: 0;
+}
+
+/* ── Expand backdrop (click to dismiss) ──────────────────────────────────── */
+
+.map-expand-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 999;
+  cursor: pointer;
+  /* Fade-in driven by anime.js, so start transparent */
+  opacity: 0;
+  animation: backdropIn 250ms ease-out forwards;
+}
+
+@keyframes backdropIn {
+  to { opacity: 1; }
 }

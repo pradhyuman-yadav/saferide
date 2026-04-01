@@ -12,6 +12,7 @@ const repoMock = vi.hoisted(() => ({
   findActiveByBusId:    vi.fn(),
   create:               vi.fn(),
   update:               vi.fn(),
+  setSosStatus:         vi.fn(),
 }));
 
 const rtdbMock = vi.hoisted(() => ({
@@ -21,8 +22,17 @@ const rtdbMock = vi.hoisted(() => ({
   }),
 }));
 
+const notificationsMock = vi.hoisted(() => ({
+  notifyParentsOfBus:     vi.fn().mockResolvedValue(undefined),
+  notifyManagersOfTenant: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock('../../src/repositories/trip.repository', () => ({
   TripRepository: vi.fn().mockImplementation(() => repoMock),
+}));
+
+vi.mock('../../src/services/notification.service', () => ({
+  NotificationService: vi.fn().mockImplementation(() => notificationsMock),
 }));
 
 vi.mock('@saferide/firebase-admin', () => ({
@@ -210,6 +220,7 @@ describe('TripService', () => {
 
     expect(repoMock.update).toHaveBeenCalledWith(
       'trip-001',
+      'tenant-001',
       expect.objectContaining({ status: 'ended' }),
     );
     // RTDB node must be cleared
@@ -247,5 +258,98 @@ describe('TripService', () => {
     await expect(
       service.endTrip('trip-001', 'driver-uid-001', 'tenant-001'),
     ).rejects.toThrow('TRIP_NOT_FOUND');
+  });
+
+  // ── sendSOS ──────────────────────────────────────────────────────────────
+  it('sendSOS() sets sosActive=true and returns the updated trip', async () => {
+    const active  = makeTrip({ status: 'active' });
+    const withSOS = makeTrip({ status: 'active', sosActive: true, sosTriggeredAt: Date.now() });
+    repoMock.findById
+      .mockResolvedValueOnce(active)    // getTrip inside sendSOS
+      .mockResolvedValueOnce(withSOS);  // final read
+    repoMock.setSosStatus.mockResolvedValue(undefined);
+
+    const result = await service.sendSOS('trip-001', 'driver-uid-001', 'tenant-001');
+
+    expect(repoMock.setSosStatus).toHaveBeenCalledWith(
+      'trip-001',
+      'tenant-001',
+      true,
+      expect.any(Number),
+    );
+    expect(result.sosActive).toBe(true);
+  });
+
+  it('sendSOS() throws TRIP_NOT_FOUND when trip does not exist', async () => {
+    repoMock.findById.mockResolvedValue(null);
+
+    await expect(
+      service.sendSOS('missing', 'driver-uid-001', 'tenant-001'),
+    ).rejects.toThrow('TRIP_NOT_FOUND');
+
+    expect(repoMock.setSosStatus).not.toHaveBeenCalled();
+  });
+
+  it('sendSOS() throws TRIP_NOT_OWNED when called by a different driver', async () => {
+    repoMock.findById.mockResolvedValue(makeTrip({ driverId: 'other-driver' }));
+
+    await expect(
+      service.sendSOS('trip-001', 'driver-uid-001', 'tenant-001'),
+    ).rejects.toThrow('TRIP_NOT_OWNED');
+
+    expect(repoMock.setSosStatus).not.toHaveBeenCalled();
+  });
+
+  it('sendSOS() throws TRIP_ALREADY_ENDED when trip is ended', async () => {
+    repoMock.findById.mockResolvedValue(makeTrip({ status: 'ended' }));
+
+    await expect(
+      service.sendSOS('trip-001', 'driver-uid-001', 'tenant-001'),
+    ).rejects.toThrow('TRIP_ALREADY_ENDED');
+
+    expect(repoMock.setSosStatus).not.toHaveBeenCalled();
+  });
+
+  it('sendSOS() enforces tenant isolation — throws TRIP_NOT_FOUND for wrong tenant', async () => {
+    repoMock.findById.mockResolvedValue(makeTrip({ tenantId: 'tenant-999' }));
+
+    await expect(
+      service.sendSOS('trip-001', 'driver-uid-001', 'tenant-001'),
+    ).rejects.toThrow('TRIP_NOT_FOUND');
+  });
+
+  // ── cancelSOS ────────────────────────────────────────────────────────────
+  it('cancelSOS() sets sosActive=false and returns the updated trip', async () => {
+    const withSOS    = makeTrip({ status: 'active', sosActive: true });
+    const sosCleared = makeTrip({ status: 'active', sosActive: false });
+    repoMock.findById
+      .mockResolvedValueOnce(withSOS)    // getTrip inside cancelSOS
+      .mockResolvedValueOnce(sosCleared); // final read
+    repoMock.setSosStatus.mockResolvedValue(undefined);
+
+    const result = await service.cancelSOS('trip-001', 'driver-uid-001', 'tenant-001');
+
+    expect(repoMock.setSosStatus).toHaveBeenCalledWith('trip-001', 'tenant-001', false);
+    expect(result.sosActive).toBe(false);
+  });
+
+  it('cancelSOS() throws TRIP_NOT_FOUND when trip does not exist', async () => {
+    repoMock.findById.mockResolvedValue(null);
+
+    await expect(
+      service.cancelSOS('missing', 'driver-uid-001', 'tenant-001'),
+    ).rejects.toThrow('TRIP_NOT_FOUND');
+
+    expect(repoMock.setSosStatus).not.toHaveBeenCalled();
+  });
+
+  it('cancelSOS() throws TRIP_NOT_OWNED when called by a different driver', async () => {
+    repoMock.findById.mockResolvedValue(makeTrip({ driverId: 'other-driver' }));
+
+    await expect(
+      service.cancelSOS('trip-001', 'driver-uid-001', 'tenant-001'),
+    ).rejects.toThrow('TRIP_NOT_OWNED');
+
+    expect(repoMock.setSosStatus).not.toHaveBeenCalled();
   });
 });

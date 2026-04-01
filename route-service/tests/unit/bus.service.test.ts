@@ -11,6 +11,9 @@ const batchMock = vi.hoisted(() => ({
 
 const dbMock = vi.hoisted(() => ({
   batch: vi.fn().mockReturnValue(batchMock),
+  collection: vi.fn().mockReturnValue({
+    doc: vi.fn().mockReturnValue({ id: 'mock-doc-ref' }),
+  }),
 }));
 
 const repoMock = vi.hoisted(() => ({
@@ -251,7 +254,7 @@ describe('BusService', () => {
     const updateInput: UpdateBusInput = { capacity: 50 };
     const result = await service.updateBus('bus-001', updateInput, 'tenant-001');
 
-    expect(repoMock.update).toHaveBeenCalledWith('bus-001', updateInput);
+    expect(repoMock.update).toHaveBeenCalledWith('bus-001', 'tenant-001', updateInput);
     expect(result).toEqual(updated);
   });
 
@@ -274,7 +277,7 @@ describe('BusService', () => {
 
     await service.deleteBus('bus-001', 'tenant-001');
 
-    expect(repoMock.update).toHaveBeenCalledWith('bus-001', { status: 'inactive' });
+    expect(repoMock.update).toHaveBeenCalledWith('bus-001', 'tenant-001', { status: 'inactive' });
   });
 
   it('deleteBus() throws BUS_NOT_FOUND when bus does not exist', async () => {
@@ -383,7 +386,7 @@ describe('BusService', () => {
 
     const result = await service.assignRoute('bus-001', 'route-001', 'tenant-001');
 
-    expect(repoMock.update).toHaveBeenCalledWith('bus-001', { routeId: 'route-001' });
+    expect(repoMock.update).toHaveBeenCalledWith('bus-001', 'tenant-001', { routeId: 'route-001' });
     expect(result).toEqual(updated);
   });
 
@@ -396,7 +399,7 @@ describe('BusService', () => {
 
     const result = await service.assignRoute('bus-001', null, 'tenant-001');
 
-    expect(repoMock.update).toHaveBeenCalledWith('bus-001', { routeId: null });
+    expect(repoMock.update).toHaveBeenCalledWith('bus-001', 'tenant-001', { routeId: null });
     expect(result).toEqual(updated);
   });
 

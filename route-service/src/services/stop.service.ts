@@ -56,11 +56,13 @@ export class StopService {
   // ---------------------------------------------------------------------------
 
   private async findStop(id: string, tenantId: string): Promise<Stop | null> {
-    return stopRepo.findById(id, tenantId);
+    const stop = await stopRepo.findById(id, tenantId);
+    if (stop !== null && stop.tenantId !== tenantId) return null;
+    return stop;
   }
 
   private async requireRoute(routeId: string, tenantId: string): Promise<void> {
     const route = await routeRepo.findById(routeId, tenantId);
-    if (route === null) throw new Error('ROUTE_NOT_FOUND');
+    if (route === null || route.tenantId !== tenantId) throw new Error('ROUTE_NOT_FOUND');
   }
 }

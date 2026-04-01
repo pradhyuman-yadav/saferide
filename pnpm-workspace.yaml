@@ -5,6 +5,7 @@ packages:
   - 'tenant-service'
   - 'route-service'
   - 'trip-service'
+  - 'livetrack-gateway'
   # mobile uses Expo/npm toolchain separately — not part of pnpm workspace
 allowBuilds:
   '@firebase/util': true

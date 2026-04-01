@@ -85,7 +85,7 @@ describe('StopService', () => {
 
     const result = await service.listStops('route-001', 'tenant-001');
 
-    expect(routeRepoMock.findById).toHaveBeenCalledWith('route-001');
+    expect(routeRepoMock.findById).toHaveBeenCalledWith('route-001', 'tenant-001');
     expect(stopRepoMock.listByRouteId).toHaveBeenCalledWith('route-001', 'tenant-001');
     expect(result).toHaveLength(1);
   });
@@ -136,7 +136,7 @@ describe('StopService', () => {
     const input: UpdateStopInput = { sequence: 3 };
     const result = await service.updateStop('stop-001', input, 'tenant-001');
 
-    expect(stopRepoMock.update).toHaveBeenCalledWith('stop-001', input);
+    expect(stopRepoMock.update).toHaveBeenCalledWith('stop-001', 'tenant-001', input);
     expect(result).toEqual(updated);
   });
 
@@ -157,7 +157,7 @@ describe('StopService', () => {
 
     await service.deleteStop('stop-001', 'tenant-001');
 
-    expect(stopRepoMock.remove).toHaveBeenCalledWith('stop-001');
+    expect(stopRepoMock.remove).toHaveBeenCalledWith('stop-001', 'tenant-001');
   });
 
   it('deleteStop() throws STOP_NOT_FOUND when stop does not exist', async () => {

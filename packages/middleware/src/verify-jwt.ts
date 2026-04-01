@@ -32,6 +32,33 @@ export async function verifyJwt(req: Request, res: Response, next: NextFunction)
       return;
     }
 
+    // ── Tenant-level access gate ─────────────────────────────────────────────
+    // super_admin has tenantId === null and is exempt from this check.
+    if (parsed.data.tenantId !== null) {
+      const tenantSnap = await getDb().collection('tenants').doc(parsed.data.tenantId).get();
+
+      if (!tenantSnap.exists) {
+        res.status(403).json({ success: false, error: { code: 'TENANT_NOT_FOUND', message: 'Organisation not found.' } });
+        return;
+      }
+
+      const td     = tenantSnap.data()!;
+      const status = td['status'] as string;
+
+      if (status === 'suspended' || status === 'cancelled') {
+        res.status(403).json({ success: false, error: { code: 'TENANT_SUSPENDED', message: 'Your organisation\'s account has been suspended. Contact your administrator.' } });
+        return;
+      }
+
+      if (status === 'trial') {
+        const trialEndsAt = td['trialEndsAt'] as number | null;
+        if (trialEndsAt !== null && trialEndsAt < Date.now()) {
+          res.status(403).json({ success: false, error: { code: 'TRIAL_EXPIRED', message: 'Your organisation\'s trial has expired. Please upgrade to continue.' } });
+          return;
+        }
+      }
+    }
+
     req.user = {
       uid:      decoded.uid,
       email:    decoded.email ?? '',

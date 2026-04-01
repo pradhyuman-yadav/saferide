@@ -177,7 +177,7 @@ describe('StudentService', () => {
     const input: UpdateStudentInput = { parentPhone: '9999999999' };
     const result = await service.updateStudent('student-001', input, 'tenant-001');
 
-    expect(repoMock.update).toHaveBeenCalledWith('student-001', input);
+    expect(repoMock.update).toHaveBeenCalledWith('student-001', 'tenant-001', input);
     expect(result).toEqual(updated);
   });
 
@@ -200,7 +200,7 @@ describe('StudentService', () => {
 
     await service.deleteStudent('student-001', 'tenant-001');
 
-    expect(repoMock.update).toHaveBeenCalledWith('student-001', { isActive: false });
+    expect(repoMock.update).toHaveBeenCalledWith('student-001', 'tenant-001', { isActive: false });
   });
 
   it('deleteStudent() throws STUDENT_NOT_FOUND when student does not exist', async () => {

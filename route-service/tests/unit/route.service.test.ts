@@ -128,7 +128,7 @@ describe('RouteService', () => {
     const input: UpdateRouteInput = { name: 'Updated Name' };
     const result = await service.updateRoute('route-001', input, 'tenant-001');
 
-    expect(repoMock.update).toHaveBeenCalledWith('route-001', input);
+    expect(repoMock.update).toHaveBeenCalledWith('route-001', 'tenant-001', input);
     expect(result).toEqual(updated);
   });
 
@@ -149,7 +149,7 @@ describe('RouteService', () => {
 
     await service.deactivateRoute('route-001', 'tenant-001');
 
-    expect(repoMock.update).toHaveBeenCalledWith('route-001', { isActive: false });
+    expect(repoMock.update).toHaveBeenCalledWith('route-001', 'tenant-001', { isActive: false });
   });
 
   it('deactivateRoute() throws ROUTE_NOT_FOUND when route does not exist', async () => {

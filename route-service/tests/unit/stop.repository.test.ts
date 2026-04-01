@@ -80,14 +80,14 @@ describe('StopRepository', () => {
 
   it('findById() returns null when document does not exist', async () => {
     mockDocRef.get.mockResolvedValue({ exists: false, id: 'missing', data: () => undefined });
-    expect(await repo.findById('missing')).toBeNull();
+    expect(await repo.findById('missing', 'tenant-001')).toBeNull();
   });
 
   it('findById() returns a parsed Stop when document exists', async () => {
     const data = makeStopData();
     mockDocRef.get.mockResolvedValue({ exists: true, id: 'stop-001', data: () => data });
 
-    const result = await repo.findById('stop-001');
+    const result = await repo.findById('stop-001', 'tenant-001');
     expect(result).toMatchObject({ id: 'stop-001', name: 'Stop Alpha' });
   });
 
@@ -104,7 +104,7 @@ describe('StopRepository', () => {
     mockDocRef.update.mockResolvedValue(undefined);
 
     const before = Date.now();
-    await repo.update('stop-001', { sequence: 3 });
+    await repo.update('stop-001', 'tenant-001', { sequence: 3 });
     const after = Date.now();
 
     const arg = mockDocRef.update.mock.calls[0]![0] as Record<string, unknown>;

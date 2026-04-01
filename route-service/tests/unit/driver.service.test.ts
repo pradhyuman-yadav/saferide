@@ -175,7 +175,7 @@ describe('DriverService', () => {
     const input: UpdateDriverInput = { phone: '9999999999' };
     const result = await service.updateDriver('driver-001', input, 'tenant-001');
 
-    expect(repoMock.update).toHaveBeenCalledWith('driver-001', input);
+    expect(repoMock.update).toHaveBeenCalledWith('driver-001', 'tenant-001', input);
     expect(result).toEqual(updated);
   });
 
@@ -198,7 +198,7 @@ describe('DriverService', () => {
 
     await service.deleteDriver('driver-001', 'tenant-001');
 
-    expect(repoMock.update).toHaveBeenCalledWith('driver-001', { isActive: false });
+    expect(repoMock.update).toHaveBeenCalledWith('driver-001', 'tenant-001', { isActive: false });
   });
 
   it('deleteDriver() throws DRIVER_NOT_FOUND when driver does not exist', async () => {

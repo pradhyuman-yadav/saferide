@@ -11,7 +11,10 @@ export class DriverService {
 
   /** Returns the driver if it exists and belongs to tenantId; null otherwise. */
   async findDriver(id: string, tenantId: string): Promise<Driver | null> {
-    return repo.findById(id, tenantId);
+    const driver = await repo.findById(id, tenantId);
+    // Defense-in-depth: verify tenantId even if repo enforces it at query level
+    if (driver !== null && driver.tenantId !== tenantId) return null;
+    return driver;
   }
 
   /** Like findDriver but throws DRIVER_NOT_FOUND instead of returning null. */
