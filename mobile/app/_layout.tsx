@@ -41,9 +41,10 @@ export default function RootLayout() {
 
   // Register for push notifications whenever a user signs in
   useEffect(() => {
-    if (user) {
-      void registerForPushNotifications(user.uid);
-    }
+    if (!user) return;
+    registerForPushNotifications(user.uid).catch((err) => {
+      console.warn('[push] Registration error:', err);
+    });
   }, [user?.uid]);
 
   useEffect(() => {

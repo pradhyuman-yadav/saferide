@@ -56,11 +56,18 @@ export async function registerForPushNotifications(uid: string): Promise<string 
 
   if (finalStatus !== 'granted') return null;
 
-  const tokenData = await Notifications.getExpoPushTokenAsync();
-  const token     = tokenData.data;
+  try {
+    const tokenData = await Notifications.getExpoPushTokenAsync();
+    const token     = tokenData.data;
 
-  // Persist token — backend reads this to send targeted pushes
-  await updateUserProfile(uid, { expoPushToken: token } as never);
+    // Persist token — backend reads this to send targeted pushes
+    await updateUserProfile(uid, { expoPushToken: token } as never);
 
-  return token;
+    return token;
+  } catch (err) {
+    // FCM not configured (missing google-services.json / APNs key).
+    // Push notifications will be unavailable but the app continues normally.
+    console.warn('[push] Could not register for push notifications:', err);
+    return null;
+  }
 }
