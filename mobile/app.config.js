@@ -24,14 +24,18 @@ const config = {
   orientation: 'portrait',
   userInterfaceStyle: 'light',
 
+  // App icon — S mark on transparent background (1024×1024 PNG required by stores)
+  icon: './assets/images/icon.png',
+
   splash: {
+    // Solid forest background — the JS layer renders AppLogo on top
     backgroundColor: '#404E3B',
-    resizeMode:      'contain',
   },
 
   ios: {
     supportsTablet:   false,
     bundleIdentifier: 'in.saferide.app',
+    // iOS uses the top-level icon field — no separate override needed
   },
 
   android: {
@@ -39,6 +43,11 @@ const config = {
     minSdkVersion: 24,   // Android 7.0 (2016) — covers ~97% of active devices
     targetSdkVersion: 35,
     compileSdkVersion: 35,
+    // Android adaptive icon: S mark foreground on forest background
+    adaptiveIcon: {
+      foregroundImage: './assets/images/icon.png',
+      backgroundColor: '#404E3B',
+    },
     config: {
       googleMaps: {
         // Read from .env at build time — never embed a hardcoded key or the
@@ -55,7 +64,6 @@ const config = {
       'expo-splash-screen',
       {
         backgroundColor: '#404E3B',
-        resizeMode:      'contain',
       },
     ],
     [

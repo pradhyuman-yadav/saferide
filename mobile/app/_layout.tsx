@@ -1,4 +1,6 @@
+import '../src/i18n';
 import { useEffect } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
@@ -6,6 +8,8 @@ import { DMSans_300Light, DMSans_400Regular, DMSans_500Medium } from '@expo-goog
 import { DMSerifDisplay_400Regular } from '@expo-google-fonts/dm-serif-display';
 import { useAuthStore } from '@/store/auth.store';
 import { StatusBar } from 'expo-status-bar';
+import { AppLogo } from '@/components/ui/AppLogo';
+import { colors } from '@/theme';
 
 // Must be imported at module scope so the background task definition is registered
 // before the app renders or any navigation occurs.
@@ -62,7 +66,14 @@ export default function RootLayout() {
     }
   }, [user, isLoading, fontsLoaded, segments]);
 
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded || isLoading) {
+    return (
+      <View style={splash.container}>
+        <StatusBar style="light" />
+        <AppLogo size={52} color={colors.mist} />
+      </View>
+    );
+  }
 
   return (
     <>
@@ -78,3 +89,12 @@ export default function RootLayout() {
     </>
   );
 }
+
+const splash = StyleSheet.create({
+  container: {
+    flex:            1,
+    backgroundColor: colors.forest,
+    alignItems:      'center',
+    justifyContent:  'center',
+  },
+});
