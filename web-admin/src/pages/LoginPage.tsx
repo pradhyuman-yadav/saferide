@@ -23,7 +23,7 @@ export function LoginPage() {
   useEffect(() => {
     if (!storeIsLoading && profile !== null) {
       navigate(
-        profile.role === 'school_admin' ? '/school' : '/',
+        profile.role === 'school_admin' ? '/school' : '/dashboard',
         { replace: true },
       );
     }
@@ -44,10 +44,9 @@ export function LoginPage() {
 
     try {
       await signInWithEmail(email.trim(), password);
-      // Redirect handled by the useEffect above once profile loads
+      // isLoading stays true — redirect handled by useEffect once profile loads
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -57,7 +56,7 @@ export function LoginPage() {
   return (
     <div className="login-page">
       <header className="login-header">
-        <h1 className="login-header-title">SafeRide</h1>
+        <img src="/logo.svg" alt="SafeRide" className="login-header-logo" />
         <p className="login-header-caption">Admin Portal</p>
       </header>
 

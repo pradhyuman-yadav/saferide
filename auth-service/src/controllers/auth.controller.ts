@@ -9,7 +9,9 @@ export class AuthController {
     const { idToken } = req.body as { idToken: string };
     const result = await service.claimInvite(idToken);
     if (result === null) {
-      res.status(404).json({ success: false, error: { code: 'INVITE_NOT_FOUND', message: 'No invitation found for this email address.' } });
+      // Return 401 (not 404) to prevent email enumeration — a 404 would
+      // reveal whether an email address has a pending invite or not.
+      res.status(401).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid or expired invitation.' } });
       return;
     }
     auditLog({

@@ -219,6 +219,96 @@ describe('PendingInviteSchema', () => {
 });
 
 // ---------------------------------------------------------------------------
+// TripSchema
+// ---------------------------------------------------------------------------
+import { TripSchema, WebhookSchema } from '../src/index';
+
+describe('TripSchema', () => {
+  const validTrip = {
+    id:        'trip-001',
+    tenantId:  'tenant-001',
+    driverId:  'driver-001',
+    busId:     'bus-001',
+    routeId:   'route-001',
+    status:    'active' as const,
+    startedAt: 1700000000000,
+    createdAt: 1700000000000,
+    updatedAt: 1700000000000,
+  };
+
+  it('parses a valid trip', () => {
+    const result = TripSchema.safeParse(validTrip);
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects latestLat below -90', () => {
+    const result = TripSchema.safeParse({ ...validTrip, latestLat: -91 });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects latestLat above 90', () => {
+    const result = TripSchema.safeParse({ ...validTrip, latestLat: 91 });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects latestLon below -180', () => {
+    const result = TripSchema.safeParse({ ...validTrip, latestLon: -181 });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects latestLon above 180', () => {
+    const result = TripSchema.safeParse({ ...validTrip, latestLon: 181 });
+    expect(result.success).toBe(false);
+  });
+
+  it('accepts latestLat at boundary values -90 and 90', () => {
+    expect(TripSchema.safeParse({ ...validTrip, latestLat: -90 }).success).toBe(true);
+    expect(TripSchema.safeParse({ ...validTrip, latestLat:  90 }).success).toBe(true);
+  });
+
+  it('accepts latestLon at boundary values -180 and 180', () => {
+    expect(TripSchema.safeParse({ ...validTrip, latestLon: -180 }).success).toBe(true);
+    expect(TripSchema.safeParse({ ...validTrip, latestLon:  180 }).success).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// WebhookSchema
+// ---------------------------------------------------------------------------
+describe('WebhookSchema', () => {
+  const validWebhook = {
+    id:        'wh-001',
+    tenantId:  'tenant-001',
+    url:       'https://example.com/webhook',
+    events:    ['trip.started'] as const,
+    isActive:  true,
+    createdAt: 1700000000000,
+    updatedAt: 1700000000000,
+  };
+
+  it('parses a valid webhook', () => {
+    const result = WebhookSchema.safeParse(validWebhook);
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects url longer than 500 characters', () => {
+    const longUrl = 'https://example.com/' + 'a'.repeat(490);
+    const result  = WebhookSchema.safeParse({ ...validWebhook, url: longUrl });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects a non-URL string', () => {
+    const result = WebhookSchema.safeParse({ ...validWebhook, url: 'not-a-url' });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects an empty events array', () => {
+    const result = WebhookSchema.safeParse({ ...validWebhook, events: [] });
+    expect(result.success).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // ClaimInviteSchema
 // ---------------------------------------------------------------------------
 describe('ClaimInviteSchema', () => {

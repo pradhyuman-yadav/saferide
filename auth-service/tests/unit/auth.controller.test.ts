@@ -92,7 +92,7 @@ describe('AuthController', () => {
       });
     });
 
-    it('returns 404 when service returns null (no invite found)', async () => {
+    it('returns 401 when service returns null (no invite found — prevents email enumeration)', async () => {
       serviceMock.claimInvite.mockResolvedValue(null);
 
       const req = mockReq({ body: { idToken: 'valid-token' } });
@@ -100,11 +100,12 @@ describe('AuthController', () => {
 
       await controller.claimInvite(req, res as unknown as Response);
 
-      expect(res.status).toHaveBeenCalledWith(404);
+      // Must be 401, not 404 — a 404 leaks that the email is/isn't registered
+      expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: false,
-          error:   expect.objectContaining({ code: 'INVITE_NOT_FOUND' }),
+          error:   expect.objectContaining({ code: 'UNAUTHORIZED' }),
         }),
       );
     });

@@ -3,9 +3,11 @@ import { getRtdb } from '@saferide/firebase-admin';
 import { logger } from '@saferide/logger';
 import { TripRepository } from '../repositories/trip.repository';
 import { NotificationService } from './notification.service';
+import { WebhookService } from './webhook.service';
 
-const repo         = new TripRepository();
+const repo          = new TripRepository();
 const notifications = new NotificationService();
+const webhooks      = new WebhookService();
 
 export class TripService {
   /** Recent trips for the calling driver, newest first. */
@@ -26,6 +28,16 @@ export class TripService {
   /** Recent trip history for a bus — for parent history screen. */
   listTripsForBus(busId: string, tenantId: string, limit = 20): Promise<Trip[]> {
     return repo.listByBusId(busId, tenantId, limit);
+  }
+
+  /** All recent trips for a tenant — for school_admin analytics. */
+  listTenantTrips(tenantId: string, limit = 100): Promise<Trip[]> {
+    return repo.listByTenant(tenantId, limit);
+  }
+
+  /** All recent trips across all tenants — for super_admin analytics. */
+  listAllTrips(limit = 500): Promise<Trip[]> {
+    return repo.listAll(limit);
   }
 
   async findTrip(id: string, tenantId: string): Promise<Trip | null> {
@@ -73,6 +85,13 @@ export class TripService {
       'Your child\'s bus has started. Track it live in SafeRide.',
     );
 
+    void webhooks.deliverEvent('trip.started', {
+      tripId:    created.id,
+      busId:     created.busId,
+      driverId:  created.driverId,
+      startedAt: created.startedAt,
+    }, tenantId);
+
     return created;
   }
 
@@ -100,6 +119,15 @@ export class TripService {
 
     const updated = await repo.findById(tripId, tenantId);
     if (updated === null) throw new Error('Failed to retrieve updated trip');
+
+    void webhooks.deliverEvent('trip.ended', {
+      tripId:    updated.id,
+      busId:     updated.busId,
+      driverId:  updated.driverId,
+      startedAt: updated.startedAt,
+      endedAt:   updated.endedAt,
+    }, tenantId);
+
     return updated;
   }
 
@@ -132,6 +160,14 @@ export class TripService {
 
     const updated = await repo.findById(tripId, tenantId);
     if (updated === null) throw new Error('Failed to retrieve updated trip');
+
+    void webhooks.deliverEvent('sos.triggered', {
+      tripId:         updated.id,
+      busId:          updated.busId,
+      driverId:       updated.driverId,
+      sosTriggeredAt: updated.sosTriggeredAt,
+    }, tenantId);
+
     return updated;
   }
 
@@ -155,6 +191,13 @@ export class TripService {
 
     const updated = await repo.findById(tripId, tenantId);
     if (updated === null) throw new Error('Failed to retrieve updated trip');
+
+    void webhooks.deliverEvent('sos.cancelled', {
+      tripId:   updated.id,
+      busId:    updated.busId,
+      driverId: updated.driverId,
+    }, tenantId);
+
     return updated;
   }
 

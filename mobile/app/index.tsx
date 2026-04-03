@@ -27,7 +27,7 @@ export default function Index() {
     if (isLoading) return; // wait for auth to resolve
 
     if (!user) {
-      router.replace('/(auth)/login');
+      router.replace('/(auth)/welcome');
       return;
     }
 

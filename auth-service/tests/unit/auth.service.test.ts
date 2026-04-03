@@ -12,6 +12,7 @@ const {
   mockUsersCollection,
   mockInvitesCollection,
   mockTenantsCollection,
+  mockRunTransaction,
 } = vi.hoisted(() => {
   const mockVerifyIdToken     = vi.fn();
   const mockAdminAuth         = { verifyIdToken: mockVerifyIdToken };
@@ -21,10 +22,15 @@ const {
   const mockUsersCollection   = { doc: vi.fn().mockReturnValue(mockUserDocRef) };
   const mockInvitesCollection = { doc: vi.fn().mockReturnValue(mockInviteDocRef) };
   const mockTenantsCollection = { doc: vi.fn().mockReturnValue(mockTenantDocRef) };
+  // Executes the transaction callback immediately (no real Firestore needed in tests)
+  const mockRunTransaction    = vi.fn().mockImplementation(
+    async (fn: (t: object) => Promise<unknown>) => fn({ get: vi.fn(), set: vi.fn(), delete: vi.fn() }),
+  );
   return {
     mockVerifyIdToken, mockAdminAuth,
     mockUserDocRef, mockInviteDocRef, mockTenantDocRef,
     mockUsersCollection, mockInvitesCollection, mockTenantsCollection,
+    mockRunTransaction,
   };
 });
 
@@ -36,6 +42,7 @@ vi.mock('@saferide/firebase-admin', () => ({
       if (name === 'tenants')        return mockTenantsCollection;
       return mockInvitesCollection;  // pendingInvites
     }),
+    runTransaction: mockRunTransaction,
   })),
 }));
 
@@ -90,6 +97,18 @@ describe('AuthService', () => {
     mockInvitesCollection.doc.mockReturnValue(mockInviteDocRef);
     mockTenantsCollection.doc.mockReturnValue(mockTenantDocRef);
     mockTenantDocRef.update.mockResolvedValue(undefined);
+    // Transaction mock: calls the callback with a tx object that delegates
+    // set/delete to the individual doc ref mocks so the existing assertions
+    // on mockUserDocRef.set and mockInviteDocRef.delete still work.
+    mockRunTransaction.mockImplementation(
+      async (fn: (t: { set: typeof vi.fn; delete: typeof vi.fn }) => Promise<unknown>) => {
+        const tx = {
+          set:    (...args: Parameters<typeof mockUserDocRef.set>)    => mockUserDocRef.set(...args),
+          delete: (...args: Parameters<typeof mockInviteDocRef.delete>) => mockInviteDocRef.delete(...args),
+        };
+        return fn(tx);
+      },
+    );
     service = new AuthService();
   });
 
@@ -145,6 +164,21 @@ describe('AuthService', () => {
         statusCode: 400,
         code:       'NO_EMAIL',
       });
+    });
+
+    it('wraps profile creation and invite deletion in a Firestore transaction', async () => {
+      const decoded = makeValidDecodedToken();
+      const invite  = makeValidInviteData();
+
+      mockVerifyIdToken.mockResolvedValue(decoded);
+      mockInviteDocRef.get.mockResolvedValue({ exists: true, data: () => invite });
+      mockUserDocRef.set.mockResolvedValue(undefined);
+      mockInviteDocRef.delete.mockResolvedValue(undefined);
+
+      await service.claimInvite('valid-token');
+
+      // Profile write + invite delete must happen inside a single transaction
+      expect(mockRunTransaction).toHaveBeenCalledOnce();
     });
   });
 

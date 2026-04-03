@@ -83,7 +83,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
             await firebaseSignOut();
             set({
               user: null, profile: null, isLoading: false,
-              authError: 'No invitation found for this email address.',
+              authError: 'Invalid or expired invitation. Contact your administrator.',
             });
             return;
           }

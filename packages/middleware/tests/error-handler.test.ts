@@ -93,4 +93,60 @@ describe('errorHandler', () => {
 
     expect(res.status).toHaveBeenCalledWith(500);
   });
+
+  // ── statusCode propagation ─────────────────────────────────────────────────
+
+  it('uses statusCode from the error when it is a 4xx', () => {
+    const err  = Object.assign(new Error('Not found.'), { statusCode: 404, code: 'NOT_FOUND' });
+    const req  = mockReq();
+    const res  = mockRes();
+    const next = vi.fn() as unknown as NextFunction;
+
+    errorHandler(err, req, res as unknown as Response, next);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  it('uses the error code field for 4xx responses', () => {
+    const err  = Object.assign(new Error('Unauthorized.'), { statusCode: 401, code: 'UNAUTHORIZED' });
+    const req  = mockReq();
+    const res  = mockRes();
+    const next = vi.fn() as unknown as NextFunction;
+
+    errorHandler(err, req, res as unknown as Response, next);
+
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        error:   expect.objectContaining({ code: 'UNAUTHORIZED' }),
+      }),
+    );
+  });
+
+  it('exposes the error message for 4xx responses', () => {
+    const err  = Object.assign(new Error('Forbidden — insufficient role.'), { statusCode: 403, code: 'FORBIDDEN' });
+    const req  = mockReq();
+    const res  = mockRes();
+    const next = vi.fn() as unknown as NextFunction;
+
+    errorHandler(err, req, res as unknown as Response, next);
+
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({ message: 'Forbidden — insufficient role.' }),
+      }),
+    );
+  });
+
+  it('hides the original message for 5xx errors (generic message only)', () => {
+    const err  = Object.assign(new Error('DB connection string leaked here.'), { statusCode: 503 });
+    const req  = mockReq();
+    const res  = mockRes();
+    const next = vi.fn() as unknown as NextFunction;
+
+    errorHandler(err, req, res as unknown as Response, next);
+
+    const call = (res.json as ReturnType<typeof vi.fn>).mock.calls[0] as [{ error: { message: string } }];
+    expect(call[0].error.message).not.toContain('DB connection string');
+  });
 });

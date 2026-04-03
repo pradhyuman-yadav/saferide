@@ -13,12 +13,13 @@
   text-align: center;
 }
 
-.login-header-title {
-  font-family: var(--font-display);
-  font-size: var(--text-display);
-  font-weight: var(--weight-regular);
-  color: var(--white);
-  line-height: var(--leading-tight);
+.login-header-logo {
+  display: block;
+  height: 48px;
+  width: auto;
+  margin: 0 auto;
+  /* SVG is sage-coloured — invert to white for the forest header background */
+  filter: brightness(0) invert(1);
 }
 
 .login-header-caption {
@@ -130,6 +131,11 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
+}
+
+.login-submit-btn .spinner {
+  border-color: rgba(255, 255, 255, 0.35);
+  border-top-color: var(--white);
 }
 
 /* ── Setup page hint text ────────────────────────────────────────────────── */

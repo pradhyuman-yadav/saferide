@@ -42,8 +42,7 @@ export class AuthService {
       updatedAt: now,
     };
 
-    await repo.createProfile(decoded.uid, profile);
-    await repo.deleteInvite(inviteKey);
+    await repo.claimInviteAtomically(decoded.uid, inviteKey, profile);
 
     // Activate the tenant: pending → trial/active. Trial clock starts now.
     if (invite.role === 'school_admin') {

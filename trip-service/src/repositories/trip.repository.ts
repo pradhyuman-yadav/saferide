@@ -39,7 +39,8 @@ export class TripRepository {
       .limit(1)
       .get();
     if (snap.empty) return null;
-    const d = snap.docs[0];
+    const [d] = snap.docs;
+    if (!d) return null;
     return TripSchema.parse({ ...d.data(), id: d.id });
   }
 
@@ -63,8 +64,30 @@ export class TripRepository {
       .limit(1)
       .get();
     if (snap.empty) return null;
-    const d = snap.docs[0];
+    const [d] = snap.docs;
+    if (!d) return null;
     return TripSchema.parse({ ...d.data(), id: d.id });
+  }
+
+  /** All recent trips across all tenants — used by super_admin analytics. */
+  async listAll(limit = 500): Promise<Trip[]> {
+    const snap = await getDb()
+      .collection('trips')
+      .orderBy('createdAt', 'desc')
+      .limit(limit)
+      .get();
+    return snap.docs.map((d) => TripSchema.parse({ ...d.data(), id: d.id }));
+  }
+
+  /** All recent trips for a tenant — used by school_admin analytics. */
+  async listByTenant(tenantId: string, limit = 100): Promise<Trip[]> {
+    const snap = await getDb()
+      .collection('trips')
+      .where('tenantId', '==', tenantId)
+      .orderBy('createdAt', 'desc')
+      .limit(limit)
+      .get();
+    return snap.docs.map((d) => TripSchema.parse({ ...d.data(), id: d.id }));
   }
 
   async create(data: Omit<Trip, 'id'>): Promise<string> {

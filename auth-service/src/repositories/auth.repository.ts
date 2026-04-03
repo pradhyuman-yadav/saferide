@@ -8,18 +8,30 @@ export class AuthRepository {
     return snap.data() as Record<string, unknown>;
   }
 
-  async createProfile(uid: string, data: Omit<UserProfile, 'uid'>): Promise<void> {
-    await getDb().collection('users').doc(uid).set(data);
-  }
-
   async findInvite(inviteKey: string): Promise<Record<string, unknown> | null> {
     const snap = await getDb().collection('pendingInvites').doc(inviteKey).get();
     if (!snap.exists) return null;
     return snap.data() as Record<string, unknown>;
   }
 
-  async deleteInvite(inviteKey: string): Promise<void> {
-    await getDb().collection('pendingInvites').doc(inviteKey).delete();
+  /**
+   * Atomically create the user profile and delete the invite in a single
+   * Firestore transaction to prevent TOCTOU races where two concurrent
+   * requests could both read the invite before either deletes it.
+   */
+  async claimInviteAtomically(
+    uid: string,
+    inviteKey: string,
+    profileData: Omit<UserProfile, 'uid'>,
+  ): Promise<void> {
+    const db         = getDb();
+    const userRef    = db.collection('users').doc(uid);
+    const inviteRef  = db.collection('pendingInvites').doc(inviteKey);
+
+    await db.runTransaction(async (tx) => {
+      tx.set(userRef, profileData);
+      tx.delete(inviteRef);
+    });
   }
 
   /**

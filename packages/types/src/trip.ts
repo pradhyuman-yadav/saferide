@@ -18,8 +18,8 @@ export const TripSchema = z.object({
   endedAt:   z.number().optional(),
 
   /** Denormalized from the latest telemetry ping — fast parent reads without joins. */
-  latestLat:          z.number().optional(),
-  latestLon:          z.number().optional(),
+  latestLat:          z.number().min(-90).max(90).optional(),
+  latestLon:          z.number().min(-180).max(180).optional(),
   latestSpeed:        z.number().optional(),
   latestHeading:      z.number().optional(),
   latestRecordedAt:   z.number().optional(),

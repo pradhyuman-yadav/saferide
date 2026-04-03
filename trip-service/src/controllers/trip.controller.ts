@@ -119,6 +119,23 @@ export class TripController {
     res.json({ success: true, data: trip });
   }
 
+  /** GET /api/v1/trips/all-history — all trips across all tenants for super_admin analytics */
+  async listAllHistory(_req: Request, res: Response): Promise<void> {
+    const trips = await service.listAllTrips();
+    res.json({ success: true, data: trips });
+  }
+
+  /** GET /api/v1/trips/tenant-history — recent trips for school_admin analytics */
+  async listTenantHistory(req: Request, res: Response): Promise<void> {
+    const { tenantId } = req.user;
+    if (tenantId === null) {
+      res.status(403).json({ success: false, error: { code: 'FORBIDDEN', message: 'A school context is required.' } });
+      return;
+    }
+    const trips = await service.listTenantTrips(tenantId);
+    res.json({ success: true, data: trips });
+  }
+
   /** POST /api/v1/trips/:id/sos — driver triggers an SOS alert */
   async sos(req: Request, res: Response): Promise<void> {
     const { uid: driverId, tenantId } = req.user;

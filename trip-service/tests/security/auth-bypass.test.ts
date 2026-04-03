@@ -37,6 +37,14 @@ vi.mock('../../src/services/telemetry.service', () => ({
     findLatest: vi.fn(),
   })),
 }));
+vi.mock('../../src/services/webhook.service', () => ({
+  WebhookService: vi.fn().mockImplementation(() => ({
+    listWebhooks:     vi.fn(),
+    createWebhook:    vi.fn(),
+    deleteWebhook:    vi.fn(),
+    listDeliveries:   vi.fn(),
+  })),
+}));
 
 import { app } from '../../src/app';
 
@@ -45,16 +53,24 @@ import { app } from '../../src/app';
 // ---------------------------------------------------------------------------
 
 const PROTECTED_ROUTES: [string, string][] = [
-  ['get',  '/api/v1/trips'],
-  ['get',  '/api/v1/trips/active'],
-  ['get',  '/api/v1/trips/bus/bus-001'],
-  ['get',  '/api/v1/trips/bus/bus-001/active'],
-  ['post', '/api/v1/trips'],
-  ['post', '/api/v1/trips/trip-001/end'],
-  ['post', '/api/v1/trips/trip-001/sos'],
-  ['post', '/api/v1/trips/trip-001/sos/cancel'],
-  ['post', '/api/v1/trips/trip-001/location'],
-  ['get',  '/api/v1/trips/trip-001/location/latest'],
+  // Trip routes
+  ['get',    '/api/v1/trips'],
+  ['get',    '/api/v1/trips/active'],
+  ['get',    '/api/v1/trips/all-history'],
+  ['get',    '/api/v1/trips/tenant-history'],
+  ['get',    '/api/v1/trips/bus/bus-001'],
+  ['get',    '/api/v1/trips/bus/bus-001/active'],
+  ['post',   '/api/v1/trips'],
+  ['post',   '/api/v1/trips/trip-001/end'],
+  ['post',   '/api/v1/trips/trip-001/sos'],
+  ['post',   '/api/v1/trips/trip-001/sos/cancel'],
+  ['post',   '/api/v1/trips/trip-001/location'],
+  ['get',    '/api/v1/trips/trip-001/location/latest'],
+  // Webhook routes
+  ['get',    '/api/v1/webhooks'],
+  ['post',   '/api/v1/webhooks'],
+  ['delete', '/api/v1/webhooks/wh-001'],
+  ['get',    '/api/v1/webhooks/wh-001/deliveries'],
 ];
 
 describe('Auth bypass — all protected routes return 401 without a token', () => {

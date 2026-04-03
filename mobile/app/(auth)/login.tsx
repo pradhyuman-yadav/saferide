@@ -8,8 +8,10 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import { AppLogo } from '@/components/ui/AppLogo';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { signInWithEmail, resetPassword } from '@/firebase/auth';
 import { SRText } from '@/components/ui/SRText';
 import { SRButton } from '@/components/ui/SRButton';
@@ -17,13 +19,14 @@ import { colors, spacing, radius, typography } from '@/theme';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { t }  = useTranslation();
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
 
   async function handleSubmit() {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Missing fields', 'Please enter your email and password.');
+      Alert.alert(t('auth.missingFieldsTitle'), t('auth.missingFieldsMessage'));
       return;
     }
 
@@ -33,8 +36,8 @@ export default function LoginScreen() {
       // Send back to index — it reads the updated auth store and routes to the correct section
       router.replace('/');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Something went wrong.';
-      Alert.alert('Error', msg);
+      const msg = err instanceof Error ? err.message : t('auth.errorMessage');
+      Alert.alert(t('auth.errorTitle'), msg);
     } finally {
       setLoading(false);
     }
@@ -44,12 +47,12 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.safe}>
       {/* Hero header */}
       <View style={styles.hero}>
-        <SRText variant="label" color={colors.mist} style={{ opacity: 0.7, marginBottom: spacing[2] }}>
-          School bus safety platform
+        <SRText variant="label" color={colors.mist} style={{ opacity: 0.7, marginBottom: spacing[4] }}>
+          {t('auth.tagline')}
         </SRText>
-        <SRText variant="display" color={colors.white}>SafeRide</SRText>
-        <SRText variant="body" color={colors.mist} style={{ opacity: 0.85, marginTop: spacing[1] }}>
-          Calm · Grounded · Always there
+        <AppLogo size={36} color={colors.mist} />
+        <SRText variant="body" color={colors.mist} style={{ opacity: 0.85, marginTop: spacing[4] }}>
+          {t('auth.taglineCaption')}
         </SRText>
       </View>
 
@@ -63,20 +66,20 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <SRText variant="heading" style={{ marginBottom: spacing[1] }}>
-            Welcome back
+            {t('auth.welcomeBack')}
           </SRText>
           <SRText variant="caption" style={{ marginBottom: spacing[6] }}>
-            Sign in to see your child's bus.
+            {t('auth.signInCaption')}
           </SRText>
 
           <SRText variant="label" color={colors.slate} style={{ marginBottom: spacing[1] }}>
-            Email address
+            {t('auth.emailLabel')}
           </SRText>
           <TextInput
             style={styles.input}
             value={email}
             onChangeText={setEmail}
-            placeholder="you@example.com"
+            placeholder={t('auth.emailPlaceholder')}
             placeholderTextColor={colors.slate}
             keyboardType="email-address"
             autoCapitalize="none"
@@ -84,7 +87,7 @@ export default function LoginScreen() {
           />
 
           <SRText variant="label" color={colors.slate} style={{ marginBottom: spacing[1], marginTop: spacing[4] }}>
-            Password
+            {t('auth.passwordLabel')}
           </SRText>
           <TextInput
             style={styles.input}
@@ -96,7 +99,7 @@ export default function LoginScreen() {
           />
 
           <SRButton
-            label="Continue"
+            label={t('auth.continue')}
             onPress={handleSubmit}
             loading={loading}
             style={{ marginTop: spacing[6] }}
@@ -104,18 +107,18 @@ export default function LoginScreen() {
           />
 
           <SRButton
-            label="Forgot password?"
+            label={t('auth.forgotPassword')}
             variant="ghost"
             onPress={async () => {
               if (!email.trim()) {
-                Alert.alert('Enter your email', 'Type your email address above, then tap Forgot password.');
+                Alert.alert(t('auth.enterEmailTitle'), t('auth.enterEmailMessage'));
                 return;
               }
               try {
                 await resetPassword(email.trim());
-                Alert.alert('Email sent', 'Check your inbox for a password reset link.');
+                Alert.alert(t('auth.emailSentTitle'), t('auth.emailSentMessage'));
               } catch (err: unknown) {
-                Alert.alert('Error', err instanceof Error ? err.message : 'Something went wrong.');
+                Alert.alert(t('auth.errorTitle'), err instanceof Error ? err.message : t('auth.errorMessage'));
               }
             }}
             style={{ marginTop: spacing[2] }}

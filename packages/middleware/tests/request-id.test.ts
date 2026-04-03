@@ -13,14 +13,15 @@ function mockReq(headers: Record<string, string> = {}): Request {
 // Tests
 // ---------------------------------------------------------------------------
 describe('requestId', () => {
-  it('uses the x-request-id header value when present', () => {
-    const req  = mockReq({ 'x-request-id': 'my-fixed-id' });
+  it('uses the x-request-id header value when it is a valid UUID', () => {
+    const validUuid = '123e4567-e89b-12d3-a456-426614174000';
+    const req  = mockReq({ 'x-request-id': validUuid });
     const res  = {} as Response;
     const next = vi.fn() as unknown as NextFunction;
 
     requestId(req, res, next);
 
-    expect(req.requestId).toBe('my-fixed-id');
+    expect(req.requestId).toBe(validUuid);
     expect(next).toHaveBeenCalledOnce();
   });
 
@@ -50,12 +51,28 @@ describe('requestId', () => {
   });
 
   it('always calls next()', () => {
-    const req  = mockReq({ 'x-request-id': 'explicit-id' });
+    const req  = mockReq({ 'x-request-id': '00000000-0000-0000-0000-000000000001' });
     const res  = {} as Response;
     const next = vi.fn() as unknown as NextFunction;
 
     requestId(req, res, next);
 
     expect(next).toHaveBeenCalledOnce();
+  });
+
+  it('ignores a non-UUID x-request-id and generates a fresh UUID instead', () => {
+    const injectedValue = '<script>alert(1)</script>';
+    const req  = mockReq({ 'x-request-id': injectedValue });
+    const res  = {} as Response;
+    const next = vi.fn() as unknown as NextFunction;
+
+    requestId(req, res, next);
+
+    // Must NOT echo back the injected string
+    expect(req.requestId).not.toBe(injectedValue);
+    // Must generate a valid UUID
+    expect(req.requestId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    );
   });
 });

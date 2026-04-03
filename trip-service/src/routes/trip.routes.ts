@@ -30,6 +30,20 @@ tripRouter.get(
   (req, res, next) => tripCtrl.getActive(req, res).catch(next),
 );
 
+// GET /api/v1/trips/all-history — super_admin cross-tenant analytics (must be before /:id routes)
+tripRouter.get(
+  '/all-history',
+  requireRole('super_admin'),
+  (req, res, next) => tripCtrl.listAllHistory(req, res).catch(next),
+);
+
+// GET /api/v1/trips/tenant-history — school_admin analytics (must be before /:id routes)
+tripRouter.get(
+  '/tenant-history',
+  requireRole('school_admin'),
+  (req, res, next) => tripCtrl.listTenantHistory(req, res).catch(next),
+);
+
 // GET /api/v1/trips/bus/:busId — trip history for a bus (parents + managers)
 // Defined before /bus/:busId/active so the more specific path wins
 tripRouter.get(

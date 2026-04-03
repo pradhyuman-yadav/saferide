@@ -9,6 +9,7 @@ import helmet from 'helmet';
 import { requestId, errorHandler } from '@saferide/middleware';
 import { config } from './config';
 import { tripRouter } from './routes/trip.routes';
+import { webhookRouter } from './routes/webhook.routes';
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.get('/health', (_req, res) => {
 
 // ── Routes ─────────────────────────────────────────────────────────────────────
 app.use('/api/v1/trips', tripRouter);
+app.use('/api/v1/webhooks', webhookRouter);
 
 // ── Error handler (must be last) ───────────────────────────────────────────────
 app.use(errorHandler);
