@@ -1,4 +1,5 @@
 import type { Student, CreateStudentInput, UpdateStudentInput } from '@saferide/types';
+import { getDb } from '@saferide/firebase-admin';
 import { StudentRepository } from '../repositories/student.repository';
 import { StopRepository } from '../repositories/stop.repository';
 import { BusRepository }  from '../repositories/bus.repository';
@@ -49,6 +50,17 @@ export class StudentService {
 
     // Send setup email so the parent can set their password and sign in to the app
     await sendSetupEmail(input.parentEmail);
+
+    // Write pending invite so the mobile app can auto-claim the parent's profile
+    // on first sign-in (claimPendingInviteByEmail in auth.store.ts checks this).
+    const inviteKey = input.parentEmail.replace(/[@.]/g, '_');
+    await getDb().collection('pendingInvites').doc(inviteKey).set({
+      role:      'parent',
+      tenantId,
+      status:    'pending',
+      createdAt: now,
+      updatedAt: now,
+    });
 
     const created = await repo.findById(studentId, tenantId);
     if (created === null) throw new Error('Failed to retrieve created student');

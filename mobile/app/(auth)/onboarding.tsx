@@ -1,81 +1,52 @@
-import { useState } from 'react';
-import { View, TextInput, StyleSheet, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/auth.store';
-import { redeemInviteCode } from '@/firebase/firestore';
+import { AppLogo } from '@/components/ui/AppLogo';
 import { SRText } from '@/components/ui/SRText';
 import { SRButton } from '@/components/ui/SRButton';
-import { colors, spacing, radius, typography } from '@/theme';
+import { colors, spacing } from '@/theme';
 
+/**
+ * Shown when a user has signed in but no profile has been set up yet.
+ *
+ * Flow: school admin creates a student record → route-service writes
+ * pendingInvites/{email_key} → parent receives a setup email → parent
+ * sets their password and signs in → auth.store claimPendingInviteByEmail
+ * finds the invite and creates the profile automatically.
+ *
+ * This screen is reached only when no invite was found (admin hasn't created
+ * the student record yet, or the wrong email was used).
+ */
 export default function OnboardingScreen() {
-  const router                = useRouter();
-  const { user, setProfile }  = useAuthStore();
-  const [code, setCode]       = useState('');
-  const [loading, setLoading] = useState(false);
-
-  async function handleRedeem() {
-    if (!code.trim() || !user) return;
-
-    setLoading(true);
-    try {
-      const profile = await redeemInviteCode(
-        user.uid,
-        user.email ?? '',
-        user.displayName ?? user.email ?? 'User',
-        code.trim(),
-      );
-      setProfile(profile);
-      router.replace('/');
-    } catch (err: unknown) {
-      Alert.alert('Invalid code', err instanceof Error ? err.message : 'Something went wrong.');
-    } finally {
-      setLoading(false);
-    }
-  }
+  const { t }       = useTranslation();
+  const { signOut } = useAuthStore();
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
-        <SRText variant="label" color={colors.slate} style={{ marginBottom: spacing[2] }}>
-          Almost there
+        <View style={styles.logo}>
+          <AppLogo size={28} color={colors.forest} />
+        </View>
+
+        <SRText variant="label" color={colors.slate} style={styles.eyebrow}>
+          {t('onboarding.eyebrow')}
         </SRText>
-        <SRText variant="heading" style={{ marginBottom: spacing[1] }}>
-          Enter your invite code
+        <SRText variant="heading" style={styles.heading}>
+          {t('onboarding.heading')}
         </SRText>
-        <SRText variant="caption" color={colors.slate} style={{ marginBottom: spacing[8] }}>
-          Your school admin will have sent you a code to get started.
+        <SRText variant="body" color={colors.slate} style={styles.body}>
+          {t('onboarding.body')}
         </SRText>
 
-        <SRText variant="label" color={colors.slate} style={{ marginBottom: spacing[1] }}>
-          Invite code
-        </SRText>
-        <TextInput
-          style={styles.input}
-          value={code}
-          onChangeText={setCode}
-          placeholder="e.g. SR-XYZABC"
-          placeholderTextColor={colors.slate}
-          autoCapitalize="characters"
-          autoCorrect={false}
-        />
-
-        <SRButton
-          label="Redeem code"
-          onPress={handleRedeem}
-          loading={loading}
-          disabled={!code.trim()}
-          style={{ marginTop: spacing[6] }}
-          size="lg"
-        />
-
-        <SRText
-          variant="caption"
-          color={colors.slate}
-          style={{ marginTop: spacing[6], textAlign: 'center' }}
-        >
-          Don't have a code? Contact your school's transport manager.
-        </SRText>
+        <View style={styles.actions}>
+          <SRButton
+            label={t('onboarding.signOut')}
+            variant="ghost"
+            onPress={() => { void signOut(); }}
+            size="lg"
+          />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -89,17 +60,23 @@ const styles = StyleSheet.create({
   container: {
     flex:              1,
     paddingHorizontal: spacing[6],
-    paddingTop:        spacing[10],
+    paddingTop:        spacing[12],
   },
-  input: {
-    borderWidth:     0.5,
-    borderColor:     colors.stone,
-    borderRadius:    radius.sm,
-    padding:         spacing[3],
-    fontFamily:      typography.body.fontFamily,
-    fontSize:        14,
-    color:           colors.ink,
-    backgroundColor: colors.surface,
-    letterSpacing:   2,
+  logo: {
+    marginBottom: spacing[8],
+  },
+  eyebrow: {
+    marginBottom: spacing[2],
+  },
+  heading: {
+    marginBottom: spacing[3],
+  },
+  body: {
+    lineHeight:   22,
+    marginBottom: spacing[2],
+  },
+  actions: {
+    marginTop: spacing[10],
+    gap:       spacing[3],
   },
 });

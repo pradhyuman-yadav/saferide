@@ -22,6 +22,17 @@ vi.mock('@saferide/logger', () => ({
   auditLog: vi.fn(),
 }));
 
+const mockPendingInviteSet = vi.fn().mockResolvedValue(undefined);
+vi.mock('@saferide/firebase-admin', () => ({
+  getDb: vi.fn(() => ({
+    collection: vi.fn(() => ({
+      doc: vi.fn(() => ({
+        set: mockPendingInviteSet,
+      })),
+    })),
+  })),
+}));
+
 import { StudentService } from '../../src/services/student.service';
 
 function makeStudent(overrides: Partial<Student> = {}): Student {
@@ -156,6 +167,17 @@ describe('StudentService', () => {
     const createCall = repoMock.create.mock.calls[0]![0] as Record<string, unknown>;
     expect(createCall['busId']).toBeNull();
     expect(createCall['stopId']).toBeNull();
+  });
+
+  it('createStudent() writes a pending invite to Firestore for the parent', async () => {
+    repoMock.create.mockResolvedValue('student-001');
+    repoMock.findById.mockResolvedValue(makeStudent());
+
+    await service.createStudent(validCreateInput, 'tenant-001');
+
+    expect(mockPendingInviteSet).toHaveBeenCalledWith(
+      expect.objectContaining({ role: 'parent', tenantId: 'tenant-001', status: 'pending' }),
+    );
   });
 
   it('createStudent() throws when repo.findById() returns null after create', async () => {

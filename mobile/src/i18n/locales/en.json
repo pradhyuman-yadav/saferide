@@ -94,14 +94,9 @@
     "errorMessage": "Something went wrong."
   },
   "onboarding": {
-    "almostThere": "Almost there",
-    "heading": "Enter your invite code",
-    "caption": "Your school admin will have sent you a code to get started.",
-    "codeLabel": "Invite code",
-    "codePlaceholder": "e.g. SR-XYZABC",
-    "redeemButton": "Redeem code",
-    "helpText": "Don't have a code? Contact your school's transport manager.",
-    "invalidCodeTitle": "Invalid code",
-    "errorMessage": "Something went wrong."
+    "eyebrow": "Account not ready",
+    "heading": "Your school hasn't added you yet.",
+    "body": "Ask your school's transport manager to register your child. Once they do, sign out and sign back in — your account will be ready automatically.",
+    "signOut": "Sign out"
   }
 }
