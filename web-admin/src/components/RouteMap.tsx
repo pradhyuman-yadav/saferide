@@ -121,14 +121,6 @@ function IconCrosshair() {
     </svg>
   );
 }
-function IconClose() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-         stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-    </svg>
-  );
-}
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -238,10 +230,9 @@ export function RouteMap({
     setIsExpanded(true);
     document.body.style.overflow = 'hidden';
     onExpandChangeRef.current?.(true);
-    if (expandBtnRef.current) {
-      animate(expandBtnRef.current.querySelector('svg'), {
-        scale: [1, 0.65, 1.2, 1], duration: 400, ease: 'outBack(2)',
-      });
+    const svgEl = expandBtnRef.current?.querySelector('svg');
+    if (svgEl) {
+      animate(svgEl, { scale: [1, 0.65, 1.2, 1], duration: 400, ease: 'outBack(2)' });
     }
   }, []);
 

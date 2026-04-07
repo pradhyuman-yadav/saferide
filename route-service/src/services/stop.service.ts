@@ -1,6 +1,9 @@
 import type { Stop, CreateStopInput, UpdateStopInput } from '@saferide/types';
+import { createServiceLogger } from '@saferide/logger';
 import { StopRepository } from '../repositories/stop.repository';
 import { RouteRepository } from '../repositories/route.repository';
+
+const log = createServiceLogger('stop');
 
 const stopRepo  = new StopRepository();
 const routeRepo = new RouteRepository();
@@ -31,24 +34,33 @@ export class StopService {
 
     const created = await stopRepo.findById(stopId, tenantId);
     if (created === null) throw new Error('Failed to retrieve created stop');
+    log.info({ stopId: created.id, routeId, tenantId, name: created.name, sequence: created.sequence }, 'stop added to route');
     return created;
   }
 
   async updateStop(id: string, input: UpdateStopInput, tenantId: string): Promise<Stop> {
     const existing = await this.findStop(id, tenantId);
-    if (existing === null) throw new Error('STOP_NOT_FOUND');
+    if (existing === null) {
+      log.warn({ stopId: id, tenantId }, 'stop not found');
+      throw new Error('STOP_NOT_FOUND');
+    }
 
     await stopRepo.update(id, tenantId, input);
 
     const updated = await stopRepo.findById(id, tenantId);
     if (updated === null) throw new Error('Failed to retrieve updated stop');
+    log.info({ stopId: id, tenantId, fields: Object.keys(input) }, 'stop updated');
     return updated;
   }
 
   async deleteStop(id: string, tenantId: string): Promise<void> {
     const existing = await this.findStop(id, tenantId);
-    if (existing === null) throw new Error('STOP_NOT_FOUND');
+    if (existing === null) {
+      log.warn({ stopId: id, tenantId }, 'stop not found');
+      throw new Error('STOP_NOT_FOUND');
+    }
     await stopRepo.remove(id, tenantId);
+    log.info({ stopId: id, tenantId }, 'stop deleted');
   }
 
   // ---------------------------------------------------------------------------

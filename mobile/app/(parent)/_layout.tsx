@@ -1,8 +1,10 @@
 import { Tabs } from 'expo-router';
 import { Map, Navigation, Bell, Clock, User } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { colors, iconSize } from '@/theme';
 
 export default function ParentLayout() {
+  const { t } = useTranslation();
   return (
     <Tabs
       screenOptions={{
@@ -26,7 +28,7 @@ export default function ParentLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Live',
+          title: t('tab.live'),
           // Tab bar is hidden on the map screen — navigation lives inside the
           // bottom card (Uber-style). Other screens still show the tab bar.
           tabBarStyle: { display: 'none' },
@@ -36,28 +38,28 @@ export default function ParentLayout() {
       <Tabs.Screen
         name="route"
         options={{
-          title: 'Route',
+          title: t('tab.route'),
           tabBarIcon: ({ color }) => <Navigation size={iconSize.lg} color={color} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
         name="notifications"
         options={{
-          title: 'Alerts',
+          title: t('tab.alerts'),
           tabBarIcon: ({ color }) => <Bell size={iconSize.lg} color={color} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
-          title: 'History',
+          title: t('tab.history'),
           tabBarIcon: ({ color }) => <Clock size={iconSize.lg} color={color} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: t('tab.profile'),
           tabBarIcon: ({ color }) => <User size={iconSize.lg} color={color} strokeWidth={2} />,
         }}
       />

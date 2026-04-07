@@ -1,0 +1,208 @@
+/* ── Legal pages (Privacy Policy · Terms of Service) ──────────────────────── */
+
+.legal-page {
+  min-height: 100vh;
+  background-color: var(--stone);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-body);
+}
+
+/* ── Nav (reuses status-nav tokens) ─────────────────────────────────────── */
+
+.legal-nav {
+  background-color: var(--forest);
+}
+
+.legal-nav-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 var(--space-8);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.legal-nav-logo {
+  height: 28px;
+  width: auto;
+  filter: brightness(0) invert(1);
+  display: block;
+  opacity: 0.9;
+}
+
+.legal-nav-signin {
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--mist);
+  text-decoration: none;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid rgba(186, 200, 177, 0.25);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--motion-micro), color var(--motion-micro),
+              border-color var(--motion-micro);
+}
+
+.legal-nav-signin:hover {
+  background-color: rgba(186, 200, 177, 0.08);
+  border-color: rgba(186, 200, 177, 0.5);
+  color: var(--white);
+}
+
+/* ── Content ─────────────────────────────────────────────────────────────── */
+
+.legal-main {
+  flex: 1;
+  padding: var(--space-16) var(--space-8) var(--space-20);
+}
+
+.legal-inner {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+/* Page heading */
+.legal-title {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-tight);
+  color: var(--forest);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.legal-meta {
+  font-size: var(--text-caption);
+  color: var(--slate);
+  margin: 0 0 var(--space-10) 0;
+  letter-spacing: 0.01em;
+}
+
+/* Section blocks */
+.legal-section {
+  margin-bottom: var(--space-8);
+}
+
+.legal-section-title {
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--forest);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.legal-body {
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
+  color: var(--ink);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.legal-body:last-child {
+  margin-bottom: 0;
+}
+
+.legal-list {
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
+  color: var(--ink);
+  margin: 0 0 var(--space-3) 0;
+  padding-left: var(--space-5);
+}
+
+.legal-list li {
+  margin-bottom: var(--space-2);
+}
+
+.legal-list li:last-child {
+  margin-bottom: 0;
+}
+
+/* Divider */
+.legal-divider {
+  border: none;
+  border-top: 1px solid var(--mist);
+  margin: var(--space-8) 0;
+}
+
+/* Contact block */
+.legal-contact {
+  background-color: var(--white);
+  border: 1px solid var(--mist);
+  border-radius: var(--radius-md);
+  padding: var(--space-5) var(--space-6);
+}
+
+.legal-contact-label {
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.legal-contact-text {
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
+  color: var(--ink);
+  margin: 0;
+}
+
+.legal-contact a {
+  color: var(--forest);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--motion-micro);
+}
+
+.legal-contact a:hover {
+  color: var(--sage);
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+
+.legal-footer {
+  padding: var(--space-6) var(--space-8);
+  text-align: center;
+  border-top: 1px solid var(--mist);
+}
+
+.legal-footer-text {
+  font-size: var(--text-caption);
+  color: var(--slate);
+  margin: 0;
+}
+
+.legal-footer-link {
+  color: var(--slate);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--motion-micro);
+}
+
+.legal-footer-link:hover {
+  color: var(--forest);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .legal-nav-inner {
+    padding: 0 var(--space-4);
+  }
+
+  .legal-main {
+    padding: var(--space-10) var(--space-4) var(--space-16);
+  }
+
+  .legal-title {
+    font-size: 28px;
+  }
+
+  .legal-footer {
+    padding: var(--space-4);
+  }
+}

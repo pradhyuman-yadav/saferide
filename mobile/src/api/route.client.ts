@@ -118,4 +118,30 @@ export const routeClient = {
   /** Get a single driver by ID. */
   getDriver: (id: string) =>
     apiFetch<Driver>(`/api/v1/drivers/${id}`),
+
+  /**
+   * Full road-following polyline for a route (all stops in sequence).
+   * The Directions API call happens server-side — no API key in the app bundle.
+   * Returns [] when the backend has no GOOGLE_MAPS_DIRECTIONS_KEY configured.
+   */
+  getRoutePolyline: async (routeId: string): Promise<{ latitude: number; longitude: number }[]> => {
+    const pts = await apiFetch<{ lat: number; lon: number }[]>(`/api/v1/routes/${routeId}/polyline`);
+    return pts.map((p) => ({ latitude: p.lat, longitude: p.lon }));
+  },
+
+  /**
+   * Road-following line from one coordinate to another (driver → next stop).
+   * Proxied through the backend — no API key in the app bundle.
+   * Returns [] on error or when the backend has no key configured.
+   */
+  getDirections: async (
+    origin:      { lat: number; lon: number },
+    destination: { lat: number; lon: number },
+  ): Promise<{ latitude: number; longitude: number }[]> => {
+    const pts = await apiFetch<{ lat: number; lon: number }[]>('/api/v1/routes/directions', {
+      method: 'POST',
+      body:   JSON.stringify({ origin, destination }),
+    });
+    return pts.map((p) => ({ latitude: p.lat, longitude: p.lon }));
+  },
 };

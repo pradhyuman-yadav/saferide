@@ -4,3 +4,4 @@ export * from './rate-limit';
 export * from './validate-body';
 export * from './error-handler';
 export * from './request-id';
+export * from './http-logger';

@@ -1,9 +1,12 @@
 import type { Student, CreateStudentInput, UpdateStudentInput } from '@saferide/types';
 import { getDb } from '@saferide/firebase-admin';
+import { createServiceLogger } from '@saferide/logger';
 import { StudentRepository } from '../repositories/student.repository';
 import { StopRepository } from '../repositories/stop.repository';
 import { BusRepository }  from '../repositories/bus.repository';
 import { findOrCreateFirebaseUser, sendSetupEmail } from '../utils/firebase-auth.utils';
+
+const log = createServiceLogger('student');
 
 const repo      = new StudentRepository();
 const stopRepo  = new StopRepository();
@@ -25,7 +28,10 @@ export class StudentService {
   /** Like findStudent but throws STUDENT_NOT_FOUND instead of returning null. */
   async getStudent(id: string, tenantId: string): Promise<Student> {
     const student = await this.findStudent(id, tenantId);
-    if (student === null) throw new Error('STUDENT_NOT_FOUND');
+    if (student === null) {
+      log.warn({ studentId: id, tenantId }, 'student not found');
+      throw new Error('STUDENT_NOT_FOUND');
+    }
     return student;
   }
 
@@ -64,6 +70,7 @@ export class StudentService {
 
     const created = await repo.findById(studentId, tenantId);
     if (created === null) throw new Error('Failed to retrieve created student');
+    log.info({ studentId: created.id, tenantId, parentEmail: created.parentEmail }, 'student created; parent invite written');
     return created;
   }
 
@@ -103,6 +110,10 @@ export class StudentService {
 
     const updated = await repo.findById(id, tenantId);
     if (updated === null) throw new Error('Failed to retrieve updated student');
+    log.info(
+      { studentId: id, tenantId, stopId: updated.stopId, busId: updated.busId, fields: Object.keys(safeInput) },
+      'student updated',
+    );
     return updated;
   }
 
@@ -110,5 +121,6 @@ export class StudentService {
     const existing = await this.findStudent(id, tenantId);
     if (existing === null) throw new Error('STUDENT_NOT_FOUND');
     await repo.update(id, tenantId, { isActive: false });
+    log.info({ studentId: id, tenantId }, 'student soft-deleted (isActive → false)');
   }
 }

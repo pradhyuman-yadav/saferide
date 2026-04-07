@@ -1,0 +1,267 @@
+/* ── Analytics Page ──────────────────────────────────────────────────────── */
+
+.analytics-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+/* ── Header ── */
+
+.analytics-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.analytics-title {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: var(--weight-regular);
+  color: var(--forest);
+  line-height: var(--leading-tight);
+}
+
+.analytics-subtitle {
+  font-size: var(--text-body);
+  color: var(--slate);
+  margin-top: var(--space-1);
+}
+
+/* ── Period toggle ── */
+
+.analytics-period-toggle {
+  display: flex;
+  border: 1px solid var(--mist);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: var(--space-2);
+}
+
+.period-btn {
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--white);
+  border: none;
+  border-radius: 0;
+  color: var(--slate);
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
+  cursor: pointer;
+  transition: background-color var(--motion-micro), color var(--motion-micro);
+}
+
+.period-btn + .period-btn {
+  border-left: 1px solid var(--mist);
+}
+
+.period-btn:hover:not(.period-btn--active) {
+  background-color: var(--stone);
+  color: var(--ink);
+}
+
+.period-btn--active {
+  background-color: var(--forest);
+  color: var(--white);
+  font-weight: var(--weight-medium);
+}
+
+/* ── Loading ── */
+
+.analytics-loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-20) 0;
+}
+
+/* ── KPI row ── */
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+}
+
+.kpi-card {
+  background-color: var(--white);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.kpi-card--alert {
+  border-left: 3px solid var(--gold);
+}
+
+.kpi-label {
+  font-size: var(--text-subheading);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.kpi-value {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: var(--weight-regular);
+  color: var(--forest);
+  line-height: 1;
+  margin-top: var(--space-2);
+}
+
+.kpi-sub {
+  font-size: var(--text-caption);
+  color: var(--slate);
+  margin-top: var(--space-1);
+}
+
+/* ── Section cards ── */
+
+.analytics-card {
+  background-color: var(--white);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-8);
+}
+
+.analytics-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+}
+
+.analytics-card-heading {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-regular);
+  color: var(--forest);
+}
+
+.analytics-empty {
+  font-size: var(--text-body);
+  color: var(--slate);
+}
+
+/* ── Bar chart ── */
+
+.chart-area {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* ── Table ── */
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-body);
+}
+
+.analytics-table th {
+  font-size: var(--text-subheading);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  text-align: left;
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  border-bottom: 1px solid var(--mist);
+  white-space: nowrap;
+}
+
+.analytics-table td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--stone);
+  color: var(--ink);
+  vertical-align: middle;
+}
+
+.analytics-table tr:last-child td {
+  border-bottom: none;
+}
+
+.analytics-table tbody tr:hover td {
+  background-color: var(--stone);
+}
+
+.analytics-bus-reg {
+  font-family: monospace;
+  font-size: var(--text-code);
+  color: var(--forest);
+  letter-spacing: 0.04em;
+  font-weight: var(--weight-medium);
+}
+
+.analytics-completed-pct {
+  color: var(--slate);
+  font-size: var(--text-caption);
+}
+
+.analytics-zero {
+  color: var(--mist);
+}
+
+.analytics-ts {
+  font-size: var(--text-caption);
+  color: var(--slate);
+  white-space: nowrap;
+}
+
+/* ── SOS count badge (inside table cell) ── */
+
+.analytics-sos-badge {
+  display: inline-block;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background-color: rgba(194, 168, 120, 0.15);
+  color: var(--gold);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+}
+
+/* ── SOS status pill ── */
+
+.sos-status-badge {
+  display: inline-block;
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.sos-status-badge--active {
+  background-color: rgba(194, 168, 120, 0.15);
+  color: var(--gold);
+}
+
+.sos-status-badge--resolved {
+  background-color: rgba(123, 150, 105, 0.12);
+  color: var(--sage);
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 900px) {
+  .kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .kpi-row {
+    grid-template-columns: 1fr;
+  }
+}

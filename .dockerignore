@@ -1,0 +1,43 @@
+# Dependencies — each Docker stage installs its own
+node_modules
+**/node_modules
+
+# Secrets — never bake into an image
+.env
+.env.*
+!.env.*.example
+
+# Mobile app — not deployed server-side
+mobile/
+
+# Web admin — deployed to Firebase Hosting, not EC2
+web-admin/
+
+# Git history
+.git
+.gitignore
+
+# Editor / OS artifacts
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Test output / coverage
+coverage/
+**/coverage/
+*.lcov
+
+# Build artifacts (rebuilt inside Docker)
+dist/
+**/dist/
+
+# Documentation (not needed at runtime)
+docs/
+*.md
+*.html
+
+# CI config — not needed at runtime
+.github/

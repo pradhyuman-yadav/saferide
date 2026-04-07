@@ -1,6 +1,9 @@
 import type { Driver, CreateDriverInput, UpdateDriverInput } from '@saferide/types';
+import { createServiceLogger } from '@saferide/logger';
 import { DriverRepository } from '../repositories/driver.repository';
 import { findOrCreateFirebaseUser, sendSetupEmail } from '../utils/firebase-auth.utils';
+
+const log = createServiceLogger('driver');
 
 const repo = new DriverRepository();
 
@@ -20,7 +23,10 @@ export class DriverService {
   /** Like findDriver but throws DRIVER_NOT_FOUND instead of returning null. */
   async getDriver(id: string, tenantId: string): Promise<Driver> {
     const driver = await this.findDriver(id, tenantId);
-    if (driver === null) throw new Error('DRIVER_NOT_FOUND');
+    if (driver === null) {
+      log.warn({ driverId: id, tenantId }, 'driver not found');
+      throw new Error('DRIVER_NOT_FOUND');
+    }
     return driver;
   }
 
@@ -47,6 +53,7 @@ export class DriverService {
 
     const created = await repo.findById(driverId, tenantId);
     if (created === null) throw new Error('Failed to retrieve created driver');
+    log.info({ driverId: created.id, tenantId, email: created.email }, 'driver created; setup email sent');
     return created;
   }
 
@@ -58,6 +65,7 @@ export class DriverService {
 
     const updated = await repo.findById(id, tenantId);
     if (updated === null) throw new Error('Failed to retrieve updated driver');
+    log.info({ driverId: id, tenantId, fields: Object.keys(input) }, 'driver updated');
     return updated;
   }
 
@@ -65,5 +73,6 @@ export class DriverService {
     const existing = await this.findDriver(id, tenantId);
     if (existing === null) throw new Error('DRIVER_NOT_FOUND');
     await repo.update(id, tenantId, { isActive: false });
+    log.info({ driverId: id, tenantId }, 'driver soft-deleted (isActive → false)');
   }
 }

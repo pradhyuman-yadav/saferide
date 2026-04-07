@@ -232,6 +232,7 @@ describe('TripRepository', () => {
 
   describe('update()', () => {
     it('patches the trip document with the provided fields', async () => {
+      mockDocRef.get.mockResolvedValue({ exists: true, id: 'trip-001', data: () => makeTripData() });
       mockDocRef.update.mockResolvedValue(undefined);
 
       await repo.update('trip-001', 'tenant-001', { status: 'ended', endedAt: 1700000010000 });
@@ -242,6 +243,7 @@ describe('TripRepository', () => {
     });
 
     it('filters out undefined values from the patch', async () => {
+      mockDocRef.get.mockResolvedValue({ exists: true, id: 'trip-001', data: () => makeTripData() });
       mockDocRef.update.mockResolvedValue(undefined);
 
       await repo.update('trip-001', 'tenant-001', { status: 'ended', endedAt: undefined });
@@ -255,6 +257,7 @@ describe('TripRepository', () => {
 
   describe('setSosStatus()', () => {
     it('sets sosActive = true and records sosTriggeredAt', async () => {
+      mockDocRef.get.mockResolvedValue({ exists: true, id: 'trip-001', data: () => makeTripData() });
       mockDocRef.update.mockResolvedValue(undefined);
 
       await repo.setSosStatus('trip-001', 'tenant-001', true, 1700000005000);
@@ -265,6 +268,7 @@ describe('TripRepository', () => {
     });
 
     it('sets sosActive = false without sosTriggeredAt', async () => {
+      mockDocRef.get.mockResolvedValue({ exists: true, id: 'trip-001', data: () => makeTripData() });
       mockDocRef.update.mockResolvedValue(undefined);
 
       await repo.setSosStatus('trip-001', 'tenant-001', false);

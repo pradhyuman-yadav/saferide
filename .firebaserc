@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "saferide-c3870",
+    "prod": "saferide-prod"
+  }
+}

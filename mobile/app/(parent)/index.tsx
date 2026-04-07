@@ -5,6 +5,7 @@ import * as Location from 'expo-location';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Map, Navigation, Bell, User, Bus, Crosshair } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useLiveTrack } from '@/hooks/useLiveTrack';
 import { useAuthStore } from '@/store/auth.store';
 import { BusMarker } from '@/components/map/BusMarker';
@@ -21,18 +22,19 @@ const DEFAULT_REGION = {
   longitudeDelta: 0.08,
 };
 
-function formatAge(ms: number): string {
-  const diff = Math.floor((Date.now() - ms) / 1000);
-  if (diff < 5)  return 'just now';
-  if (diff < 60) return `${diff}s ago`;
-  return `${Math.floor(diff / 60)}m ago`;
-}
-
 export default function ParentHomeScreen() {
   const insets  = useSafeAreaInsets();
   const router  = useRouter();
   const mapRef  = useRef<MapView>(null);
   const profile = useAuthStore((s) => s.profile);
+  const { t }   = useTranslation();
+
+  function formatAge(ms: number): string {
+    const diff = Math.floor((Date.now() - ms) / 1000);
+    if (diff < 5)  return t('live.justNow');
+    if (diff < 60) return t('live.secondsAgo', { n: diff });
+    return t('live.minutesAgo', { n: Math.floor(diff / 60) });
+  }
 
   const busId = profile?.busId ?? '';
   const { location, isConnected } = useLiveTrack(busId);
@@ -120,7 +122,7 @@ export default function ParentHomeScreen() {
           variant="label"
           color={isConnected ? colors.forest : colors.slate}
         >
-          {isConnected ? 'Live' : 'Offline'}
+          {isConnected ? t('live.statusLive') : t('live.statusOffline')}
         </SRText>
       </View>
 
@@ -136,6 +138,7 @@ export default function ParentHomeScreen() {
             childName={profile?.childName}
             busLabel={busLabel}
             location={location}
+            formatAge={formatAge}
           />
         ) : (
           <OfflineState childName={profile?.childName} />
@@ -145,23 +148,23 @@ export default function ParentHomeScreen() {
         <View style={styles.tabRow}>
           <NavTab
             icon={<Map size={iconSize.md} color={colors.forest} strokeWidth={2} />}
-            label="Live"
+            label={t('tab.live')}
             active
             onPress={() => {}}
           />
           <NavTab
             icon={<Navigation size={iconSize.md} color={colors.slate} strokeWidth={2} />}
-            label="Route"
+            label={t('tab.route')}
             onPress={() => router.push('/(parent)/route')}
           />
           <NavTab
             icon={<Bell size={iconSize.md} color={colors.slate} strokeWidth={2} />}
-            label="Alerts"
+            label={t('tab.alerts')}
             onPress={() => router.push('/(parent)/notifications')}
           />
           <NavTab
             icon={<User size={iconSize.md} color={colors.slate} strokeWidth={2} />}
-            label="Profile"
+            label={t('tab.profile')}
             onPress={() => router.push('/(parent)/profile')}
           />
         </View>
@@ -173,12 +176,14 @@ export default function ParentHomeScreen() {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 interface LiveStateProps {
-  childName?: string;
-  busLabel:   string;
-  location:   { speed: number | null; updatedAt: number };
+  childName?:  string;
+  busLabel:    string;
+  location:    { speed: number | null; updatedAt: number };
+  formatAge:   (ms: number) => string;
 }
 
-function LiveState({ childName, busLabel, location }: LiveStateProps) {
+function LiveState({ childName, busLabel, location, formatAge }: LiveStateProps) {
+  const { t } = useTranslation();
   return (
     <>
       <View style={styles.row}>
@@ -190,7 +195,7 @@ function LiveState({ childName, busLabel, location }: LiveStateProps) {
             {childName ? `${childName}'s bus` : `Bus ${busLabel}`}
           </SRText>
           <SRText variant="cardTitle">
-            Bus is on the way
+            {t('live.busOnWay')}
           </SRText>
         </View>
         <SRText variant="caption" color={colors.slate}>
@@ -199,9 +204,9 @@ function LiveState({ childName, busLabel, location }: LiveStateProps) {
       </View>
 
       <View style={styles.badges}>
-        <SRBadge label="On Route" variant="active" />
+        <SRBadge label={t('live.onRoute')} variant="active" />
         {location.speed !== null && location.speed > 0 && (
-          <SRBadge label={`${Math.round(location.speed)} km/h`} variant="muted" />
+          <SRBadge label={`${Math.round(location.speed)} ${t('live.kmh')}`} variant="muted" />
         )}
       </View>
     </>
@@ -213,6 +218,7 @@ interface OfflineStateProps {
 }
 
 function OfflineState({ childName }: OfflineStateProps) {
+  const { t } = useTranslation();
   return (
     <>
       <View style={styles.row}>
@@ -224,13 +230,13 @@ function OfflineState({ childName }: OfflineStateProps) {
             {childName ?? 'Your child'}
           </SRText>
           <SRText variant="cardTitle">
-            Bus hasn't started yet
+            {t('live.busNotStarted')}
           </SRText>
         </View>
       </View>
 
       <SRText variant="caption" color={colors.slate} style={styles.offlineHint}>
-        The bus will appear here once the driver starts the trip.
+        {t('live.busNotStartedHint')}
       </SRText>
     </>
   );

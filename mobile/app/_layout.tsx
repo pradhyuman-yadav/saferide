@@ -43,7 +43,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (!user) return;
     registerForPushNotifications(user.uid).catch((err) => {
-      console.warn('[push] Registration error:', err);
+      if (__DEV__) console.warn('[push] Registration error:', err);
     });
   }, [user?.uid]);
 
@@ -62,8 +62,8 @@ export default function RootLayout() {
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!user && !inAuthGroup) {
-      // User signed out (or session expired) from inside the app — send to login
-      router.replace('/(auth)/login');
+      // User signed out (or session expired) from inside the app — send to welcome
+      router.replace('/(auth)/welcome');
     }
   }, [user, isLoading, fontsLoaded, segments]);
 

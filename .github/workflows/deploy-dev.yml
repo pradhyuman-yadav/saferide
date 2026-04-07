@@ -1,0 +1,77 @@
+name: Deploy Dev
+
+# Triggers on every push to main (after PR is merged).
+# Deploys backend to dev EC2 and web-admin to Firebase Hosting (default project).
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy to dev
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # ── Backend: SSH → EC2 dev ─────────────────────────────────────────────
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.EC2_DEV_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy backend to dev EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_DEV_HOST }}
+          DEV_ENV:  ${{ secrets.DEV_ENV_FILE }}
+        run: |
+          ssh ubuntu@$EC2_HOST << 'ENDSSH'
+            set -e
+            cd /opt/saferide
+
+            # Write env file from secret (overwrites previous)
+            echo "$DEV_ENV" > .env
+
+            # Pull latest code
+            git pull origin main
+
+            # Rebuild and restart only changed containers (others keep running)
+            docker compose up --build -d
+
+            # Remove dangling images to save disk
+            docker image prune -f
+          ENDSSH
+
+      # ── Web admin: Firebase Hosting (dev project) ─────────────────────────
+      - name: Build web-admin
+        run: pnpm --filter web-admin build
+        env:
+          VITE_AUTH_SERVICE_URL:              ${{ secrets.DEV_VITE_AUTH_SERVICE_URL }}
+          VITE_FIREBASE_API_KEY:              ${{ secrets.DEV_VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN:          ${{ secrets.DEV_VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID:           ${{ secrets.DEV_VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET:       ${{ secrets.DEV_VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID:  ${{ secrets.DEV_VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID:               ${{ secrets.DEV_VITE_FIREBASE_APP_ID }}
+
+      - name: Deploy web-admin to Firebase Hosting (dev)
+        run: |
+          npx firebase-tools@latest use default
+          npx firebase-tools@latest deploy --only hosting,firestore:rules,firestore:indexes,database
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}

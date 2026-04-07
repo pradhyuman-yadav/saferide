@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bus, Users, Route, CheckCircle, LogOut } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/store/auth.store';
 import { SRText } from '@/components/ui/SRText';
 import { colors, spacing, radius, iconSize } from '@/theme';
@@ -22,6 +23,7 @@ interface Stats {
 }
 
 export default function AdminDashboardScreen() {
+  const router = useRouter();
   const { profile, signOut } = useAuthStore();
   const [stats,     setStats]     = useState<Stats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,7 +60,9 @@ export default function AdminDashboardScreen() {
   function handleSignOut() {
     Alert.alert('Sign out', 'Sign out of SafeRide admin?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign out', style: 'destructive', onPress: signOut },
+      { text: 'Sign out', style: 'destructive', onPress: () => {
+          void signOut().then(() => router.replace('/(auth)/welcome'));
+        } },
     ]);
   }
 

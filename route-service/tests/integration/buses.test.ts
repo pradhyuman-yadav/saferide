@@ -18,9 +18,12 @@ import {
 // ---------------------------------------------------------------------------
 
 vi.mock('@saferide/firebase-admin', () => buildFirebaseMock());
+const mockChildLogger = vi.hoisted(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }));
+
 vi.mock('@saferide/logger', () => ({
-  logger:   { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-  auditLog: vi.fn(),
+  logger:              { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  auditLog:            vi.fn(),
+  createServiceLogger: vi.fn().mockReturnValue(mockChildLogger),
 }));
 
 // Mock BusService so integration tests stay fast and deterministic

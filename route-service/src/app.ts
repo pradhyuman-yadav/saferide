@@ -7,7 +7,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { logger } from '@saferide/logger';
-import { requestId, errorHandler } from '@saferide/middleware';
+import { requestId, errorHandler, httpLogger } from '@saferide/middleware';
 import { config } from './config';
 import { busRouter } from './routes/bus.routes';
 import { routeRouter, stopRouter } from './routes/route.routes';
@@ -32,9 +32,10 @@ app.use(cors({
   credentials: true,
 }));
 
-// ── Body parsing + request ID ─────────────────────────────────────────────────
+// ── Body parsing + request ID + HTTP logging ──────────────────────────────────
 app.use(express.json({ limit: '100kb' }));
 app.use(requestId);
+app.use(httpLogger);
 
 // ── Health check (no auth) ────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {

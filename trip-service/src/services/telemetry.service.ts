@@ -1,7 +1,10 @@
 import type { GpsTelemetry, CreateTelemetryInput } from '@saferide/types';
 import { getRtdb } from '@saferide/firebase-admin';
+import { createServiceLogger } from '@saferide/logger';
 import { TelemetryRepository } from '../repositories/telemetry.repository';
 import { TripService } from './trip.service';
+
+const log = createServiceLogger('telemetry');
 
 const repo        = new TelemetryRepository();
 const tripService = new TripService();
@@ -26,9 +29,18 @@ export class TelemetryService {
   ): Promise<GpsTelemetry> {
     // Verify the trip exists, is active, and belongs to this driver
     const trip = await tripService.findTrip(tripId, tenantId);
-    if (trip === null) throw new Error('TRIP_NOT_FOUND');
-    if (trip.driverId !== driverId) throw new Error('TRIP_NOT_OWNED');
-    if (trip.status !== 'active') throw new Error('TRIP_NOT_ACTIVE');
+    if (trip === null) {
+      log.warn({ tripId, driverId, tenantId }, 'GPS ping rejected — trip not found');
+      throw new Error('TRIP_NOT_FOUND');
+    }
+    if (trip.driverId !== driverId) {
+      log.warn({ tripId, driverId, ownerDriverId: trip.driverId, tenantId }, 'GPS ping rejected — driver does not own this trip');
+      throw new Error('TRIP_NOT_OWNED');
+    }
+    if (trip.status !== 'active') {
+      log.warn({ tripId, driverId, status: trip.status, tenantId }, 'GPS ping rejected — trip not active');
+      throw new Error('TRIP_NOT_ACTIVE');
+    }
 
     const now = Date.now();
 
@@ -56,6 +68,11 @@ export class TelemetryService {
       input.speed,
       input.heading,
       input.recordedAt,
+    );
+
+    log.debug(
+      { telemetryId: id, tripId, driverId, busId, tenantId, lat: input.lat, lon: input.lon, speed: input.speed ?? null, accuracy: input.accuracy ?? null },
+      'GPS ping recorded',
     );
 
     // ── 3. Push to RTDB liveLocation — overwrites previous value, fires onValue instantly ──

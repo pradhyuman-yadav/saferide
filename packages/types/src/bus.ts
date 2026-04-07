@@ -3,6 +3,9 @@ import { z } from 'zod';
 export const BUS_STATUSES = ['active', 'inactive', 'maintenance'] as const;
 export type BusStatus = typeof BUS_STATUSES[number];
 
+export const VEHICLE_TYPES = ['bus', 'minibus', 'van', 'suv'] as const;
+export type VehicleType = typeof VEHICLE_TYPES[number];
+
 export const BusSchema = z.object({
   id:                 z.string(),
   tenantId:           z.string(),
@@ -11,8 +14,9 @@ export const BusSchema = z.object({
   model:              z.string().min(1).max(50),
   year:               z.number().int().min(1990).max(2100),
   capacity:           z.number().int().min(1).max(100),
-  // driverId / routeId use .catch(null) so existing Firestore docs without
-  // these fields parse cleanly instead of throwing a validation error.
+  // vehicleType / driverId / routeId use .catch() so existing Firestore docs
+  // without these fields parse cleanly instead of throwing a validation error.
+  vehicleType:        z.enum(VEHICLE_TYPES).catch('bus'),
   driverId:           z.string().nullable().catch(null),
   routeId:            z.string().nullable().catch(null),
   status:             z.enum(BUS_STATUSES),
@@ -28,6 +32,7 @@ export const CreateBusSchema = z.object({
   model:              z.string().min(1).max(50),
   year:               z.number().int().min(1990).max(2100),
   capacity:           z.number().int().min(1).max(100),
+  vehicleType:        z.enum(VEHICLE_TYPES).default('bus'),
 });
 
 export type CreateBusInput = z.infer<typeof CreateBusSchema>;
@@ -38,6 +43,7 @@ export const UpdateBusSchema = z.object({
   model:              z.string().min(1).max(50).optional(),
   year:               z.number().int().min(1990).max(2100).optional(),
   capacity:           z.number().int().min(1).max(100).optional(),
+  vehicleType:        z.enum(VEHICLE_TYPES).optional(),
   status:             z.enum(BUS_STATUSES).optional(),
 }).refine(
   (data) => Object.keys(data).length > 0,

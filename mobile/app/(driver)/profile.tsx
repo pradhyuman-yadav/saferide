@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -23,7 +24,10 @@ import {
   LogOut,
   User,
   AlertCircle,
+  FileText,
+  Shield,
 } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/store/auth.store';
 import { SRText } from '@/components/ui/SRText';
 import { SRBadge } from '@/components/ui/SRBadge';
@@ -34,6 +38,7 @@ import type { Bus as BusType, Route as RouteType } from '@/api/route.client';
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function DriverProfileScreen() {
+  const router = useRouter();
   const { profile, signOut } = useAuthStore();
 
   const [bus,      setBus]      = useState<BusType | null>(null);
@@ -76,7 +81,9 @@ export default function DriverProfileScreen() {
         {
           text: 'Sign out',
           style: 'destructive',
-          onPress: () => void signOut(),
+          onPress: () => {
+            void signOut().then(() => router.replace('/(auth)/welcome'));
+          },
         },
       ],
     );
@@ -170,6 +177,33 @@ export default function DriverProfileScreen() {
             label="Email"
             value={profile?.email ?? '—'}
           />
+        </View>
+
+        {/* ── Legal ────────────────────────────────────────────────────────── */}
+        <View style={styles.section}>
+          <SRText variant="label" color={colors.slate} style={styles.sectionTitle}>
+            Legal
+          </SRText>
+          <TouchableOpacity
+            style={styles.infoRow}
+            onPress={() => { void Linking.openURL('https://saferide.co.in/privacy'); }}
+            activeOpacity={0.7}
+          >
+            <View style={styles.infoIcon}>
+              <Shield size={iconSize.sm} color={colors.slate} strokeWidth={2} />
+            </View>
+            <SRText variant="body" style={{ flex: 1, fontWeight: '500' }}>Privacy Policy</SRText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.infoRow, { borderBottomWidth: 0 }]}
+            onPress={() => { void Linking.openURL('https://saferide.co.in/terms'); }}
+            activeOpacity={0.7}
+          >
+            <View style={styles.infoIcon}>
+              <FileText size={iconSize.sm} color={colors.slate} strokeWidth={2} />
+            </View>
+            <SRText variant="body" style={{ flex: 1, fontWeight: '500' }}>Terms of Service</SRText>
+          </TouchableOpacity>
         </View>
 
         {/* ── Sign out ─────────────────────────────────────────────────────── */}

@@ -4,6 +4,8 @@ import { useAuthStore } from '@/store/auth.store';
 import { SuperAdminRoute } from '@/components/SuperAdminRoute';
 import { SchoolAdminRoute } from '@/components/SchoolAdminRoute';
 import { Layout } from '@/components/Layout';
+import { LandingPage }  from '@/pages/LandingPage';
+import { StatusPage }   from '@/pages/StatusPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { SchoolsPage } from '@/pages/SchoolsPage';
@@ -14,7 +16,12 @@ import { BusesPage }           from '@/pages/school/BusesPage';
 import { RoutesPage }          from '@/pages/school/RoutesPage';
 import { DriversPage }         from '@/pages/school/DriversPage';
 import { StudentsPage }        from '@/pages/school/StudentsPage';
+import { WebhooksPage }        from '@/pages/school/WebhooksPage';
+import { AnalyticsPage }      from '@/pages/school/AnalyticsPage';
+import { SuperAnalyticsPage } from '@/pages/SuperAnalyticsPage';
 import { SetupAccountPage }    from '@/pages/SetupAccountPage';
+import { PrivacyPage }         from '@/pages/PrivacyPage';
+import { TermsPage }           from '@/pages/TermsPage';
 
 // ── Smart catch-all redirect based on role ────────────────────────────────
 
@@ -28,7 +35,7 @@ function SmartRedirect() {
     return <Navigate to="/school" replace />;
   }
   if (profile?.role === 'super_admin') {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
   return <Navigate to="/login" replace />;
 }
@@ -48,16 +55,21 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Public */}
+        <Route path="/"              element={<LandingPage />} />
+        <Route path="/status"        element={<StatusPage />} />
         <Route path="/login"         element={<LoginPage />} />
         <Route path="/setup-account" element={<SetupAccountPage />} />
+        <Route path="/privacy"       element={<PrivacyPage />} />
+        <Route path="/terms"         element={<TermsPage />} />
 
         {/* Super admin routes */}
         <Route element={<SuperAdminRoute />}>
           <Route element={<Layout />}>
-            <Route path="/"            element={<DashboardPage />} />
+            <Route path="/dashboard"   element={<DashboardPage />} />
             <Route path="/schools"     element={<SchoolsPage />} />
             <Route path="/schools/new" element={<OnboardSchoolPage />} />
             <Route path="/schools/:id" element={<SchoolDetailPage />} />
+            <Route path="/analytics"   element={<SuperAnalyticsPage />} />
           </Route>
         </Route>
 
@@ -69,6 +81,8 @@ export default function App() {
             <Route path="/school/routes"  element={<RoutesPage />} />
             <Route path="/school/drivers"  element={<DriversPage />} />
             <Route path="/school/students" element={<StudentsPage />} />
+            <Route path="/school/webhooks"   element={<WebhooksPage />} />
+            <Route path="/school/analytics" element={<AnalyticsPage />} />
           </Route>
         </Route>
 

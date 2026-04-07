@@ -7,7 +7,13 @@ import { app } from './app';
 initFirebaseAdmin({ databaseURL: config.FIREBASE_DATABASE_URL });
 
 app.listen(config.PORT, () => {
-  logger.info({ port: config.PORT, env: config.NODE_ENV }, 'trip-service started');
+  logger.info({
+    port:        config.PORT,
+    env:         config.NODE_ENV,
+    logLevel:    config.LOG_LEVEL,
+    corsOrigins: config.CORS_ORIGINS,
+    rtdbUrl:     config.FIREBASE_DATABASE_URL,
+  }, 'trip-service started');
 });
 
 export default app;

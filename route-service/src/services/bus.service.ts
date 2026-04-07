@@ -1,10 +1,13 @@
 import type { Bus, CreateBusInput, UpdateBusInput } from '@saferide/types';
 import { getDb } from '@saferide/firebase-admin';
+import { createServiceLogger } from '@saferide/logger';
 import { BusRepository } from '../repositories/bus.repository';
 import { DriverRepository } from '../repositories/driver.repository';
 import { RouteRepository }   from '../repositories/route.repository';
 import { StopRepository }    from '../repositories/stop.repository';
 import { StudentRepository } from '../repositories/student.repository';
+
+const log = createServiceLogger('bus');
 
 const repo        = new BusRepository();
 const driverRepo  = new DriverRepository();
@@ -28,7 +31,10 @@ export class BusService {
   /** Like findBus but throws BUS_NOT_FOUND instead of returning null. */
   async getBus(id: string, tenantId: string): Promise<Bus> {
     const bus = await this.findBus(id, tenantId);
-    if (bus === null) throw new Error('BUS_NOT_FOUND');
+    if (bus === null) {
+      log.warn({ busId: id, tenantId }, 'bus not found');
+      throw new Error('BUS_NOT_FOUND');
+    }
     return bus;
   }
 
@@ -41,6 +47,7 @@ export class BusService {
       model:              input.model,
       year:               input.year,
       capacity:           input.capacity,
+      vehicleType:        input.vehicleType,
       driverId:           null,
       routeId:            null,
       status:             'active',
@@ -50,6 +57,7 @@ export class BusService {
 
     const created = await repo.findById(busId, tenantId);
     if (created === null) throw new Error('Failed to retrieve created bus');
+    log.info({ busId: created.id, tenantId, registrationNumber: created.registrationNumber, vehicleType: created.vehicleType }, 'bus created');
     return created;
   }
 
@@ -61,6 +69,7 @@ export class BusService {
 
     const updated = await repo.findById(id, tenantId);
     if (updated === null) throw new Error('Failed to retrieve updated bus');
+    log.info({ busId: id, tenantId, fields: Object.keys(input) }, 'bus updated');
     return updated;
   }
 
@@ -68,6 +77,7 @@ export class BusService {
     const existing = await this.findBus(id, tenantId);
     if (existing === null) throw new Error('BUS_NOT_FOUND');
     await repo.update(id, tenantId, { status: 'inactive' });
+    log.info({ busId: id, tenantId }, 'bus soft-deleted (status → inactive)');
   }
 
   /**
@@ -110,6 +120,7 @@ export class BusService {
 
     const updated = await repo.findById(busId, tenantId);
     if (updated === null) throw new Error('Failed to retrieve updated bus');
+    log.info({ busId, driverId, tenantId }, driverId !== null ? 'driver assigned to bus' : 'driver unassigned from bus');
     return updated;
   }
 
@@ -159,6 +170,10 @@ export class BusService {
 
     const updated = await repo.findById(busId, tenantId);
     if (updated === null) throw new Error('Failed to retrieve updated bus');
+    log.info(
+      { busId, routeId, previousRouteId, tenantId },
+      routeId !== null ? 'route assigned to bus' : 'route unassigned from bus',
+    );
     return updated;
   }
 }

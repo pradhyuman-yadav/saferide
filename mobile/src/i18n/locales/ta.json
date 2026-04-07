@@ -69,6 +69,9 @@
     "notifSms": "SMS உதவி",
     "signOut": "வெளியேறு",
     "signOutMessage": "நீங்கள் SafeRide இலிருந்து வெளியேறுவீர்கள்.",
+    "legal": "சட்டம்",
+    "privacyPolicy": "தனியுரிமைக் கொள்கை",
+    "termsOfService": "சேவை விதிமுறைகள்",
     "cancel": "ரத்து செய்",
     "selectLanguage": "மொழி தேர்ந்தெடு"
   },

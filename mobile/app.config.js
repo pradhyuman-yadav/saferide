@@ -18,17 +18,20 @@
 /** @type {import('expo/config').ExpoConfig} */
 const config = {
   name:        'SafeRide',
-  slug:        'saferide',
+  slug:        'sfrapp',
+  owner:       'saferidein',
   version:     '1.0.0',
   scheme:      'saferide',
   orientation: 'portrait',
   userInterfaceStyle: 'light',
 
-  // App icon — S mark on transparent background (1024×1024 PNG required by stores)
+  // App icon — S-mark on transparent background (scales well at all icon sizes)
   icon: './assets/images/icon.png',
 
   splash: {
-    // Solid forest background — the JS layer renders AppLogo on top
+    // Forest background with SafeRide wordmark — the JS layer renders AppLogo on top
+    image:           './assets/images/logo.png',
+    resizeMode:      'contain',
     backgroundColor: '#404E3B',
   },
 
@@ -39,11 +42,12 @@ const config = {
   },
 
   android: {
-    package: 'in.saferide.app',
+    package:             'in.saferide.app',
+    googleServicesFile:  './google-services.json',
     minSdkVersion: 24,   // Android 7.0 (2016) — covers ~97% of active devices
     targetSdkVersion: 35,
     compileSdkVersion: 35,
-    // Android adaptive icon: S mark foreground on forest background
+    // Android adaptive icon: S-mark foreground on forest background
     adaptiveIcon: {
       foregroundImage: './assets/images/icon.png',
       backgroundColor: '#404E3B',
@@ -52,7 +56,7 @@ const config = {
       googleMaps: {
         // Read from .env at build time — never embed a hardcoded key or the
         // literal "$GOOGLE_MAPS_API_KEY" string that app.json would produce.
-        apiKey: process.env.GOOGLE_MAPS_API_KEY ?? '',
+        apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? '',
       },
     },
   },
@@ -64,6 +68,8 @@ const config = {
       'expo-splash-screen',
       {
         backgroundColor: '#404E3B',
+        image:           './assets/images/icon.png',
+        imageWidth:      200,
       },
     ],
     [
@@ -83,6 +89,12 @@ const config = {
 
   experiments: {
     typedRoutes: true,
+  },
+
+  extra: {
+    eas: {
+      projectId: '92700ed6-a859-442d-b1d8-f63ad6daec5d',
+    },
   },
 };
 

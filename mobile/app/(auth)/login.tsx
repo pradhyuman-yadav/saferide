@@ -84,6 +84,7 @@ export default function LoginScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
+            maxLength={254}
           />
 
           <SRText variant="label" color={colors.slate} style={{ marginBottom: spacing[1], marginTop: spacing[4] }}>
@@ -96,6 +97,7 @@ export default function LoginScreen() {
             placeholder="••••••••"
             placeholderTextColor={colors.slate}
             secureTextEntry
+            maxLength={128}
           />
 
           <SRButton

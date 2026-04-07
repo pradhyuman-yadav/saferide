@@ -14,6 +14,8 @@ export interface Trip {
   latestSpeed?:       number;
   latestHeading?:     number;
   latestRecordedAt?:  number;
+  sosActive?:         boolean;
+  sosTriggeredAt?:    number;
   createdAt:          number;
   updatedAt:          number;
 }

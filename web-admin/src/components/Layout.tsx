@@ -26,7 +26,7 @@ export function Layout() {
       {/* ── Sidebar ── */}
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <span className="sidebar-brand-title">SafeRide</span>
+          <img src="/logo.svg" alt="SafeRide" className="sidebar-brand-logo" />
           <p className="sidebar-brand-caption">{caption}</p>
         </div>
 
@@ -34,7 +34,7 @@ export function Layout() {
           {isSuperAdmin && (
             <>
               <NavLink
-                to="/"
+                to="/dashboard"
                 end
                 className={({ isActive }) =>
                   `sidebar-nav-item${isActive ? ' active' : ''}`
@@ -49,6 +49,14 @@ export function Layout() {
                 }
               >
                 Schools
+              </NavLink>
+              <NavLink
+                to="/analytics"
+                className={({ isActive }) =>
+                  `sidebar-nav-item${isActive ? ' active' : ''}`
+                }
+              >
+                Analytics
               </NavLink>
             </>
           )}
@@ -95,6 +103,12 @@ export function Layout() {
                 }
               >
                 Students
+              </NavLink>
+              <NavLink to="/school/webhooks" className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`}>
+                Webhooks
+              </NavLink>
+              <NavLink to="/school/analytics" className={({ isActive }) => `sidebar-nav-item${isActive ? ' active' : ''}`}>
+                Analytics
               </NavLink>
             </>
           )}

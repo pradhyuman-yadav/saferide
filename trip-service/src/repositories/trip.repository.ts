@@ -100,12 +100,12 @@ export class TripRepository {
     tenantId: string,
     updates: Partial<Omit<Trip, 'id' | 'tenantId' | 'createdAt'>>,
   ): Promise<void> {
+    const existing = await this.findById(id, tenantId);
+    if (!existing) throw new Error('NOT_FOUND');
     const patch = Object.fromEntries(
       Object.entries(updates).filter(([, v]) => v !== undefined),
     );
     await this.docRef(id).update({ ...patch, updatedAt: Date.now() });
-    // suppress TS — tenantId param kept for interface consistency
-    void tenantId;
   }
 
   /** Set or clear the SOS flag on a trip document. */
@@ -115,6 +115,8 @@ export class TripRepository {
     active: boolean,
     triggeredAt?: number,
   ): Promise<void> {
+    const existing = await this.findById(id, tenantId);
+    if (!existing) throw new Error('NOT_FOUND');
     const patch: Record<string, unknown> = {
       sosActive:  active,
       updatedAt:  Date.now(),
@@ -123,6 +125,5 @@ export class TripRepository {
       patch['sosTriggeredAt'] = triggeredAt;
     }
     await this.docRef(id).update(patch);
-    void tenantId;
   }
 }

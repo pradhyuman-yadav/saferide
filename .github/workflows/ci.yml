@@ -1,0 +1,51 @@
+name: CI
+
+# Runs on every PR targeting main or release.
+# Must pass before merge is allowed.
+
+on:
+  pull_request:
+    branches: [main, release]
+
+jobs:
+  quality:
+    name: Typecheck · Lint · Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+        env:
+          # Tests mock Firebase — this placeholder satisfies the Zod schema at startup
+          FIREBASE_SERVICE_ACCOUNT_JSON: >-
+            {"type":"service_account","project_id":"test","private_key_id":"key",
+            "private_key":"-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA0Z3VS5JJ\n-----END RSA PRIVATE KEY-----\n",
+            "client_email":"test@test.iam.gserviceaccount.com","client_id":"1",
+            "auth_uri":"https://accounts.google.com/o/oauth2/auth",
+            "token_uri":"https://oauth2.googleapis.com/token",
+            "auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs",
+            "client_x509_cert_url":"https://www.googleapis.com/robot/v1/metadata/x509/test"}
+          FIREBASE_DATABASE_URL: https://test-default-rtdb.firebaseio.com
+          JWT_PUBLIC_KEY: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0Z3VS5JJcds3xHn/ygWe\n-----END PUBLIC KEY-----"
+          JWT_PRIVATE_KEY: "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA0Z3VS5JJ\n-----END RSA PRIVATE KEY-----"
+          GOOGLE_MAPS_API_KEY: test_key

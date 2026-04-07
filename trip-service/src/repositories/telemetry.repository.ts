@@ -16,7 +16,8 @@ export class TelemetryRepository {
       .limit(1)
       .get();
     if (snap.empty) return null;
-    const d = snap.docs[0];
+    const [d] = snap.docs;
+    if (!d) return null;
     return GpsTelemetrySchema.parse({ ...d.data(), id: d.id });
   }
 

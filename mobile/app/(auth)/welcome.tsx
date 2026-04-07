@@ -1,4 +1,4 @@
-import { View, StyleSheet, StatusBar } from 'react-native';
+import { View, StyleSheet, StatusBar, TouchableOpacity, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +33,23 @@ export default function WelcomeScreen() {
         <SRText variant="caption" color={colors.mist} style={styles.hint}>
           {t('auth.welcomeHint')}
         </SRText>
+
+        {/* Legal links */}
+        <View style={styles.legalRow}>
+          <TouchableOpacity
+            onPress={() => { void Linking.openURL('https://saferide.co.in/terms'); }}
+            activeOpacity={0.7}
+          >
+            <SRText variant="caption" style={styles.legalLink}>Terms of Service</SRText>
+          </TouchableOpacity>
+          <SRText variant="caption" style={styles.legalDot}>{'·'}</SRText>
+          <TouchableOpacity
+            onPress={() => { void Linking.openURL('https://saferide.co.in/privacy'); }}
+            activeOpacity={0.7}
+          >
+            <SRText variant="caption" style={styles.legalLink}>Privacy Policy</SRText>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -64,5 +81,22 @@ const styles = StyleSheet.create({
   hint: {
     textAlign: 'center',
     opacity:   0.55,
+  },
+
+  legalRow: {
+    flexDirection:  'row',
+    alignItems:     'center',
+    justifyContent: 'center',
+    gap:            spacing[2],
+    marginTop:      spacing[1],
+  },
+  legalLink: {
+    color:        colors.mist,
+    opacity:      0.5,
+    textDecorationLine: 'underline',
+  },
+  legalDot: {
+    color:   colors.mist,
+    opacity: 0.35,
   },
 });

@@ -1,0 +1,76 @@
+services:
+
+  auth:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    ports:
+      - "4001:4001"
+    env_file: .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  tenant:
+    build:
+      context: .
+      dockerfile: tenant-service/Dockerfile
+    ports:
+      - "4002:4002"
+    env_file: .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4002/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  route:
+    build:
+      context: .
+      dockerfile: route-service/Dockerfile
+    ports:
+      - "4003:4003"
+    env_file: .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4003/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  trip:
+    build:
+      context: .
+      dockerfile: trip-service/Dockerfile
+    ports:
+      - "4004:4004"
+    env_file: .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4004/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  livetrack:
+    build:
+      context: .
+      dockerfile: livetrack-gateway/Dockerfile
+    ports:
+      - "4005:4005"
+    env_file: .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4005/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

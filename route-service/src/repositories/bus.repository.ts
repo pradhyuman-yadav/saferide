@@ -35,7 +35,8 @@ export class BusRepository {
       .limit(1)
       .get();
     if (snap.empty) return null;
-    const d = snap.docs[0];
+    const [d] = snap.docs;
+    if (!d) return null;
     return BusSchema.parse({ ...d.data(), id: d.id });
   }
 
@@ -49,11 +50,12 @@ export class BusRepository {
     tenantId: string,
     updates: UpdateBusInput | { status: 'inactive' } | { driverId: string | null } | { routeId: string | null },
   ): Promise<void> {
+    const existing = await this.findById(id, tenantId);
+    if (!existing) throw new Error('NOT_FOUND');
     const patch = Object.fromEntries(
       Object.entries(updates).filter(([, v]) => v !== undefined),
     );
     await this.doc(id).update({ ...patch, updatedAt: Date.now() });
-    void tenantId;
   }
 
   async delete(id: string): Promise<void> {

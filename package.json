@@ -3,13 +3,13 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "seed": "tsx --env-file=scripts/.env scripts/seed.ts",
-    "dev": "pnpm --parallel --filter saferide-auth-service --filter saferide-tenant-service --filter saferide-route-service --filter saferide-trip-service run dev",
+    "seed": "tsx --env-file=.env scripts/seed.ts",
+    "dev": "pnpm --parallel --filter saferide-auth-service --filter saferide-tenant-service --filter saferide-route-service --filter saferide-trip-service --filter saferide-livetrack-gateway run dev",
     "build": "pnpm run --recursive --filter './packages/*' build && pnpm run --recursive --filter !web-admin --filter !mobile build",
     "typecheck": "pnpm run --recursive typecheck",
     "lint": "pnpm run --recursive lint",
-    "test": "pnpm --filter @saferide/types --filter @saferide/logger --filter @saferide/middleware --filter saferide-auth-service --filter saferide-tenant-service --filter saferide-route-service --filter saferide-trip-service run test",
-    "test:coverage": "pnpm --filter @saferide/types --filter @saferide/logger --filter @saferide/middleware --filter saferide-auth-service --filter saferide-tenant-service --filter saferide-route-service --filter saferide-trip-service run test:coverage"
+    "test": "pnpm --filter @saferide/types --filter @saferide/logger --filter @saferide/middleware --filter saferide-auth-service --filter saferide-tenant-service --filter saferide-route-service --filter saferide-trip-service --filter saferide-livetrack-gateway run test",
+    "test:coverage": "pnpm --filter @saferide/types --filter @saferide/logger --filter @saferide/middleware --filter saferide-auth-service --filter saferide-tenant-service --filter saferide-route-service --filter saferide-trip-service --filter saferide-livetrack-gateway run test:coverage"
   },
   "devDependencies": {
     "firebase-admin": "^13.0.0",

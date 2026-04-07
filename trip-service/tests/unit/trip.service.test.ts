@@ -39,9 +39,12 @@ vi.mock('@saferide/firebase-admin', () => ({
   getRtdb: vi.fn().mockReturnValue(rtdbMock),
 }));
 
+const mockChildLogger = vi.hoisted(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }));
+
 vi.mock('@saferide/logger', () => ({
-  logger:   { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
-  auditLog: vi.fn(),
+  logger:              { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
+  auditLog:            vi.fn(),
+  createServiceLogger: vi.fn().mockReturnValue(mockChildLogger),
 }));
 
 import { TripService } from '../../src/services/trip.service';

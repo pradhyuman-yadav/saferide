@@ -10,6 +10,8 @@ import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bell, CheckCircle, Clock, AlertCircle } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useAuthStore } from '@/store/auth.store';
 import { tripClient } from '@/api/trip.client';
 import type { Trip } from '@/api/trip.client';
@@ -46,14 +48,14 @@ function formatTime(ms: number): string {
   return new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-function tripsToEvents(trips: Trip[]): TripEvent[] {
+function tripsToEvents(trips: Trip[], t: TFunction): TripEvent[] {
   const events: TripEvent[] = [];
   for (const trip of trips) {
     events.push({
       id:    `${trip.id}-started`,
       type:  'started',
-      title: 'Trip started',
-      body:  `Bus departed at ${new Date(trip.startedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}.`,
+      title: t('alerts.tripStarted'),
+      body:  t('alerts.tripStartedBody', { time: new Date(trip.startedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) }),
       time:  trip.startedAt,
     });
     if (trip.endedAt) {
@@ -61,8 +63,8 @@ function tripsToEvents(trips: Trip[]): TripEvent[] {
       events.push({
         id:    `${trip.id}-ended`,
         type:  'ended',
-        title: 'Trip ended',
-        body:  `Arrived after ${durMin} min.`,
+        title: t('alerts.tripEnded'),
+        body:  t('alerts.tripEndedBody', { duration: durMin }),
         time:  trip.endedAt,
       });
     }
@@ -73,6 +75,7 @@ function tripsToEvents(trips: Trip[]): TripEvent[] {
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function NotificationsScreen() {
+  const { t }   = useTranslation();
   const profile = useAuthStore((s) => s.profile);
   const busId   = profile?.busId ?? '';
 
@@ -84,7 +87,7 @@ export default function NotificationsScreen() {
     if (!busId) { setLoading(false); return; }
 
     tripClient.listTripsForBus(busId)
-      .then((trips) => setEvents(tripsToEvents(trips)))
+      .then((trips) => setEvents(tripsToEvents(trips, t)))
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
   }, [busId]);
@@ -95,9 +98,9 @@ export default function NotificationsScreen() {
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <View style={styles.header}>
         <SRText variant="label" color={colors.slate} style={{ marginBottom: spacing[1] }}>
-          Today
+          {t('alerts.today')}
         </SRText>
-        <SRText variant="heading">Trip alerts</SRText>
+        <SRText variant="heading">{t('alerts.heading')}</SRText>
       </View>
 
       {/* ── Content ─────────────────────────────────────────────────────── */}
@@ -109,14 +112,14 @@ export default function NotificationsScreen() {
         <View style={styles.center}>
           <AlertCircle size={iconSize.lg} color={colors.gold} strokeWidth={2} />
           <SRText variant="body" color={colors.slate} style={styles.emptyText}>
-            Could not load alerts.
+            {t('alerts.loadError')}
           </SRText>
         </View>
       ) : events.length === 0 ? (
         <View style={styles.center}>
           <Clock size={iconSize.xl} color={colors.stone} strokeWidth={1.5} />
           <SRText variant="body" color={colors.slate} style={styles.emptyText}>
-            No alerts yet. They'll appear here once the bus starts a trip.
+            {t('alerts.empty')}
           </SRText>
         </View>
       ) : (

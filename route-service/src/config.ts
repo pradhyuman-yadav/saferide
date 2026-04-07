@@ -9,6 +9,10 @@ const EnvSchema = z.object({
   ),
   CORS_ORIGINS:                  z.string().default('http://localhost:5173'),
   LOG_LEVEL:                     z.enum(['trace', 'debug', 'info', 'warn', 'error']).default('info'),
+  // Optional: when set, the /polyline and /directions endpoints return road-following
+  // polylines via the Google Directions API. When absent, those endpoints return [].
+  // This key never leaves the server — it is NOT the same key used for map tile rendering.
+  GOOGLE_MAPS_DIRECTIONS_KEY:    z.string().optional(),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
@@ -23,4 +27,5 @@ export const config = {
   FIREBASE_SERVICE_ACCOUNT_JSON: parsed.data.FIREBASE_SERVICE_ACCOUNT_JSON,
   CORS_ORIGINS:                  parsed.data.CORS_ORIGINS,
   LOG_LEVEL:                     parsed.data.LOG_LEVEL,
+  GOOGLE_MAPS_DIRECTIONS_KEY:    parsed.data.GOOGLE_MAPS_DIRECTIONS_KEY,
 };

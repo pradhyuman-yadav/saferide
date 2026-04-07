@@ -1,0 +1,280 @@
+/* ── Status Page ─────────────────────────────────────────────────────────── */
+
+.status-page {
+  min-height: 100vh;
+  background-color: var(--stone);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-body);
+}
+
+/* ── Nav ─────────────────────────────────────────────────────────────────── */
+
+.status-nav {
+  background-color: var(--forest);
+}
+
+.status-nav-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 var(--space-8);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status-nav-logo {
+  height: 28px;
+  width: auto;
+  filter: brightness(0) invert(1);
+  display: block;
+  opacity: 0.9;
+}
+
+.status-nav-signin {
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--mist);
+  text-decoration: none;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid rgba(186, 200, 177, 0.25);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--motion-micro), color var(--motion-micro),
+              border-color var(--motion-micro);
+}
+
+.status-nav-signin:hover {
+  background-color: rgba(186, 200, 177, 0.08);
+  border-color: rgba(186, 200, 177, 0.5);
+  color: var(--white);
+}
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+
+.status-hero {
+  padding: var(--space-20) var(--space-8) var(--space-16);
+  text-align: center;
+  transition: background-color var(--motion-panel);
+}
+
+.status-hero--checking    { background-color: var(--white); }
+.status-hero--operational { background-color: rgba(123, 150, 105, 0.07); }
+.status-hero--down        { background-color: rgba(108, 132, 128, 0.08); }
+
+.status-hero-inner {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* Pulsing orb */
+.status-hero-orb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  margin-bottom: var(--space-2);
+  flex-shrink: 0;
+  transition: background-color var(--motion-panel);
+}
+
+.status-hero-orb--checking    { background-color: var(--mist); }
+.status-hero-orb--operational {
+  background-color: var(--sage);
+  animation: orb-pulse 2.4s ease-in-out infinite;
+}
+.status-hero-orb--down        { background-color: var(--slate); }
+
+@keyframes orb-pulse {
+  0%, 100% { box-shadow: 0 0 0 0   rgba(123, 150, 105, 0.45); }
+  50%       { box-shadow: 0 0 0 10px rgba(123, 150, 105, 0);   }
+}
+
+/* Main title */
+.status-hero-title {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-tight);
+  color: var(--forest);
+  margin: 0;
+}
+
+/* Timestamp line */
+.status-hero-meta {
+  font-size: var(--text-caption);
+  color: var(--slate);
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+/* Refresh button */
+.status-refresh-btn {
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-6);
+  background-color: transparent;
+  border: 1px solid var(--mist);
+  border-radius: var(--radius-sm);
+  color: var(--slate);
+  font-family: var(--font-body);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background-color var(--motion-micro), border-color var(--motion-micro),
+              color var(--motion-micro);
+}
+
+.status-refresh-btn:hover:not(:disabled) {
+  background-color: var(--stone);
+  border-color: var(--slate);
+  color: var(--forest);
+}
+
+.status-refresh-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── Services section ────────────────────────────────────────────────────── */
+
+.status-main {
+  flex: 1;
+  padding: var(--space-10) var(--space-8) var(--space-16);
+}
+
+.status-main-inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.status-section-label {
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin: 0 0 var(--space-3) 0;
+}
+
+/* Service card */
+.status-service-list {
+  background-color: var(--white);
+  border: 1px solid var(--mist);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.status-service-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--stone);
+  gap: var(--space-8);
+}
+
+.status-service-row:last-child {
+  border-bottom: none;
+}
+
+.status-service-name {
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--forest);
+  margin: 0;
+}
+
+/* ── Status pill ─────────────────────────────────────────────────────────── */
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 3px var(--space-3);
+  border-radius: 20px;         /* fully rounded pill */
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.01em;
+}
+
+.status-pill--operational {
+  background-color: rgba(123, 150, 105, 0.12);
+  color: var(--forest);
+}
+
+.status-pill--down {
+  background-color: rgba(108, 132, 128, 0.1);
+  color: var(--slate);
+}
+
+/* Status dot inside pill */
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.status-dot--operational { background-color: var(--sage); }
+.status-dot--down        { background-color: var(--slate); }
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+
+.status-footer {
+  padding: var(--space-6) var(--space-8);
+  text-align: center;
+  border-top: 1px solid var(--mist);
+}
+
+.status-footer-text {
+  font-size: var(--text-caption);
+  color: var(--slate);
+  margin: 0;
+}
+
+.status-footer-link {
+  color: var(--slate);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color var(--motion-micro);
+}
+
+.status-footer-link:hover {
+  color: var(--forest);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .status-nav-inner {
+    padding: 0 var(--space-4);
+  }
+
+  .status-hero {
+    padding: var(--space-16) var(--space-4) var(--space-12);
+  }
+
+  .status-hero-title {
+    font-size: 28px;
+  }
+
+  .status-main {
+    padding: var(--space-8) var(--space-4) var(--space-12);
+  }
+
+  .status-service-row {
+    padding: var(--space-4);
+    gap: var(--space-4);
+  }
+
+  .status-footer {
+    padding: var(--space-4);
+  }
+}

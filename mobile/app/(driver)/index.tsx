@@ -42,67 +42,22 @@ import { routeClient } from '@/api/route.client';
 import type { Bus, Route, Stop } from '@/api/route.client';
 import { startLocationTracking, stopLocationTracking } from '@/tasks/location.task';
 
-// ── Google Maps API key (runtime — for Directions REST calls) ─────────────────
-
-const MAPS_API_KEY = process.env['EXPO_PUBLIC_GOOGLE_MAPS_API_KEY'] ?? '';
-
-// ── Google encoded-polyline decoder ───────────────────────────────────────────
-
-function decodePolyline(encoded: string): { latitude: number; longitude: number }[] {
-  const pts: { latitude: number; longitude: number }[] = [];
-  let i = 0, lat = 0, lng = 0;
-  while (i < encoded.length) {
-    let b: number, shift = 0, result = 0;
-    do { b = encoded.charCodeAt(i++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
-    lat += (result & 1) ? ~(result >> 1) : (result >> 1);
-    shift = 0; result = 0;
-    do { b = encoded.charCodeAt(i++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
-    lng += (result & 1) ? ~(result >> 1) : (result >> 1);
-    pts.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
-  }
-  return pts;
-}
-
-// ── Directions API fetch ───────────────────────────────────────────────────────
-
-interface LatLon { lat: number; lon: number }
+// ── Directions are proxied through the backend (no API key in this bundle) ────
+// Use routeClient.getRoutePolyline(routeId) for the full route.
+// Use routeClient.getDirections(origin, dest) for driver → next stop.
 
 async function fetchDirectionsPolyline(
-  stops: LatLon[],
-  apiKey: string,
+  stops: { lat: number; lon: number }[],
 ): Promise<{ latitude: number; longitude: number }[]> {
   if (stops.length < 2) return [];
-  if (!apiKey) {
-    console.warn('[Directions] EXPO_PUBLIC_GOOGLE_MAPS_API_KEY is not set — showing straight lines');
-    return [];
-  }
-  const origin      = stops[0]!;
-  const destination = stops[stops.length - 1]!;
-  const middle      = stops.slice(1, -1);
-  const wpStr       = middle.length > 0
-    ? `&waypoints=optimize:false|${middle.map((w) => `${w.lat},${w.lon}`).join('|')}`
-    : '';
-  const url = `https://maps.googleapis.com/maps/api/directions/json`
-            + `?origin=${origin.lat},${origin.lon}`
-            + `&destination=${destination.lat},${destination.lon}`
-            + wpStr
-            + `&travelmode=driving`
-            + `&key=${apiKey}`;
   try {
-    const res  = await fetch(url);
-    const data = await res.json() as {
-      status: string;
-      error_message?: string;
-      routes?: { overview_polyline?: { points: string } }[];
-    };
-    if (data.status !== 'OK') {
-      console.warn('[Directions] API returned status:', data.status, data.error_message ?? '');
-      return [];
+    if (stops.length === 2) {
+      return routeClient.getDirections(stops[0]!, stops[1]!);
     }
-    const pts = data.routes?.[0]?.overview_polyline?.points;
-    return pts ? decodePolyline(pts) : [];
+    // Multi-stop: not used in nav path (always 2 points); handled by getRoutePolyline
+    return [];
   } catch (e) {
-    console.warn('[Directions] fetch failed:', e);
+    if (__DEV__) console.warn('[Directions] fetch failed:', e);
     return [];
   }
 }
@@ -377,11 +332,12 @@ export default function DriverTripScreen() {
 
   // ── Fetch road-following polyline for the full route ────────────────────────
   useEffect(() => {
-    if (stops.length < 2) { setRoutePolyline([]); return; }
-    const sorted = [...stops].sort((a, b) => a.sequence - b.sequence);
-    fetchDirectionsPolyline(sorted.map((s) => ({ lat: s.lat, lon: s.lon })), MAPS_API_KEY)
-      .then((pts) => { if (pts.length > 0) setRoutePolyline(pts); });
-  }, [stops]);
+    const routeId = profile?.assignedRouteId;
+    if (!routeId || stops.length < 2) { setRoutePolyline([]); return; }
+    routeClient.getRoutePolyline(routeId)
+      .then((pts) => { if (pts.length > 0) setRoutePolyline(pts); })
+      .catch(() => { /* falls back to straight-line stop markers */ });
+  }, [stops, profile?.assignedRouteId]);
 
   // ── Fetch road-following line from current position to current target stop ──
   // Refetches when target stop changes OR when a location first becomes available
@@ -394,8 +350,8 @@ export default function DriverTripScreen() {
     navFetchingRef.current = true;
     fetchDirectionsPolyline(
       [{ lat: loc.latitude, lon: loc.longitude }, { lat: target.lat, lon: target.lon }],
-      MAPS_API_KEY,
-    ).then((pts) => { setNavPolyline(pts); navFetchingRef.current = false; });
+    ).then((pts) => { setNavPolyline(pts); navFetchingRef.current = false; })
+      .catch(() => { navFetchingRef.current = false; });
   }, [currentStopIdx]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Trigger when stop index or trip changes

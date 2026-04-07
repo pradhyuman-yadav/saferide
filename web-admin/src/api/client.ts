@@ -60,7 +60,7 @@ const ROUTE_URL  = import.meta.env['VITE_ROUTE_SERVICE_URL']  as string ?? 'http
 const TRIP_URL   = import.meta.env['VITE_TRIP_SERVICE_URL']   as string ?? 'http://localhost:4004';
 
 export const tenantApi = {
-  list:       ()               => apiFetch<unknown[]>(TENANT_URL, '/api/v1/tenants'),
+  list:       ()               => apiFetch<{ id: string; name: string; status: string }[]>(TENANT_URL, '/api/v1/tenants'),
   getById:    (id: string)     => apiFetch<unknown>(TENANT_URL, `/api/v1/tenants/${id}`),
   create:     (body: unknown)  => apiFetch<unknown>(TENANT_URL, '/api/v1/tenants', { method: 'POST', body: JSON.stringify(body) }),
   suspend:    (id: string)     => apiFetch<void>(TENANT_URL, `/api/v1/tenants/${id}/suspend`, { method: 'PATCH' }),
@@ -126,9 +126,24 @@ export const routeApi = {
     apiFetch<void>(ROUTE_URL, `/api/v1/students/${id}`, { method: 'DELETE' }),
 };
 
+// ── Trip Service (webhook management) ─────────────────────────────────────
+
+import type { Webhook, WebhookDelivery, CreateWebhookInput } from '@/types/webhook';
+
+export const webhookApi = {
+  list:           ()                         => apiFetch<Webhook[]>(TRIP_URL, '/api/v1/webhooks'),
+  create:         (body: CreateWebhookInput) => apiFetch<Webhook>(TRIP_URL, '/api/v1/webhooks', { method: 'POST', body: JSON.stringify(body) }),
+  delete:         (id: string)               => apiFetch<void>(TRIP_URL, `/api/v1/webhooks/${id}`, { method: 'DELETE' }),
+  listDeliveries: (id: string)               => apiFetch<WebhookDelivery[]>(TRIP_URL, `/api/v1/webhooks/${id}/deliveries`),
+};
+
 // ── Trip Service ───────────────────────────────────────────────────────────────
 
 export const tripApi = {
+  listAllHistory: () =>
+    apiFetch<Trip[]>(TRIP_URL, '/api/v1/trips/all-history'),
+  listTenantHistory: () =>
+    apiFetch<Trip[]>(TRIP_URL, '/api/v1/trips/tenant-history'),
   // Manager/admin views
   getActiveForBus: (busId: string) =>
     apiFetch<Trip | null>(TRIP_URL, `/api/v1/trips/bus/${busId}/active`),

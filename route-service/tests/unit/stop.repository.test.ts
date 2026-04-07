@@ -101,6 +101,8 @@ describe('StopRepository', () => {
   });
 
   it('update() calls doc.update() with fields plus a fresh updatedAt', async () => {
+    const data = makeStopData();
+    mockDocRef.get.mockResolvedValue({ exists: true, id: 'stop-001', data: () => data });
     mockDocRef.update.mockResolvedValue(undefined);
 
     const before = Date.now();
@@ -114,9 +116,11 @@ describe('StopRepository', () => {
   });
 
   it('remove() calls doc.delete()', async () => {
+    const data = makeStopData();
+    mockDocRef.get.mockResolvedValue({ exists: true, id: 'stop-001', data: () => data });
     mockDocRef.delete.mockResolvedValue(undefined);
 
-    await repo.remove('stop-001');
+    await repo.remove('stop-001', 'tenant-001');
 
     expect(mockCollection.doc).toHaveBeenCalledWith('stop-001');
     expect(mockDocRef.delete).toHaveBeenCalledOnce();

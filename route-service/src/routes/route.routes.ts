@@ -1,8 +1,14 @@
-import { Router } from 'express';
+import { Router }   from 'express';
+import { z }        from 'zod';
 import { verifyJwt, requireRole, readRateLimiter, validateBody } from '@saferide/middleware';
 import { CreateRouteSchema, UpdateRouteSchema, CreateStopSchema, UpdateStopSchema } from '@saferide/types';
 import { RouteController } from '../controllers/route.controller';
-import { StopController } from '../controllers/stop.controller';
+import { StopController }  from '../controllers/stop.controller';
+
+const DirectionsSchema = z.object({
+  origin:      z.object({ lat: z.number(), lon: z.number() }),
+  destination: z.object({ lat: z.number(), lon: z.number() }),
+});
 
 const routeController = new RouteController();
 const stopController  = new StopController();
@@ -21,11 +27,27 @@ routeRouter.get(
   (req, res, next) => { routeController.list(req, res).catch(next); },
 );
 
+// POST /api/v1/routes/directions — driver: proxy Directions API call (no key in app bundle)
+// Must be registered BEFORE /:id so "directions" is not consumed as an id param.
+routeRouter.post(
+  '/directions',
+  requireRole('driver', 'school_admin', 'manager'),
+  validateBody(DirectionsSchema),
+  (req, res, next) => { routeController.getDirections(req, res).catch(next); },
+);
+
 // GET /api/v1/routes/:id
 routeRouter.get(
   '/:id',
   requireRole('school_admin', 'manager', 'driver'),
   (req, res, next) => { routeController.getById(req, res).catch(next); },
+);
+
+// GET /api/v1/routes/:id/polyline — full route road-following polyline
+routeRouter.get(
+  '/:id/polyline',
+  requireRole('school_admin', 'manager', 'driver'),
+  (req, res, next) => { routeController.getPolyline(req, res).catch(next); },
 );
 
 // POST /api/v1/routes

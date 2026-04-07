@@ -7,7 +7,13 @@ import { app } from './app';
 initFirebaseAdmin();
 
 app.listen(config.PORT, () => {
-  logger.info({ port: config.PORT, env: config.NODE_ENV }, 'route-service started');
+  logger.info({
+    port:             config.PORT,
+    env:              config.NODE_ENV,
+    logLevel:         config.LOG_LEVEL,
+    corsOrigins:      config.CORS_ORIGINS,
+    mapsConfigured:   Boolean(config.GOOGLE_MAPS_DIRECTIONS_KEY),
+  }, 'route-service started');
 });
 
 export default app;

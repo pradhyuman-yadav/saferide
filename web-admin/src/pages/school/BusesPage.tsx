@@ -1,7 +1,8 @@
 import { Fragment, useState, useEffect, type FormEvent } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { routeApi } from '@/api/client';
-import type { Bus } from '@/types/bus';
+import type { Bus, VehicleType } from '@/types/bus';
+import { VEHICLE_TYPE_LABELS } from '@/types/bus';
 import type { Driver } from '@/types/driver';
 import type { Route } from '@/types/route';
 import './buses.css';
@@ -40,11 +41,12 @@ export function BusesPage() {
   const [assignError,     setAssignError]     = useState<string | null>(null);
 
   // ── Form fields ───────────────────────────────────────────────────────────
-  const [regNumber, setRegNumber] = useState('');
-  const [make,      setMake]      = useState('');
-  const [model,     setModel]     = useState('');
-  const [year,      setYear]      = useState<number>(CURRENT_YEAR);
-  const [capacity,  setCapacity]  = useState<number>(40);
+  const [regNumber,    setRegNumber]    = useState('');
+  const [make,         setMake]         = useState('');
+  const [model,        setModel]        = useState('');
+  const [year,         setYear]         = useState<number>(CURRENT_YEAR);
+  const [capacity,     setCapacity]     = useState<number>(40);
+  const [vehicleType,  setVehicleType]  = useState<VehicleType>('bus');
 
   useEffect(() => {
     let cancelled = false;
@@ -64,7 +66,7 @@ export function BusesPage() {
 
   function resetForm() {
     setRegNumber(''); setMake(''); setModel('');
-    setYear(CURRENT_YEAR); setCapacity(40); setFormError(null);
+    setYear(CURRENT_YEAR); setCapacity(40); setVehicleType('bus'); setFormError(null);
   }
 
   function closeAssign() {
@@ -95,6 +97,7 @@ export function BusesPage() {
         model:              model.trim(),
         year,
         capacity,
+        vehicleType,
       });
       setBuses((prev) => [newBus, ...prev]);
       setShowForm(false);
@@ -217,6 +220,19 @@ export function BusesPage() {
                   disabled={isSubmitting} />
               </div>
 
+              <div className="form-field">
+                <label className="form-label" htmlFor="busVehicleType">Vehicle type</label>
+                <select id="busVehicleType" className="form-input"
+                  value={vehicleType}
+                  onChange={(e) => setVehicleType(e.target.value as VehicleType)}
+                  disabled={isSubmitting}
+                >
+                  {(Object.entries(VEHICLE_TYPE_LABELS) as [VehicleType, string][]).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </div>
+
             </div>
 
             <div className="bus-form-actions">
@@ -252,6 +268,7 @@ export function BusesPage() {
               <col />                              {/* Make & Model — flex, shows more on wide screens */}
               <col style={{ width: '80px' }} />   {/* Year */}
               <col style={{ width: '96px' }} />   {/* Capacity */}
+              <col style={{ width: '104px' }} />  {/* Type */}
               <col style={{ width: '180px' }} />  {/* Driver */}
               <col style={{ width: '180px' }} />  {/* Route */}
               <col style={{ width: '112px' }} />  {/* Status */}
@@ -263,6 +280,7 @@ export function BusesPage() {
                 <th>Make &amp; Model</th>
                 <th>Year</th>
                 <th>Capacity</th>
+                <th>Type</th>
                 <th>Driver</th>
                 <th>Route</th>
                 <th>Status</th>
@@ -277,6 +295,7 @@ export function BusesPage() {
                     <td className="buses-table-make" title={`${bus.make} ${bus.model}`}>{bus.make} {bus.model}</td>
                     <td className="buses-table-nowrap">{bus.year}</td>
                     <td className="buses-table-nowrap">{bus.capacity}</td>
+                    <td className="buses-table-nowrap">{VEHICLE_TYPE_LABELS[bus.vehicleType] ?? bus.vehicleType}</td>
                     <td className="buses-table-nowrap" title={bus.driverId !== null ? driverLabel(bus.driverId) : undefined}>
                       {bus.driverId !== null
                         ? <span className="driver-bus-assigned">{driverLabel(bus.driverId)}</span>
@@ -323,7 +342,7 @@ export function BusesPage() {
                   {/* Inline assignment panel */}
                   {assigningBusId === bus.id && assignPanel !== null && (
                     <tr className="driver-assign-row">
-                      <td colSpan={8}>
+                      <td colSpan={9}>
                         <div className="driver-assign-panel">
                           <span className="driver-assign-label">
                             {assignPanel === 'driver' ? `Assign driver to ${bus.registrationNumber}` : `Assign route to ${bus.registrationNumber}`}

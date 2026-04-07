@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type FormEvent, Fragment } from 'react';
+import { useState, useEffect, useRef, type FormEvent, type ChangeEvent, Fragment } from 'react';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { routeApi } from '@/api/client';
 import type { Student } from '@/types/student';
@@ -10,6 +10,117 @@ import './drivers.css';
 import './students.css';
 
 const COL_COUNT = 8;
+
+// ── CSV helpers ───────────────────────────────────────────────────────────────
+
+interface CsvRow {
+  name:        string;
+  parentName:  string;
+  parentPhone: string;
+  parentEmail: string;
+}
+
+/** Parse a single CSV line into fields, supporting quoted values. */
+function parseCsvLine(line: string): string[] {
+  const fields: string[] = [];
+  let i = 0;
+  while (i < line.length) {
+    if (line[i] === '"') {
+      i++; // skip opening quote
+      let field = '';
+      while (i < line.length) {
+        if (line[i] === '"' && line[i + 1] === '"') {
+          field += '"';
+          i += 2;
+        } else if (line[i] === '"') {
+          i++; // skip closing quote
+          break;
+        } else {
+          field += line[i++];
+        }
+      }
+      fields.push(field);
+      if (line[i] === ',') i++;
+    } else {
+      const end = line.indexOf(',', i);
+      if (end < 0) {
+        fields.push(line.slice(i));
+        break;
+      }
+      fields.push(line.slice(i, end));
+      i = end + 1;
+    }
+  }
+  return fields;
+}
+
+interface ParseResult {
+  rows:   CsvRow[];
+  errors: string[];
+}
+
+function parseCsv(text: string): ParseResult {
+  // Destructure to avoid noUncheckedIndexedAccess issues on lines[0] / lines[i]
+  const [headerLine, ...dataLines] = text
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .split('\n')
+    .filter((l) => l.trim() !== '');
+
+  if (!headerLine || dataLines.length === 0) {
+    return { rows: [], errors: ['CSV must have a header row and at least one data row.'] };
+  }
+
+  const headers = parseCsvLine(headerLine).map((h) => h.toLowerCase().replace(/\s+/g, ''));
+  const col = {
+    name:        headers.indexOf('name'),
+    parentName:  headers.indexOf('parentname'),
+    parentPhone: headers.indexOf('parentphone'),
+    parentEmail: headers.indexOf('parentemail'),
+  };
+
+  const missingCols: string[] = [];
+  if (col.name < 0)        missingCols.push('name');
+  if (col.parentName < 0)  missingCols.push('parentName');
+  if (col.parentPhone < 0) missingCols.push('parentPhone');
+  if (col.parentEmail < 0) missingCols.push('parentEmail');
+  if (missingCols.length > 0) {
+    return {
+      rows: [],
+      errors: [`Missing required columns: ${missingCols.join(', ')}. Expected header: name,parentName,parentPhone,parentEmail`],
+    };
+  }
+
+  const rows: CsvRow[] = [];
+  const errors: string[] = [];
+
+  dataLines.forEach((line, idx) => {
+    const fields = parseCsvLine(line);
+    const row: CsvRow = {
+      name:        (fields[col.name] ?? '').trim(),
+      parentName:  (fields[col.parentName] ?? '').trim(),
+      parentPhone: (fields[col.parentPhone] ?? '').trim(),
+      parentEmail: (fields[col.parentEmail] ?? '').trim(),
+    };
+    const missingFields: string[] = [];
+    if (!row.name)        missingFields.push('name');
+    if (!row.parentName)  missingFields.push('parentName');
+    if (!row.parentPhone) missingFields.push('parentPhone');
+    if (!row.parentEmail) missingFields.push('parentEmail');
+    if (missingFields.length > 0) {
+      errors.push(`Row ${idx + 1}: missing ${missingFields.join(', ')}`);
+    } else {
+      rows.push(row);
+    }
+  });
+
+  return { rows, errors };
+}
+
+const CSV_TEMPLATE = 'name,parentName,parentPhone,parentEmail\nArjun Sharma,Priya Sharma,9876543210,priya@example.com';
+const CSV_TEMPLATE_URL = `data:text/csv;charset=utf-8,${encodeURIComponent(CSV_TEMPLATE)}`;
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export function StudentsPage() {
   usePageTitle('Students');
@@ -30,6 +141,14 @@ export function StudentsPage() {
   const [parentName,   setParentName]   = useState('');
   const [parentPhone,  setParentPhone]  = useState('');
   const [parentEmail,  setParentEmail]  = useState('');
+
+  // ── CSV import ───────────────────────────────────────────────────────────
+  const csvFileRef = useRef<HTMLInputElement>(null);
+  const [csvRows,      setCsvRows]   = useState<CsvRow[] | null>(null);
+  const [csvErrors,    setCsvErrors] = useState<string[]>([]);
+  const [csvImporting, setCsvImporting] = useState(false);
+  const [csvProgress,  setCsvProgress] = useState(0);
+  const [csvDone,      setCsvDone]   = useState<{ ok: number; failed: number } | null>(null);
 
   // ── Deactivate ───────────────────────────────────────────────────────────
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -119,7 +238,65 @@ export function StudentsPage() {
     return bus ? `${bus.registrationNumber} — ${bus.make} ${bus.model}` : busId;
   }
 
-  // ── Handlers ─────────────────────────────────────────────────────────────
+  // ── CSV import handlers ───────────────────────────────────────────────────
+
+  function clearCsv() {
+    setCsvRows(null);
+    setCsvErrors([]);
+    setCsvProgress(0);
+    setCsvDone(null);
+    setCsvImporting(false);
+    if (csvFileRef.current) csvFileRef.current.value = '';
+  }
+
+  function handleCsvFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCsvDone(null);
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      const { rows, errors } = parseCsv(text);
+      setCsvRows(rows);
+      setCsvErrors(errors);
+      setCsvProgress(0);
+    };
+    reader.readAsText(file);
+  }
+
+  async function handleCsvImport() {
+    if (!csvRows || csvRows.length === 0) return;
+    setCsvImporting(true);
+    setCsvProgress(0);
+
+    let ok = 0;
+    let failed = 0;
+    const CONCURRENCY = 5;
+
+    for (let i = 0; i < csvRows.length; i += CONCURRENCY) {
+      const chunk = csvRows.slice(i, i + CONCURRENCY);
+      await Promise.all(
+        chunk.map(async (row) => {
+          try {
+            const created = await routeApi.createStudent(row);
+            setStudents((prev) => [created, ...prev]);
+            ok++;
+          } catch {
+            failed++;
+          }
+          setCsvProgress((p) => p + 1);
+        }),
+      );
+    }
+
+    setCsvImporting(false);
+    setCsvDone({ ok, failed });
+    setCsvRows(null);
+    if (csvFileRef.current) csvFileRef.current.value = '';
+  }
+
+  // ── Form handlers ─────────────────────────────────────────────────────────
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setFormError(null);
@@ -203,14 +380,110 @@ export function StudentsPage() {
       {/* Header */}
       <div className="page-header-row">
         <h1 className="page-heading">Students</h1>
-        {!showForm && (
-          <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
-            Add student
-          </button>
-        )}
+        <div className="csv-header-actions">
+          {/* Hidden file input — triggered by the Import CSV button */}
+          <input
+            ref={csvFileRef}
+            type="file"
+            accept=".csv,text/csv"
+            style={{ display: 'none' }}
+            onChange={handleCsvFileChange}
+          />
+          {!showForm && (
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => csvFileRef.current?.click()}
+              disabled={csvImporting}
+            >
+              Import CSV
+            </button>
+          )}
+          {!showForm && (
+            <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
+              Add student
+            </button>
+          )}
+        </div>
       </div>
 
       {loadError !== null && <p className="page-error" role="alert">{loadError}</p>}
+
+      {/* ── CSV import result banner ──────────────────────────────────────── */}
+      {csvDone !== null && (
+        <div className={`csv-result-banner ${csvDone.failed > 0 ? 'csv-result-banner--partial' : 'csv-result-banner--ok'}`}>
+          <span>
+            {csvDone.ok > 0 && `${csvDone.ok} student${csvDone.ok !== 1 ? 's' : ''} imported.`}
+            {csvDone.failed > 0 && ` ${csvDone.failed} failed (already exists or invalid email).`}
+          </span>
+          <button type="button" className="csv-dismiss" onClick={() => setCsvDone(null)}>Dismiss</button>
+        </div>
+      )}
+
+      {/* ── CSV preview card ──────────────────────────────────────────────── */}
+      {csvRows !== null && (
+        <div className="bus-form-card csv-preview-card">
+          <div className="csv-preview-header">
+            <h2 className="bus-form-heading" style={{ marginBottom: 0 }}>Import students</h2>
+            <a className="btn-text csv-template-link" href={CSV_TEMPLATE_URL} download="students_template.csv">
+              Download template
+            </a>
+          </div>
+
+          {csvErrors.length > 0 && (
+            <div className="csv-errors">
+              <p className="csv-errors-title">
+                {csvErrors.length} row{csvErrors.length !== 1 ? 's' : ''} with errors — these will be skipped:
+              </p>
+              <ul className="csv-errors-list">
+                {csvErrors.slice(0, 5).map((e, i) => <li key={i}>{e}</li>)}
+                {csvErrors.length > 5 && <li>…and {csvErrors.length - 5} more</li>}
+              </ul>
+            </div>
+          )}
+
+          {csvRows.length > 0 ? (
+            <>
+              <p className="csv-preview-count">
+                <strong>{csvRows.length}</strong> student{csvRows.length !== 1 ? 's' : ''} ready to import
+              </p>
+
+              {csvImporting && (
+                <div className="csv-progress">
+                  <div
+                    className="csv-progress-bar"
+                    style={{ width: `${Math.round((csvProgress / csvRows.length) * 100)}%` }}
+                  />
+                  <span className="csv-progress-label">{csvProgress} / {csvRows.length}</span>
+                </div>
+              )}
+
+              <div className="bus-form-actions">
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => { void handleCsvImport(); }}
+                  disabled={csvImporting}
+                >
+                  {csvImporting
+                    ? <span className="bus-form-loading"><span className="spinner spinner--sm" />Importing</span>
+                    : `Import ${csvRows.length} student${csvRows.length !== 1 ? 's' : ''}`}
+                </button>
+                <button type="button" className="btn-ghost" onClick={clearCsv} disabled={csvImporting}>
+                  Cancel
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="csv-no-valid-rows">
+              <p>No valid rows found. Check the errors above and re-upload.</p>
+              <div className="bus-form-actions">
+                <button type="button" className="btn-ghost" onClick={clearCsv}>Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Add Student Form ─────────────────────────────────────────────── */}
       {showForm && (
@@ -269,9 +542,14 @@ export function StudentsPage() {
       ) : students.length === 0 ? (
         <div className="empty-state">
           <p className="empty-state-message">No students yet.</p>
-          <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
-            Add first student
-          </button>
+          <div className="empty-state-actions">
+            <button type="button" className="btn-primary" onClick={() => setShowForm(true)}>
+              Add first student
+            </button>
+            <button type="button" className="btn-ghost" onClick={() => csvFileRef.current?.click()}>
+              Import CSV
+            </button>
+          </div>
         </div>
       ) : (
         <div className="buses-table-wrapper">

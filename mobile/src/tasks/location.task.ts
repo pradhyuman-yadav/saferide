@@ -19,13 +19,28 @@ export const LOCATION_TASK_NAME = 'saferide-background-location';
 
 const ACTIVE_TRIP_KEY = 'saferide_active_trip_id';
 
+// ── Accuracy constants ────────────────────────────────────────────────────────
+
+/** Horizontal accuracy ceiling (metres). Fixes worse than this come from
+ *  urban canyons, tunnels, or cold GPS starts. Sending them would put the
+ *  bus marker in the wrong location on the parent's map. */
+const MAX_ACCURACY_METRES = 50;
+
+/** Maximum plausible speed for a school bus (km/h). Anything higher is a
+ *  GPS position jump — the device briefly thought it teleported. */
+const MAX_SPEED_KMH = 120;
+
+/** Minimum speed to trust the compass heading (km/h). Below this the bus is
+ *  effectively stationary and the heading reading is unreliable noise. */
+const MIN_SPEED_FOR_HEADING_KMH = 3;
+
 // ── Task definition ────────────────────────────────────────────────────────────
 // Must be called at module scope (top level of a file imported by the app root)
 // before any navigation or async work.
 
 TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
   if (error) {
-    console.error('[LocationTask] error:', error.message);
+    if (__DEV__) console.error('[LocationTask] error:', error.message);
     return;
   }
 
@@ -36,17 +51,31 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
   const tripId = await SecureStore.getItemAsync(ACTIVE_TRIP_KEY);
   if (!tripId) return; // trip ended while we were sleeping
 
-  // Use the most recent location in the batch
-  const loc = locations[locations.length - 1];
-  if (!loc) return;
+  // Pick the most accurate fix in the batch (lowest accuracy radius = best fix)
+  const best = locations.reduce((prev, curr) => {
+    const pa = prev.coords.accuracy ?? Infinity;
+    const ca = curr.coords.accuracy ?? Infinity;
+    return ca < pa ? curr : prev;
+  });
+
+  // Discard fixes that are too imprecise (urban canyons, tunnels, cold GPS start)
+  if (best.coords.accuracy !== null && best.coords.accuracy > MAX_ACCURACY_METRES) return;
+
+  const speedKmh = best.coords.speed !== null ? best.coords.speed * 3.6 : undefined;
+
+  // Discard implausible position jumps (GPS glitch — bus cannot move this fast)
+  if (speedKmh !== undefined && speedKmh > MAX_SPEED_KMH) return;
 
   const ping = {
-    lat:        loc.coords.latitude,
-    lon:        loc.coords.longitude,
-    speed:      loc.coords.speed   !== null ? loc.coords.speed   * 3.6 : undefined, // m/s → km/h
-    heading:    loc.coords.heading !== null ? loc.coords.heading        : undefined,
-    accuracy:   loc.coords.accuracy !== null ? loc.coords.accuracy      : undefined,
-    recordedAt: loc.timestamp,
+    lat:        best.coords.latitude,
+    lon:        best.coords.longitude,
+    speed:      speedKmh,
+    // Heading is unreliable noise when the bus is stationary — omit it
+    heading:    (speedKmh !== undefined && speedKmh >= MIN_SPEED_FOR_HEADING_KMH && best.coords.heading !== null)
+                  ? best.coords.heading
+                  : undefined,
+    accuracy:   best.coords.accuracy !== null ? best.coords.accuracy : undefined,
+    recordedAt: best.timestamp,
   };
 
   try {
@@ -58,7 +87,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
       // No valid Firebase session — stale key left over from a crash or force-kill.
       // Self-heal: clear the key and stop the task so it never fires again until
       // the driver explicitly starts a new trip.
-      console.warn('[LocationTask] no active session — clearing stale trip key and stopping task');
+      if (__DEV__) console.warn('[LocationTask] no active session — clearing stale trip key and stopping task');
       await SecureStore.deleteItemAsync(ACTIVE_TRIP_KEY);
       try {
         await Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME);
@@ -68,8 +97,8 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
       return;
     }
 
-    // Transient network/server error — log and continue; next interval will retry
-    console.warn('[LocationTask] failed to send ping:', msg);
+    // Transient network/server error — swallow silently in production; next interval will retry
+    if (__DEV__) console.warn('[LocationTask] failed to send ping:', msg);
   }
 });
 
@@ -96,7 +125,7 @@ export async function startLocationTracking(tripId: string): Promise<boolean> {
   await SecureStore.setItemAsync(ACTIVE_TRIP_KEY, tripId);
 
   await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-    accuracy:               Location.Accuracy.High,
+    accuracy:               Location.Accuracy.BestForNavigation,
     timeInterval:           10_000, // 10 seconds — well within 60/min rate limit
     distanceInterval:       0,      // always fire on interval, not distance
     showsBackgroundLocationIndicator: true,

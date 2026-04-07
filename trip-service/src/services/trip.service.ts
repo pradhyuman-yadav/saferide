@@ -1,9 +1,11 @@
 import type { Trip, StartTripInput } from '@saferide/types';
 import { getRtdb } from '@saferide/firebase-admin';
-import { logger } from '@saferide/logger';
+import { createServiceLogger } from '@saferide/logger';
 import { TripRepository } from '../repositories/trip.repository';
 import { NotificationService } from './notification.service';
 import { WebhookService } from './webhook.service';
+
+const log = createServiceLogger('trip');
 
 const repo          = new TripRepository();
 const notifications = new NotificationService();
@@ -51,7 +53,10 @@ export class TripService {
 
   async getTrip(id: string, tenantId: string): Promise<Trip> {
     const trip = await this.findTrip(id, tenantId);
-    if (trip === null) throw new Error('TRIP_NOT_FOUND');
+    if (trip === null) {
+      log.warn({ tripId: id, tenantId }, 'trip not found');
+      throw new Error('TRIP_NOT_FOUND');
+    }
     return trip;
   }
 
@@ -61,7 +66,10 @@ export class TripService {
    */
   async startTrip(input: StartTripInput, driverId: string, tenantId: string): Promise<Trip> {
     const existing = await repo.findActiveByDriverId(driverId, tenantId);
-    if (existing !== null) throw new Error('TRIP_ALREADY_ACTIVE');
+    if (existing !== null) {
+      log.warn({ driverId, tenantId, existingTripId: existing.id }, 'driver already has an active trip');
+      throw new Error('TRIP_ALREADY_ACTIVE');
+    }
 
     const now    = Date.now();
     const tripId = await repo.create({
@@ -77,6 +85,11 @@ export class TripService {
 
     const created = await repo.findById(tripId, tenantId);
     if (created === null) throw new Error('Failed to retrieve created trip');
+
+    log.info(
+      { tripId: created.id, driverId, busId: created.busId, routeId: created.routeId, tenantId },
+      'trip started',
+    );
 
     // Notify parents that the bus is on the way (fire-and-forget)
     void notifications.notifyParentsOfBus(
@@ -101,10 +114,17 @@ export class TripService {
    */
   async endTrip(tripId: string, driverId: string, tenantId: string): Promise<Trip> {
     const trip = await this.getTrip(tripId, tenantId);
-    if (trip.driverId !== driverId) throw new Error('TRIP_NOT_OWNED');
-    if (trip.status === 'ended') throw new Error('TRIP_ALREADY_ENDED');
+    if (trip.driverId !== driverId) {
+      log.warn({ tripId, driverId, ownerDriverId: trip.driverId, tenantId }, 'endTrip rejected — driver does not own this trip');
+      throw new Error('TRIP_NOT_OWNED');
+    }
+    if (trip.status === 'ended') {
+      log.warn({ tripId, tenantId }, 'endTrip rejected — trip already ended');
+      throw new Error('TRIP_ALREADY_ENDED');
+    }
 
-    await repo.update(tripId, tenantId, { status: 'ended', endedAt: Date.now() });
+    const endedAt = Date.now();
+    await repo.update(tripId, tenantId, { status: 'ended', endedAt });
 
     // Remove RTDB node — connected clients receive null immediately,
     // which the mobile hook interprets as "bus offline"
@@ -119,6 +139,14 @@ export class TripService {
 
     const updated = await repo.findById(tripId, tenantId);
     if (updated === null) throw new Error('Failed to retrieve updated trip');
+
+    const durationMinutes = trip.startedAt
+      ? Math.round((endedAt - trip.startedAt) / 60_000)
+      : null;
+    log.info(
+      { tripId, driverId, busId: trip.busId, routeId: trip.routeId, tenantId, durationMinutes },
+      'trip ended',
+    );
 
     void webhooks.deliverEvent('trip.ended', {
       tripId:    updated.id,
@@ -144,8 +172,14 @@ export class TripService {
    */
   async sendSOS(tripId: string, driverId: string, tenantId: string): Promise<Trip> {
     const trip = await this.getTrip(tripId, tenantId);
-    if (trip.driverId !== driverId)  throw new Error('TRIP_NOT_OWNED');
-    if (trip.status === 'ended')     throw new Error('TRIP_ALREADY_ENDED');
+    if (trip.driverId !== driverId) {
+      log.warn({ tripId, driverId, ownerDriverId: trip.driverId, tenantId }, 'sendSOS rejected — driver does not own this trip');
+      throw new Error('TRIP_NOT_OWNED');
+    }
+    if (trip.status === 'ended') {
+      log.warn({ tripId, tenantId }, 'sendSOS rejected — trip already ended');
+      throw new Error('TRIP_ALREADY_ENDED');
+    }
 
     const now = Date.now();
     await repo.setSosStatus(tripId, tenantId, true, now);
@@ -156,7 +190,7 @@ export class TripService {
       'SOS Alert',
       'A driver has triggered an SOS alert. Open SafeRide to respond.',
     );
-    logger.warn({ tripId, busId: trip.busId, tenantId }, 'SOS activated');
+    log.warn({ tripId, busId: trip.busId, driverId, tenantId }, 'SOS activated');
 
     const updated = await repo.findById(tripId, tenantId);
     if (updated === null) throw new Error('Failed to retrieve updated trip');
@@ -177,7 +211,10 @@ export class TripService {
    */
   async cancelSOS(tripId: string, driverId: string, tenantId: string): Promise<Trip> {
     const trip = await this.getTrip(tripId, tenantId);
-    if (trip.driverId !== driverId) throw new Error('TRIP_NOT_OWNED');
+    if (trip.driverId !== driverId) {
+      log.warn({ tripId, driverId, ownerDriverId: trip.driverId, tenantId }, 'cancelSOS rejected — driver does not own this trip');
+      throw new Error('TRIP_NOT_OWNED');
+    }
 
     await repo.setSosStatus(tripId, tenantId, false);
 
@@ -187,7 +224,7 @@ export class TripService {
       'SOS Resolved',
       'The SOS alert has been cancelled by the driver.',
     );
-    logger.info({ tripId, tenantId }, 'SOS cancelled');
+    log.info({ tripId, busId: trip.busId, driverId, tenantId }, 'SOS cancelled');
 
     const updated = await repo.findById(tripId, tenantId);
     if (updated === null) throw new Error('Failed to retrieve updated trip');

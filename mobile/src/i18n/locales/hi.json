@@ -69,6 +69,9 @@
     "notifSms": "SMS बैकअप",
     "signOut": "साइन आउट",
     "signOutMessage": "आप SafeRide से साइन आउट हो जाएंगे।",
+    "legal": "कानूनी",
+    "privacyPolicy": "गोपनीयता नीति",
+    "termsOfService": "सेवा की शर्तें",
     "cancel": "रद्द करें",
     "selectLanguage": "भाषा चुनें"
   },

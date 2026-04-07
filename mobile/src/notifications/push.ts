@@ -67,7 +67,7 @@ export async function registerForPushNotifications(uid: string): Promise<string 
   } catch (err) {
     // FCM not configured (missing google-services.json / APNs key).
     // Push notifications will be unavailable but the app continues normally.
-    console.warn('[push] Could not register for push notifications:', err);
+    if (__DEV__) console.warn('[push] Could not register for push notifications:', err);
     return null;
   }
 }

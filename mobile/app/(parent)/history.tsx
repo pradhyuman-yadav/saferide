@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Clock, CheckCircle, AlertCircle } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/auth.store';
 import { tripClient } from '@/api/trip.client';
 import type { Trip } from '@/api/trip.client';
@@ -35,6 +36,7 @@ function durationMin(start: number, end: number): number {
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function ParentHistoryScreen() {
+  const { t }   = useTranslation();
   const profile = useAuthStore((s) => s.profile);
   const busId   = profile?.busId ?? '';
 
@@ -60,9 +62,9 @@ export default function ParentHistoryScreen() {
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <View style={styles.header}>
         <SRText variant="label" color={colors.slate} style={{ marginBottom: spacing[1] }}>
-          Past trips
+          {t('history.heading')}
         </SRText>
-        <SRText variant="heading">Trip history</SRText>
+        <SRText variant="heading">{t('history.heading')}</SRText>
       </View>
 
       {/* ── Content ─────────────────────────────────────────────────────── */}
@@ -74,20 +76,20 @@ export default function ParentHistoryScreen() {
         <View style={styles.center}>
           <AlertCircle size={iconSize.lg} color={colors.gold} strokeWidth={2} />
           <SRText variant="body" color={colors.slate} style={styles.emptyText}>
-            Could not load trip history.
+            {t('history.loadError')}
           </SRText>
         </View>
       ) : !busId ? (
         <View style={styles.center}>
           <SRText variant="body" color={colors.slate} style={styles.emptyText}>
-            No bus assigned to your child yet.
+            {t('history.noBus')}
           </SRText>
         </View>
       ) : trips.length === 0 ? (
         <View style={styles.center}>
           <Clock size={iconSize.xl} color={colors.stone} strokeWidth={1.5} />
           <SRText variant="body" color={colors.slate} style={styles.emptyText}>
-            No trips recorded yet.
+            {t('history.empty')}
           </SRText>
         </View>
       ) : (
@@ -115,19 +117,19 @@ export default function ParentHistoryScreen() {
                   </SRText>
                   <SRText variant="caption" color={colors.slate}>
                     {formatTime(trip.startedAt)}
-                    {trip.endedAt ? ` – ${formatTime(trip.endedAt)}` : ' – ongoing'}
+                    {trip.endedAt ? ` – ${formatTime(trip.endedAt)}` : ` – ${t('history.ongoing')}`}
                   </SRText>
                 </View>
 
                 {/* Right: badges */}
                 <View style={styles.badges}>
                   <SRBadge
-                    label={isCompleted ? 'Completed' : 'Active'}
+                    label={isCompleted ? t('history.completed') : t('history.active')}
                     variant={isCompleted ? 'active' : 'alert'}
                   />
                   {duration !== null && (
                     <SRText variant="caption" color={colors.slate}>
-                      {`${duration} min`}
+                      {t('history.duration', { n: duration })}
                     </SRText>
                   )}
                 </View>

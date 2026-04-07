@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CheckCircle, Circle, MapPin, Zap, WifiOff } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useLiveTrack } from '@/hooks/useLiveTrack';
 import { useAuthStore } from '@/store/auth.store';
 import { tripClient } from '@/api/trip.client';
@@ -46,6 +47,7 @@ function deriveStops(stops: Stop[], tripStartedAt: number | null, isConnected: b
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function RouteScreen() {
+  const { t }   = useTranslation();
   const profile = useAuthStore((s) => s.profile);
   const busId   = profile?.busId ?? '';
 
@@ -84,8 +86,8 @@ export default function RouteScreen() {
 
   const stops       = deriveStops(rawStops, tripStartedAt, isConnected);
   const speed       = location?.speed;
-  const busLabel    = busId ? `Bus ${busId.slice(-4).toUpperCase()}` : 'Bus —';
-  const driverLabel = driver?.name ?? 'Driver';
+  const busLabel    = busId ? t('route.bus', { id: busId.slice(-4).toUpperCase() }) : 'Bus —';
+  const driverLabel = driver?.name ?? t('route.driver');
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -93,7 +95,7 @@ export default function RouteScreen() {
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <View style={styles.header}>
         <SRText variant="label" color={colors.slate} style={{ marginBottom: spacing[1] }}>
-          Route overview
+          {t('route.routeOverview')}
         </SRText>
         <SRText variant="heading">{routeName ?? '—'}</SRText>
 
@@ -118,7 +120,7 @@ export default function RouteScreen() {
           <View style={styles.offlineNotice}>
             <WifiOff size={13} color={colors.slate} strokeWidth={2} />
             <SRText variant="caption" color={colors.slate}>
-              Bus has not started. ETAs shown when trip begins.
+              {t('route.notStarted')}
             </SRText>
           </View>
         )}
@@ -179,15 +181,15 @@ export default function RouteScreen() {
                   {isConnected && !stop.reached && (
                     <SRText variant="caption" color={colors.slate}>
                       {stop.etaMinutes === 0
-                        ? 'Arriving now'
-                        : `${stop.etaMinutes} min`}
+                        ? t('route.arrivingNow')
+                        : t('route.minutes', { n: stop.etaMinutes })}
                     </SRText>
                   )}
                 </View>
 
                 {/* "Next stop" badge */}
                 {isCurrent && isConnected && (
-                  <SRBadge label="Next stop" variant="alert" />
+                  <SRBadge label={t('route.nextStop')} variant="alert" />
                 )}
               </View>
             );

@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/auth.store';
  *
  * - Loading  → spinner
  * - No user  → /login
- * - Wrong role (super_admin) → /
+ * - Wrong role (super_admin) → /dashboard
  */
 export function SchoolAdminRoute() {
   const user      = useAuthStore((s) => s.user);
@@ -26,7 +26,7 @@ export function SchoolAdminRoute() {
   }
 
   if (profile?.role !== 'school_admin') {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <Outlet />;

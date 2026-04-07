@@ -79,3 +79,151 @@
   padding: var(--space-2) var(--space-3);
   height: 36px;
 }
+
+/* ── CSV Import ──────────────────────────────────────────────────────────── */
+
+/* Header action group — holds Import CSV + Add student buttons */
+.csv-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Preview card layout adjustments */
+.csv-preview-card {
+  max-width: 640px;
+}
+
+.csv-preview-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.csv-template-link {
+  font-size: var(--text-caption);
+  color: var(--slate);
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.csv-template-link:hover {
+  color: var(--forest);
+}
+
+/* Validation error list */
+.csv-errors {
+  background-color: rgba(194, 168, 120, 0.12);
+  border: 1px solid rgba(194, 168, 120, 0.4);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.csv-errors-title {
+  font-size: var(--text-body);
+  color: var(--slate);
+  margin-bottom: var(--space-2);
+}
+
+.csv-errors-list {
+  list-style: disc;
+  padding-left: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.csv-errors-list li {
+  font-size: var(--text-caption);
+  color: var(--slate);
+}
+
+/* Valid row count */
+.csv-preview-count {
+  font-size: var(--text-body);
+  color: var(--ink);
+  margin-bottom: var(--space-4);
+}
+
+/* No valid rows message */
+.csv-no-valid-rows {
+  font-size: var(--text-body);
+  color: var(--slate);
+  margin-bottom: var(--space-4);
+}
+
+/* Progress bar */
+.csv-progress {
+  position: relative;
+  height: 6px;
+  background-color: var(--stone);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-4);
+}
+
+.csv-progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background-color: var(--sage);
+  border-radius: var(--radius-full);
+  transition: width 200ms ease-out;
+}
+
+.csv-progress-label {
+  display: block;
+  text-align: right;
+  font-size: var(--text-caption);
+  color: var(--slate);
+  margin-top: var(--space-1);
+}
+
+/* Result banner */
+.csv-result-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body);
+  max-width: 640px;
+}
+
+.csv-result-banner--ok {
+  background-color: rgba(123, 150, 105, 0.12);
+  border: 1px solid rgba(123, 150, 105, 0.35);
+  color: var(--forest);
+}
+
+.csv-result-banner--partial {
+  background-color: rgba(194, 168, 120, 0.12);
+  border: 1px solid rgba(194, 168, 120, 0.4);
+  color: var(--slate);
+}
+
+.csv-dismiss {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--text-caption);
+  color: var(--slate);
+  white-space: nowrap;
+  padding: 0;
+}
+
+.csv-dismiss:hover {
+  color: var(--forest);
+}
+
+/* Empty state with two buttons */
+.empty-state-actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+  margin-top: var(--space-3);
+}

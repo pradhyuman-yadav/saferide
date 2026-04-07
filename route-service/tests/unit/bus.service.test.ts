@@ -68,9 +68,12 @@ vi.mock('../../src/repositories/student.repository', () => ({
   StudentRepository: vi.fn().mockImplementation(() => studentRepoMock),
 }));
 
+const mockChildLogger = vi.hoisted(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }));
+
 vi.mock('@saferide/logger', () => ({
-  logger:   { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
-  auditLog: vi.fn(),
+  logger:              { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
+  auditLog:            vi.fn(),
+  createServiceLogger: vi.fn().mockReturnValue(mockChildLogger),
 }));
 
 import { BusService } from '../../src/services/bus.service';

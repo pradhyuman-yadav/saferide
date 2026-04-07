@@ -68,6 +68,34 @@ export class RouteController {
     }
   }
 
+  async getPolyline(req: Request, res: Response): Promise<void> {
+    const tenantId = req.user.tenantId;
+    if (tenantId === null) {
+      res.status(403).json({ success: false, error: { code: 'FORBIDDEN', message: 'A school context is required.' } });
+      return;
+    }
+    const { id } = req.params as { id: string };
+    try {
+      const points = await service.getRoutePolyline(id, tenantId);
+      res.json({ success: true, data: points });
+    } catch (err) {
+      if (err instanceof Error && err.message === 'ROUTE_NOT_FOUND') {
+        res.status(404).json({ success: false, error: { code: 'ROUTE_NOT_FOUND', message: 'Route not found.' } });
+        return;
+      }
+      throw err;
+    }
+  }
+
+  async getDirections(req: Request, res: Response): Promise<void> {
+    const { origin, destination } = req.body as {
+      origin:      { lat: number; lon: number };
+      destination: { lat: number; lon: number };
+    };
+    const points = await service.getDirectionsPolyline(origin, destination);
+    res.json({ success: true, data: points });
+  }
+
   async deactivate(req: Request, res: Response): Promise<void> {
     const tenantId = req.user.tenantId;
     if (tenantId === null) {

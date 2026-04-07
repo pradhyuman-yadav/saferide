@@ -33,10 +33,11 @@ export class RouteRepository {
   }
 
   async update(id: string, tenantId: string, updates: UpdateRouteInput | { isActive: boolean }): Promise<void> {
+    const existing = await this.findById(id, tenantId);
+    if (!existing) throw new Error('NOT_FOUND');
     const patch = Object.fromEntries(
       Object.entries(updates).filter(([, v]) => v !== undefined),
     );
     await this.doc(id).update({ ...patch, updatedAt: Date.now() });
-    void tenantId;
   }
 }

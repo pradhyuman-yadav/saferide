@@ -14,10 +14,14 @@ import {
   Switch,
   Alert,
   TouchableOpacity,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LogOut, User, Mail, Phone, Globe, Bus, MapPin } from 'lucide-react-native';
+import { LogOut, User, Mail, Phone, Globe, Bus, MapPin, FileText, Shield } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/store/auth.store';
+import { SUPPORTED_LANGUAGES, setStoredLanguage } from '../../src/i18n';
 import { SRText } from '@/components/ui/SRText';
 import { SRBadge } from '@/components/ui/SRBadge';
 import { colors, spacing, radius, iconSize } from '@/theme';
@@ -25,6 +29,8 @@ import { colors, spacing, radius, iconSize } from '@/theme';
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function ProfileScreen() {
+  const { t } = useTranslation();
+  const router = useRouter();
   const { profile, signOut } = useAuthStore();
 
   // ── Notification preferences (local state; backend persistence in Phase 2) ─
@@ -47,16 +53,29 @@ export default function ProfileScreen() {
   // ── Sign out ────────────────────────────────────────────────────────────────
   function handleSignOut() {
     Alert.alert(
-      'Sign out',
-      'You will be signed out of SafeRide.',
+      t('profile.signOut'),
+      t('profile.signOutMessage'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('profile.cancel'), style: 'cancel' },
         {
-          text: 'Sign out',
+          text: t('profile.signOut'),
           style: 'destructive',
-          onPress: () => void signOut(),
+          onPress: () => {
+            void signOut().then(() => router.replace('/(auth)/welcome'));
+          },
         },
       ],
+    );
+  }
+
+  function handleSelectLanguage() {
+    Alert.alert(
+      t('profile.selectLanguage'),
+      undefined,
+      SUPPORTED_LANGUAGES.map(l => ({
+        text: l.label,
+        onPress: () => void setStoredLanguage(l.code),
+      })),
     );
   }
 
@@ -79,33 +98,33 @@ export default function ProfileScreen() {
             {profile?.name ?? '—'}
           </SRText>
           <View style={{ marginTop: spacing[2] }}>
-            <SRBadge label="Parent" variant="active" />
+            <SRBadge label={t('profile.role')} variant="active" />
           </View>
         </View>
 
         {/* ── Child ───────────────────────────────────────────────────────── */}
         <View style={styles.section}>
           <SRText variant="label" color={colors.slate} style={styles.sectionTitle}>
-            Your child
+            {t('profile.yourChild')}
           </SRText>
           <InfoRow
             icon={<User size={iconSize.sm} color={colors.slate} strokeWidth={2} />}
-            label="Name"
+            label={t('profile.childName')}
             value={profile?.childName ?? '—'}
           />
           <InfoRow
             icon={<User size={iconSize.sm} color={colors.slate} strokeWidth={2} />}
-            label="Class"
+            label={t('profile.childClass')}
             value={profile?.childClass ?? '—'}
           />
           <InfoRow
             icon={<Bus size={iconSize.sm} color={colors.slate} strokeWidth={2} />}
-            label="Bus"
+            label={t('profile.childBus')}
             value={profile?.busId ? `Bus ${profile.busId}` : '—'}
           />
           <InfoRow
             icon={<MapPin size={iconSize.sm} color={colors.slate} strokeWidth={2} />}
-            label="Stop"
+            label={t('profile.childStop')}
             value={profile?.stopId ?? '—'}
             last
           />
@@ -114,47 +133,68 @@ export default function ProfileScreen() {
         {/* ── Account ─────────────────────────────────────────────────────── */}
         <View style={styles.section}>
           <SRText variant="label" color={colors.slate} style={styles.sectionTitle}>
-            Account
+            {t('profile.account')}
           </SRText>
           <InfoRow
             icon={<User size={iconSize.sm} color={colors.slate} strokeWidth={2} />}
-            label="Name"
+            label={t('profile.accountName')}
             value={profile?.name ?? '—'}
           />
           {profile?.email && (
             <InfoRow
               icon={<Mail size={iconSize.sm} color={colors.slate} strokeWidth={2} />}
-              label="Email"
+              label={t('profile.accountEmail')}
               value={profile.email}
             />
           )}
           {profile?.phone && (
             <InfoRow
               icon={<Phone size={iconSize.sm} color={colors.slate} strokeWidth={2} />}
-              label="Phone"
+              label={t('profile.accountPhone')}
               value={profile.phone}
             />
           )}
           <InfoRow
             icon={<Globe size={iconSize.sm} color={colors.slate} strokeWidth={2} />}
-            label="Language"
+            label={t('profile.accountLanguage')}
             value={profile?.preferredLanguage ?? 'English'}
             last
+            onPress={handleSelectLanguage}
           />
         </View>
 
         {/* ── Notifications ───────────────────────────────────────────────── */}
         <View style={styles.section}>
           <SRText variant="label" color={colors.slate} style={styles.sectionTitle}>
-            Notifications
+            {t('profile.notifications')}
           </SRText>
-          <SwitchRow label="Bus departed"       value={notifDeparted} onChange={setDeparted} />
-          <SwitchRow label="10 minutes away"    value={notif10Min}    onChange={set10Min}    />
-          <SwitchRow label="5 minutes away"     value={notif5Min}     onChange={set5Min}     />
-          <SwitchRow label="Arrived at stop"    value={notifStop}     onChange={setStop}     />
-          <SwitchRow label="Arrived at school"  value={notifSchool}   onChange={setSchool}   />
-          <SwitchRow label="Delay alerts"       value={notifDelay}    onChange={setDelay}    />
-          <SwitchRow label="SMS fallback"       value={notifSms}      onChange={setSms}      last />
+          <SwitchRow label={t('profile.notifDeparted')} value={notifDeparted} onChange={setDeparted} />
+          <SwitchRow label={t('profile.notif10min')}    value={notif10Min}    onChange={set10Min}    />
+          <SwitchRow label={t('profile.notif5min')}     value={notif5Min}     onChange={set5Min}     />
+          <SwitchRow label={t('profile.notifStop')}     value={notifStop}     onChange={setStop}     />
+          <SwitchRow label={t('profile.notifSchool')}   value={notifSchool}   onChange={setSchool}   />
+          <SwitchRow label={t('profile.notifDelay')}    value={notifDelay}    onChange={setDelay}    />
+          <SwitchRow label={t('profile.notifSms')}      value={notifSms}      onChange={setSms}      last />
+        </View>
+
+        {/* ── Legal ────────────────────────────────────────────────────────── */}
+        <View style={styles.section}>
+          <SRText variant="label" color={colors.slate} style={styles.sectionTitle}>
+            {t('profile.legal')}
+          </SRText>
+          <InfoRow
+            icon={<Shield size={iconSize.sm} color={colors.slate} strokeWidth={2} />}
+            label={t('profile.privacyPolicy')}
+            value=""
+            onPress={() => { void Linking.openURL('https://saferide.co.in/privacy'); }}
+          />
+          <InfoRow
+            icon={<FileText size={iconSize.sm} color={colors.slate} strokeWidth={2} />}
+            label={t('profile.termsOfService')}
+            value=""
+            last
+            onPress={() => { void Linking.openURL('https://saferide.co.in/terms'); }}
+          />
         </View>
 
         {/* ── Sign out ─────────────────────────────────────────────────────── */}
@@ -165,7 +205,7 @@ export default function ProfileScreen() {
         >
           <LogOut size={iconSize.sm} color={colors.gold} strokeWidth={2} />
           <SRText variant="body" color={colors.gold} style={{ fontWeight: '500' }}>
-            Sign out
+            {t('profile.signOut')}
           </SRText>
         </TouchableOpacity>
 
@@ -177,15 +217,21 @@ export default function ProfileScreen() {
 // ── InfoRow ───────────────────────────────────────────────────────────────────
 
 interface InfoRowProps {
-  icon:  React.ReactNode;
-  label: string;
-  value: string;
-  last?: boolean;
+  icon:     React.ReactNode;
+  label:    string;
+  value:    string;
+  last?:    boolean;
+  onPress?: () => void;
 }
 
-function InfoRow({ icon, label, value, last = false }: InfoRowProps) {
+function InfoRow({ icon, label, value, last = false, onPress }: InfoRowProps) {
   return (
-    <View style={[styles.infoRow, last && styles.infoRowLast]}>
+    <TouchableOpacity
+      style={[styles.infoRow, last && styles.infoRowLast]}
+      onPress={onPress}
+      activeOpacity={onPress ? 0.7 : 1}
+      disabled={!onPress}
+    >
       <View style={styles.infoIcon}>{icon}</View>
       <View style={{ flex: 1 }}>
         <SRText variant="caption" color={colors.slate} style={{ marginBottom: 1 }}>
@@ -195,7 +241,7 @@ function InfoRow({ icon, label, value, last = false }: InfoRowProps) {
           {value}
         </SRText>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
