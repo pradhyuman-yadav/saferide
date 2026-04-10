@@ -1,27 +1,29 @@
 name: Mobile Build & Submit
 
-# Triggered automatically after Deploy Prod succeeds.
+# Triggers on push to release when mobile code changes, or manually.
+# We no longer chain to "Deploy Prod" because deploys are now per-service
+# and mobile builds are independent of which backend service changed.
+#
 # Builds both Android (.aab) and iOS (.ipa) via EAS Cloud, then submits:
-#   Android → Play Console internal track
-#   iOS → App Store Connect / TestFlight
+#   Android → Play Console internal track (via Google Play service account)
+#   iOS     → App Store Connect / TestFlight
 
 on:
-  workflow_run:
-    workflows: ["Deploy Prod"]
-    types: [completed]
+  push:
+    branches: [release]
+    paths:
+      - "mobile/**"
+      - ".github/workflows/mobile.yml"
+  workflow_dispatch:   # manual trigger from GitHub Actions UI
 
 jobs:
   eas:
     name: EAS Build + Submit
     runs-on: ubuntu-latest
 
-    # Only run when the prod deploy actually succeeded (not on failure/cancel)
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-
     steps:
       - uses: actions/checkout@v4
         with:
-          # Checkout the release branch (the one that just deployed)
           ref: release
 
       - uses: pnpm/action-setup@v4
@@ -35,7 +37,8 @@ jobs:
       - name: Install EAS CLI
         run: npm install -g eas-cli
 
-      # ── Inject prod Firebase config files ────────────────────────────────────
+      # ── Inject prod Firebase config files ─────────────────────────────────
+      # These are the full JSON/plist contents stored as GitHub secrets.
       - name: Write google-services.json (Android)
         run: echo '${{ secrets.PROD_GOOGLE_SERVICES_JSON }}' > mobile/google-services.json
 
@@ -44,14 +47,20 @@ jobs:
           mkdir -p mobile/ios
           echo '${{ secrets.PROD_GOOGLE_SERVICE_INFO_PLIST }}' > mobile/ios/GoogleService-Info.plist
 
-      # ── iOS App Store Connect API key ────────────────────────────────────────
+      # ── Google Play service account key ───────────────────────────────────
+      # EAS submit reads GOOGLE_SERVICE_ACCOUNT_KEY env var directly.
+      # No file needed when using env var approach.
+
+      # ── iOS App Store Connect API key ─────────────────────────────────────
+      # EAS reads the key file from this path when APPLE_APP_STORE_CONNECT_KEY_ID
+      # and APPLE_APP_STORE_CONNECT_ISSUER_ID are set.
       - name: Write App Store Connect API key
         run: |
           mkdir -p ~/.appstoreconnect/private_keys
           echo '${{ secrets.APPLE_APP_STORE_CONNECT_API_KEY }}' \
             > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPLE_APP_STORE_CONNECT_KEY_ID }}.p8
 
-      # ── EAS Build — both platforms ────────────────────────────────────────────
+      # ── EAS Build — both platforms ─────────────────────────────────────────
       - name: EAS Build (Android + iOS)
         working-directory: mobile
         run: >
@@ -62,7 +71,6 @@ jobs:
           --wait
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          # Prod API URLs baked into the app bundle
           EXPO_PUBLIC_AUTH_SERVICE_URL:             ${{ secrets.PROD_EXPO_PUBLIC_AUTH_SERVICE_URL }}
           EXPO_PUBLIC_ROUTE_SERVICE_URL:            ${{ secrets.PROD_EXPO_PUBLIC_ROUTE_SERVICE_URL }}
           EXPO_PUBLIC_TRIP_SERVICE_URL:             ${{ secrets.PROD_EXPO_PUBLIC_TRIP_SERVICE_URL }}
@@ -76,14 +84,15 @@ jobs:
           EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.PROD_EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
           EXPO_PUBLIC_FIREBASE_APP_ID:              ${{ secrets.PROD_EXPO_PUBLIC_FIREBASE_APP_ID }}
 
-      # ── EAS Submit ────────────────────────────────────────────────────────────
-      - name: Submit to Play Console (Android internal track)
+      # ── EAS Submit ─────────────────────────────────────────────────────────
+      - name: Submit to Play Console (internal track)
         working-directory: mobile
         run: eas submit --platform android --latest --non-interactive
         env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_TOKEN:                   ${{ secrets.EXPO_TOKEN }}
+          GOOGLE_SERVICE_ACCOUNT_KEY:   ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY }}
 
-      - name: Submit to App Store Connect / TestFlight (iOS)
+      - name: Submit to App Store Connect / TestFlight
         working-directory: mobile
         run: >
           eas submit
@@ -92,6 +101,6 @@ jobs:
           --non-interactive
           --asc-app-id ${{ secrets.APPLE_ASC_APP_ID }}
         env:
-          EXPO_TOKEN:                              ${{ secrets.EXPO_TOKEN }}
-          APPLE_APP_STORE_CONNECT_KEY_ID:          ${{ secrets.APPLE_APP_STORE_CONNECT_KEY_ID }}
-          APPLE_APP_STORE_CONNECT_ISSUER_ID:       ${{ secrets.APPLE_APP_STORE_CONNECT_ISSUER_ID }}
+          EXPO_TOKEN:                            ${{ secrets.EXPO_TOKEN }}
+          APPLE_APP_STORE_CONNECT_KEY_ID:        ${{ secrets.APPLE_APP_STORE_CONNECT_KEY_ID }}
+          APPLE_APP_STORE_CONNECT_ISSUER_ID:     ${{ secrets.APPLE_APP_STORE_CONNECT_ISSUER_ID }}
