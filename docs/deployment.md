@@ -247,16 +247,32 @@ firebase deploy --only firestore:rules,firestore:indexes,database
 
 Run these steps in order. All in `ap-south-1` unless noted.
 
+> **No EC2 instances in this stack.** There are no servers to SSH into, patch, or manage.
+> ECS Fargate runs your containers on AWS-managed compute.
+>
+> Three things below will say "EC2" and confuse you — here's why:
+> - **VPC** — the virtual network Fargate tasks run inside. Every AWS resource needs one.
+>   We use the AWS default VPC so you don't have to configure networking from scratch.
+> - **Security Groups** — firewall rules attached to the VPC. The AWS CLI and Console
+>   put these under the `ec2` command/section even though they apply to Fargate.
+> - **Load Balancers** — the ALB lives under "EC2 → Load Balancers" in the AWS Console.
+>   It is not an EC2 instance. It's a managed AWS service that happens to be grouped there.
+>
+> When you see `aws ec2 ...` in commands below, it means "EC2 API" (the AWS networking API),
+> not "create an EC2 server."
+
 ### 6a. Note your VPC and subnet IDs
 
+VPC = Virtual Private Cloud. It's a private network inside AWS where your resources talk to each other. You need it even for serverless/Fargate deployments.
+
 ```bash
-# Default VPC ID
+# Get the default VPC (already exists in every AWS account — you don't create it)
 VPC_ID=$(aws ec2 describe-vpcs \
   --filters "Name=isDefault,Values=true" \
   --query 'Vpcs[0].VpcId' --output text --region ap-south-1)
 echo "VPC: $VPC_ID"
 
-# Two public subnets in different AZs
+# Get two public subnets in different availability zones (also pre-existing)
 aws ec2 describe-subnets \
   --filters "Name=vpc-id,Values=$VPC_ID" "Name=defaultForAz,Values=true" \
   --query 'Subnets[*].[SubnetId,AvailabilityZone]' \
@@ -266,6 +282,8 @@ aws ec2 describe-subnets \
 Note `SUBNET_A` (ap-south-1a) and `SUBNET_B` (ap-south-1b).
 
 ### 6b. Security groups
+
+Security groups are firewall rules. They control which traffic can reach your Fargate tasks and ALB. No servers involved — these are just network-level allow/deny rules.
 
 ```bash
 # ALB SG — accepts internet traffic on 80 and 443
@@ -482,6 +500,10 @@ ACM checks for these CNAMEs every few minutes and issues the cert automatically.
 Note the **Certificate ARN** after issuance.
 
 ### 6i. Application Load Balancer
+
+The ALB is a managed AWS load balancer — no server, no patching. It lives under
+"EC2 → Load Balancers" in the AWS Console purely for historical reasons; it has
+nothing to do with EC2 instances.
 
 **AWS Console → EC2 → Load Balancers → Create → Application Load Balancer:**
 
