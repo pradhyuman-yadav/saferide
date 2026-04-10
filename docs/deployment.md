@@ -331,13 +331,13 @@ aws iam attach-role-policy \
 
 aws iam put-role-policy \
   --role-name saferide-ecs-execution-role \
-  --policy-name SecretsManagerRead \
+  --policy-name SSMParameterRead \
   --policy-document '{
     "Version":"2012-10-17",
     "Statement":[{
       "Effect":"Allow",
-      "Action":["secretsmanager:GetSecretValue"],
-      "Resource":"arn:aws:secretsmanager:ap-south-1:*:secret:saferide/*"
+      "Action":["ssm:GetParameters","ssm:GetParameter"],
+      "Resource":"arn:aws:ssm:ap-south-1:*:parameter/saferide/*"
     }]
   }'
 
@@ -392,42 +392,48 @@ aws iam create-access-key --user-name saferide-github-actions
 
 The output gives you `AccessKeyId` and `SecretAccessKey`. Add these to GitHub Secrets as `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
 
-### 6e. Secrets Manager
+### 6e. SSM Parameter Store (free — replaces Secrets Manager)
 
-One secret per service, in JSON format. Do this for both `saferide/dev/` and `saferide/prod/` paths.
+SSM Parameter Store Standard tier is **free**. Secrets Manager costs $0.40/secret/month.
+Each env var is stored as a separate `SecureString` parameter, encrypted at rest using the
+default `aws/ssm` KMS key (no charge). ECS injects them at task startup via ARN reference —
+the task definition never contains plaintext values.
 
-**Easiest approach**: AWS Console → Secrets Manager → Store a new secret → Other type → Plaintext tab → paste the JSON.
+Parameter path: `/saferide/{env}/{service}/{KEY}`
 
-```
-Secret name: saferide/prod/auth-service
-Value (JSON):
-{
-  "NODE_ENV": "production",
-  "PORT": "4001",
-  "FIREBASE_SERVICE_ACCOUNT_JSON": "{...single line from Step 5c...}",
-  "FIREBASE_DATABASE_URL": "https://saferide-prod-a4336-default-rtdb.asia-southeast1.firebasedatabase.app",
-  "JWT_PRIVATE_KEY": "-----BEGIN RSA PRIVATE KEY-----\n...",
-  "JWT_PUBLIC_KEY": "-----BEGIN PUBLIC KEY-----\n...",
-  "REDIS_URL": "redis://your-redis-endpoint:6379",
-  "LOG_LEVEL": "info"
+```bash
+# Helper — paste once into your terminal session
+put_param() {
+  aws ssm put-parameter \
+    --name "$1" --value "$2" \
+    --type SecureString --overwrite \
+    --region ap-south-1
 }
+
+# ── auth-service prod ──────────────────────────────────────────────────────────
+put_param "/saferide/prod/auth-service/NODE_ENV"                      "production"
+put_param "/saferide/prod/auth-service/PORT"                          "4001"
+put_param "/saferide/prod/auth-service/FIREBASE_SERVICE_ACCOUNT_JSON" '{"type":"service_account",...}'
+put_param "/saferide/prod/auth-service/FIREBASE_DATABASE_URL"         "https://saferide-prod-a4336-default-rtdb.asia-southeast1.firebasedatabase.app"
+put_param "/saferide/prod/auth-service/JWT_PRIVATE_KEY"               "-----BEGIN RSA PRIVATE KEY-----\n..."
+put_param "/saferide/prod/auth-service/JWT_PUBLIC_KEY"                "-----BEGIN PUBLIC KEY-----\n..."
+put_param "/saferide/prod/auth-service/REDIS_URL"                     "redis://your-redis:6379"
+put_param "/saferide/prod/auth-service/LOG_LEVEL"                     "info"
+
+# Repeat the same pattern for tenant-service (PORT=4002), route-service (PORT=4003,
+# add GOOGLE_MAPS_API_KEY), trip-service (PORT=4004, add GOOGLE_MAPS_API_KEY),
+# livetrack-gateway (PORT=4005).
+# Then repeat entire block with /saferide/dev/ prefix for dev environment.
 ```
 
-Create one secret per service:
+Verify a value was stored:
+```bash
+aws ssm get-parameter \
+  --name "/saferide/prod/auth-service/PORT" \
+  --with-decryption --query 'Parameter.Value' --output text --region ap-south-1
+```
 
-| Secret name | PORT | Unique keys |
-|---|---|---|
-| `saferide/prod/auth-service` | 4001 | JWT_PRIVATE_KEY, JWT_PUBLIC_KEY |
-| `saferide/prod/tenant-service` | 4002 | — |
-| `saferide/prod/route-service` | 4003 | GOOGLE_MAPS_API_KEY |
-| `saferide/prod/trip-service` | 4004 | GOOGLE_MAPS_API_KEY |
-| `saferide/prod/livetrack-gateway` | 4005 | — |
-
-All services share: `NODE_ENV`, `PORT`, `FIREBASE_SERVICE_ACCOUNT_JSON`, `FIREBASE_DATABASE_URL`, `REDIS_URL`, `LOG_LEVEL`.
-
-Repeat with `saferide/dev/` prefix pointing at dev Firebase credentials.
-
-**Note on Redis:** You need a Redis instance for rate limiting and JWT revocation. Use ElastiCache (Serverless, starts at ~$6/month) or a t3.micro Redis on ElastiCache. Create it in the same VPC, then add the ECS SG as an allowed inbound source on port 6379.
+**Note on Redis:** You need Redis for rate limiting and JWT revocation. Use ElastiCache Serverless (~$6/month minimum) or a t4g.micro ElastiCache cluster (~$12/month). Create it in the same default VPC and add `sg-ecs-saferide` as an allowed inbound source on port 6379. Then paste the endpoint into your `REDIS_URL` parameters.
 
 ### 6f. CloudWatch log groups
 
@@ -562,13 +568,13 @@ Save the following as `task-def.json`, register it, then delete the file. Repeat
     "portMappings": [{"containerPort": 4001, "protocol": "tcp"}],
     "essential": true,
     "secrets": [
-      {"name": "NODE_ENV",                      "valueFrom": "arn:aws:secretsmanager:ap-south-1:ACCOUNT_ID:secret:saferide/prod/auth-service:NODE_ENV::"},
-      {"name": "PORT",                          "valueFrom": "arn:aws:secretsmanager:ap-south-1:ACCOUNT_ID:secret:saferide/prod/auth-service:PORT::"},
-      {"name": "FIREBASE_SERVICE_ACCOUNT_JSON", "valueFrom": "arn:aws:secretsmanager:ap-south-1:ACCOUNT_ID:secret:saferide/prod/auth-service:FIREBASE_SERVICE_ACCOUNT_JSON::"},
-      {"name": "FIREBASE_DATABASE_URL",         "valueFrom": "arn:aws:secretsmanager:ap-south-1:ACCOUNT_ID:secret:saferide/prod/auth-service:FIREBASE_DATABASE_URL::"},
-      {"name": "JWT_PRIVATE_KEY",               "valueFrom": "arn:aws:secretsmanager:ap-south-1:ACCOUNT_ID:secret:saferide/prod/auth-service:JWT_PRIVATE_KEY::"},
-      {"name": "JWT_PUBLIC_KEY",                "valueFrom": "arn:aws:secretsmanager:ap-south-1:ACCOUNT_ID:secret:saferide/prod/auth-service:JWT_PUBLIC_KEY::"},
-      {"name": "REDIS_URL",                     "valueFrom": "arn:aws:secretsmanager:ap-south-1:ACCOUNT_ID:secret:saferide/prod/auth-service:REDIS_URL::"}
+      {"name": "NODE_ENV",                      "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/NODE_ENV"},
+      {"name": "PORT",                          "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/PORT"},
+      {"name": "FIREBASE_SERVICE_ACCOUNT_JSON", "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/FIREBASE_SERVICE_ACCOUNT_JSON"},
+      {"name": "FIREBASE_DATABASE_URL",         "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/FIREBASE_DATABASE_URL"},
+      {"name": "JWT_PRIVATE_KEY",               "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/JWT_PRIVATE_KEY"},
+      {"name": "JWT_PUBLIC_KEY",                "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/JWT_PUBLIC_KEY"},
+      {"name": "REDIS_URL",                     "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/REDIS_URL"}
     ],
     "logConfiguration": {
       "logDriver": "awslogs",

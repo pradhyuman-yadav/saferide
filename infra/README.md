@@ -28,8 +28,8 @@ ECS Fargate (managed containers)
   ├── Cluster: saferide-dev
   └── Cluster: saferide-prod
 
-Secrets Manager
-  └── saferide/{env}/{service}  (JSON blob of env vars per service)
+SSM Parameter Store (free)
+  └── /saferide/{env}/{service}/{KEY}  (one parameter per env var)
 ```
 
 ---
@@ -112,16 +112,17 @@ aws iam attach-role-policy \
   --role-name saferide-ecs-execution-role \
   --policy-arn arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
 
-# Allow reading Secrets Manager (for env vars)
+# Allow reading SSM Parameter Store (free — replaces Secrets Manager)
+# SecureString params are decrypted using the default aws/ssm KMS key at no charge.
 aws iam put-role-policy \
   --role-name saferide-ecs-execution-role \
-  --policy-name SecretsManagerRead \
+  --policy-name SSMParameterRead \
   --policy-document '{
     "Version": "2012-10-17",
     "Statement": [{
       "Effect": "Allow",
-      "Action": ["secretsmanager:GetSecretValue"],
-      "Resource": "arn:aws:secretsmanager:ap-south-1:*:secret:saferide/*"
+      "Action": ["ssm:GetParameters", "ssm:GetParameter"],
+      "Resource": "arn:aws:ssm:ap-south-1:*:parameter/saferide/*"
     }]
   }'
 ```
@@ -200,36 +201,84 @@ Save the `AccessKeyId` and `SecretAccessKey` → add to GitHub Secrets as:
 
 ---
 
-## Step 5 — Secrets Manager
+## Step 5 — SSM Parameter Store (free)
 
-Store all sensitive env vars here. One secret per service per environment.
-Secret name format: `saferide/{env}/{service}` (e.g. `saferide/prod/auth-service`).
+SSM Parameter Store Standard tier is **free** — $0/month regardless of how many parameters you have.
+Secrets Manager costs $0.40/secret/month. We use SSM instead.
 
-Each secret is a JSON object. Example for auth-service:
+Each env var is a separate SecureString parameter. Encrypted at rest using the default
+`aws/ssm` KMS key (no charge). ECS fetches values at task startup via the ARN — the
+task definition only stores the ARN, never the plaintext value.
 
-```json
-{
-  "NODE_ENV": "production",
-  "PORT": "4001",
-  "FIREBASE_SERVICE_ACCOUNT_JSON": "{...single-line JSON...}",
-  "FIREBASE_DATABASE_URL": "https://saferide-prod-a4336-default-rtdb.asia-southeast1.firebasedatabase.app",
-  "JWT_PRIVATE_KEY": "-----BEGIN RSA PRIVATE KEY-----\n...",
-  "JWT_PUBLIC_KEY": "-----BEGIN PUBLIC KEY-----\n...",
-  "REDIS_URL": "redis://...",
-  "LOG_LEVEL": "info"
-}
-```
-
-Create via AWS Console (Secrets Manager → Store a new secret → Other type → Plaintext, paste JSON) or CLI:
+Parameter path format: `/saferide/{env}/{service}/{KEY}`
 
 ```bash
-aws secretsmanager create-secret \
-  --name saferide/prod/auth-service \
-  --region ap-south-1 \
-  --secret-string '{"NODE_ENV":"production","PORT":"4001",...}'
+# Helper function — paste this into your terminal session
+put_param() {
+  aws ssm put-parameter \
+    --name "$1" \
+    --value "$2" \
+    --type SecureString \
+    --overwrite \
+    --region ap-south-1
+}
+
+# ── auth-service (prod) ────────────────────────────────────────────────────────
+put_param "/saferide/prod/auth-service/NODE_ENV"                      "production"
+put_param "/saferide/prod/auth-service/PORT"                          "4001"
+put_param "/saferide/prod/auth-service/FIREBASE_SERVICE_ACCOUNT_JSON" '{"type":"service_account",...}'
+put_param "/saferide/prod/auth-service/FIREBASE_DATABASE_URL"         "https://saferide-prod-a4336-default-rtdb.asia-southeast1.firebasedatabase.app"
+put_param "/saferide/prod/auth-service/JWT_PRIVATE_KEY"               "-----BEGIN RSA PRIVATE KEY-----\n..."
+put_param "/saferide/prod/auth-service/JWT_PUBLIC_KEY"                "-----BEGIN PUBLIC KEY-----\n..."
+put_param "/saferide/prod/auth-service/REDIS_URL"                     "redis://your-redis:6379"
+put_param "/saferide/prod/auth-service/LOG_LEVEL"                     "info"
+
+# ── tenant-service (prod) ──────────────────────────────────────────────────────
+put_param "/saferide/prod/tenant-service/NODE_ENV"                      "production"
+put_param "/saferide/prod/tenant-service/PORT"                          "4002"
+put_param "/saferide/prod/tenant-service/FIREBASE_SERVICE_ACCOUNT_JSON" '{"type":"service_account",...}'
+put_param "/saferide/prod/tenant-service/FIREBASE_DATABASE_URL"         "https://saferide-prod-a4336-default-rtdb.asia-southeast1.firebasedatabase.app"
+put_param "/saferide/prod/tenant-service/REDIS_URL"                     "redis://your-redis:6379"
+put_param "/saferide/prod/tenant-service/LOG_LEVEL"                     "info"
+
+# ── route-service (prod) ───────────────────────────────────────────────────────
+put_param "/saferide/prod/route-service/NODE_ENV"                      "production"
+put_param "/saferide/prod/route-service/PORT"                          "4003"
+put_param "/saferide/prod/route-service/FIREBASE_SERVICE_ACCOUNT_JSON" '{"type":"service_account",...}'
+put_param "/saferide/prod/route-service/FIREBASE_DATABASE_URL"         "https://saferide-prod-a4336-default-rtdb.asia-southeast1.firebasedatabase.app"
+put_param "/saferide/prod/route-service/GOOGLE_MAPS_API_KEY"           "AIza..."
+put_param "/saferide/prod/route-service/REDIS_URL"                     "redis://your-redis:6379"
+put_param "/saferide/prod/route-service/LOG_LEVEL"                     "info"
+
+# ── trip-service (prod) ────────────────────────────────────────────────────────
+put_param "/saferide/prod/trip-service/NODE_ENV"                      "production"
+put_param "/saferide/prod/trip-service/PORT"                          "4004"
+put_param "/saferide/prod/trip-service/FIREBASE_SERVICE_ACCOUNT_JSON" '{"type":"service_account",...}'
+put_param "/saferide/prod/trip-service/FIREBASE_DATABASE_URL"         "https://saferide-prod-a4336-default-rtdb.asia-southeast1.firebasedatabase.app"
+put_param "/saferide/prod/trip-service/GOOGLE_MAPS_API_KEY"           "AIza..."
+put_param "/saferide/prod/trip-service/REDIS_URL"                     "redis://your-redis:6379"
+put_param "/saferide/prod/trip-service/LOG_LEVEL"                     "info"
+
+# ── livetrack-gateway (prod) ───────────────────────────────────────────────────
+put_param "/saferide/prod/livetrack-gateway/NODE_ENV"                      "production"
+put_param "/saferide/prod/livetrack-gateway/PORT"                          "4005"
+put_param "/saferide/prod/livetrack-gateway/FIREBASE_SERVICE_ACCOUNT_JSON" '{"type":"service_account",...}'
+put_param "/saferide/prod/livetrack-gateway/FIREBASE_DATABASE_URL"         "https://saferide-prod-a4336-default-rtdb.asia-southeast1.firebasedatabase.app"
+put_param "/saferide/prod/livetrack-gateway/REDIS_URL"                     "redis://your-redis:6379"
+put_param "/saferide/prod/livetrack-gateway/LOG_LEVEL"                     "info"
 ```
 
-Repeat for each service (auth, tenant, route, trip, livetrack-gateway).
+Repeat the whole block with `/saferide/dev/` prefix pointing at your dev Firebase project.
+
+To verify a parameter was stored correctly:
+```bash
+aws ssm get-parameter \
+  --name "/saferide/prod/auth-service/PORT" \
+  --with-decryption \
+  --query 'Parameter.Value' \
+  --output text \
+  --region ap-south-1
+```
 
 ---
 
@@ -269,9 +318,9 @@ aws ecs update-cluster-settings \
 
 ## Step 8 — Register Initial Task Definitions
 
-Do this once before the first GitHub Actions deploy. Replace placeholders:
-- `ACCOUNT_ID` → your 12-digit AWS account ID
-- `SECRET_ARN_PREFIX` → `arn:aws:secretsmanager:ap-south-1:ACCOUNT_ID:secret:saferide/prod`
+Do this once before the first GitHub Actions deploy. Replace `ACCOUNT_ID` with your 12-digit AWS account ID.
+
+SSM ARN format: `arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/KEY`
 
 Template (save as `task-def.json`, register, then delete the file):
 
@@ -290,13 +339,13 @@ Template (save as `task-def.json`, register, then delete the file):
     "portMappings": [{"containerPort": 4001, "protocol": "tcp"}],
     "essential": true,
     "secrets": [
-      {"name": "NODE_ENV",                      "valueFrom": "SECRET_ARN_PREFIX/auth-service:NODE_ENV::"},
-      {"name": "PORT",                          "valueFrom": "SECRET_ARN_PREFIX/auth-service:PORT::"},
-      {"name": "FIREBASE_SERVICE_ACCOUNT_JSON", "valueFrom": "SECRET_ARN_PREFIX/auth-service:FIREBASE_SERVICE_ACCOUNT_JSON::"},
-      {"name": "FIREBASE_DATABASE_URL",         "valueFrom": "SECRET_ARN_PREFIX/auth-service:FIREBASE_DATABASE_URL::"},
-      {"name": "JWT_PRIVATE_KEY",               "valueFrom": "SECRET_ARN_PREFIX/auth-service:JWT_PRIVATE_KEY::"},
-      {"name": "JWT_PUBLIC_KEY",                "valueFrom": "SECRET_ARN_PREFIX/auth-service:JWT_PUBLIC_KEY::"},
-      {"name": "REDIS_URL",                     "valueFrom": "SECRET_ARN_PREFIX/auth-service:REDIS_URL::"}
+      {"name": "NODE_ENV",                      "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/NODE_ENV"},
+      {"name": "PORT",                          "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/PORT"},
+      {"name": "FIREBASE_SERVICE_ACCOUNT_JSON", "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/FIREBASE_SERVICE_ACCOUNT_JSON"},
+      {"name": "FIREBASE_DATABASE_URL",         "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/FIREBASE_DATABASE_URL"},
+      {"name": "JWT_PRIVATE_KEY",               "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/JWT_PRIVATE_KEY"},
+      {"name": "JWT_PUBLIC_KEY",                "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/JWT_PUBLIC_KEY"},
+      {"name": "REDIS_URL",                     "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/REDIS_URL"}
     ],
     "logConfiguration": {
       "logDriver": "awslogs",
@@ -317,7 +366,7 @@ Template (save as `task-def.json`, register, then delete the file):
 }
 ```
 
-Repeat this pattern for each of the 6 services (adjust `family`, `name`, `containerPort`, `image`, and secret keys).
+Repeat for the other 5 services — adjust `family`, `name`, `containerPort`, `image`, and SSM parameter paths accordingly.
 
 ```bash
 aws ecs register-task-definition --cli-input-json file://task-def.json --region ap-south-1
