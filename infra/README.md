@@ -444,23 +444,191 @@ pnpm dev
 
 ---
 
+## Step 13 — ECS Auto-Scaling
+
+Each service has independent scaling rules. Configure these after the services are running.
+
+### Fargate resource sizing per service
+
+| Service | CPU units | Memory | Min tasks | Max tasks | Notes |
+|---|---|---|---|---|---|
+| `auth-service` | 256 | 512 MB | 1 | 5 | Stateless JWT validation — scales fast |
+| `tenant-service` | 256 | 512 MB | 1 | 3 | Admin-only, low traffic |
+| `route-service` | 256 | 512 MB | 1 | 8 | High read traffic from parent app |
+| `trip-service` | 512 | 1024 MB | 1 | 10 | Bursty — peaks at school start/end times |
+| `livetrack-gateway` | 512 | 1024 MB | 2 | 20 | Long-lived WebSocket connections — always 2+ |
+| `web-admin` | 256 | 512 MB | 1 | 5 | Static files via nginx — rarely bottlenecks |
+
+256 CPU units = 0.25 vCPU. Set these in the task definition (Step 8).
+
+### Register scalable targets
+
+```bash
+SERVICES=(auth-service tenant-service route-service trip-service livetrack-gateway web-admin)
+for svc in "${SERVICES[@]}"; do
+  aws application-autoscaling register-scalable-target \
+    --service-namespace ecs \
+    --resource-id "service/saferide-prod/saferide-$svc" \
+    --scalable-dimension ecs:service:DesiredCount \
+    --min-capacity 1 \
+    --max-capacity 10 \
+    --region ap-south-1
+done
+
+# livetrack-gateway: always keep 2+ tasks (WebSocket reconnect cost is high)
+aws application-autoscaling register-scalable-target \
+  --service-namespace ecs \
+  --resource-id "service/saferide-prod/saferide-livetrack-gateway" \
+  --scalable-dimension ecs:service:DesiredCount \
+  --min-capacity 2 \
+  --max-capacity 20 \
+  --region ap-south-1
+```
+
+### CPU-based scale-out (all backend services)
+
+Scale out when CPU > 65% for 2 consecutive minutes. Scale in when CPU < 30% for 10 minutes.
+
+```bash
+SERVICES=(auth-service tenant-service route-service trip-service livetrack-gateway)
+for svc in "${SERVICES[@]}"; do
+  aws application-autoscaling put-scaling-policy \
+    --service-namespace ecs \
+    --resource-id "service/saferide-prod/saferide-$svc" \
+    --scalable-dimension ecs:service:DesiredCount \
+    --policy-name "cpu-tracking-$svc" \
+    --policy-type TargetTrackingScaling \
+    --target-tracking-scaling-policy-configuration '{
+      "TargetValue": 65.0,
+      "PredefinedMetricSpecification": {
+        "PredefinedMetricType": "ECSServiceAverageCPUUtilization"
+      },
+      "ScaleOutCooldown": 120,
+      "ScaleInCooldown": 600
+    }' \
+    --region ap-south-1
+done
+```
+
+### Request-count scale-out (trip-service and livetrack-gateway)
+
+These two see the most sudden spikes. Add a second policy based on ALB request count.
+Replace `TARGET_GROUP_ARN` with your actual ARN from the ALB console.
+
+```bash
+for svc in trip-service livetrack-gateway; do
+  TG_ARN=$(aws elbv2 describe-target-groups \
+    --names "tg-saferide-${svc%-service}" \
+    --query 'TargetGroups[0].TargetGroupArn' \
+    --output text)
+
+  # Convert full ARN to the short form ECS auto-scaling expects:
+  # arn:aws:elasticloadbalancing:...:targetgroup/name/id  →  targetgroup/name/id
+  TG_SHORT=$(echo "$TG_ARN" | sed 's|.*:||')
+
+  ALB_ARN=$(aws elbv2 describe-load-balancers \
+    --names saferide-alb \
+    --query 'LoadBalancers[0].LoadBalancerArn' \
+    --output text)
+  ALB_SHORT=$(echo "$ALB_ARN" | sed 's|.*:loadbalancer/||')
+
+  aws application-autoscaling put-scaling-policy \
+    --service-namespace ecs \
+    --resource-id "service/saferide-prod/saferide-$svc" \
+    --scalable-dimension ecs:service:DesiredCount \
+    --policy-name "requests-tracking-$svc" \
+    --policy-type TargetTrackingScaling \
+    --target-tracking-scaling-policy-configuration "{
+      \"TargetValue\": 500.0,
+      \"PredefinedMetricSpecification\": {
+        \"PredefinedMetricType\": \"ALBRequestCountPerTarget\",
+        \"ResourceLabel\": \"$ALB_SHORT/$TG_SHORT\"
+      },
+      \"ScaleOutCooldown\": 60,
+      \"ScaleInCooldown\": 300
+    }" \
+    --region ap-south-1
+done
+```
+
+500 requests/target/minute is a conservative starting point. Tune after observing production traffic.
+
+### Scheduled scale-out for school hours (trip-service)
+
+Trip data explodes at 7:00–8:30 AM and 2:00–4:00 PM IST (UTC+5:30 = UTC 1:30–3:00 and 8:30–10:30).
+Pre-warm by bumping desired count before the spike hits.
+
+```bash
+# Scale up at 7:00 AM IST (01:30 UTC) Mon–Fri
+aws application-autoscaling put-scheduled-action \
+  --service-namespace ecs \
+  --resource-id "service/saferide-prod/saferide-trip-service" \
+  --scalable-dimension ecs:service:DesiredCount \
+  --scheduled-action-name "morning-prewarm" \
+  --schedule "cron(30 1 ? * MON-FRI *)" \
+  --scalable-target-action MinCapacity=3,MaxCapacity=10 \
+  --region ap-south-1
+
+# Scale back down at 9:30 AM IST (04:00 UTC)
+aws application-autoscaling put-scheduled-action \
+  --service-namespace ecs \
+  --resource-id "service/saferide-prod/saferide-trip-service" \
+  --scalable-dimension ecs:service:DesiredCount \
+  --scheduled-action-name "morning-cooldown" \
+  --schedule "cron(0 4 ? * MON-FRI *)" \
+  --scalable-target-action MinCapacity=1,MaxCapacity=10 \
+  --region ap-south-1
+
+# Scale up at 2:00 PM IST (08:30 UTC)
+aws application-autoscaling put-scheduled-action \
+  --service-namespace ecs \
+  --resource-id "service/saferide-prod/saferide-trip-service" \
+  --scalable-dimension ecs:service:DesiredCount \
+  --scheduled-action-name "afternoon-prewarm" \
+  --schedule "cron(30 8 ? * MON-FRI *)" \
+  --scalable-target-action MinCapacity=3,MaxCapacity=10 \
+  --region ap-south-1
+
+# Scale back down at 4:30 PM IST (11:00 UTC)
+aws application-autoscaling put-scheduled-action \
+  --service-namespace ecs \
+  --resource-id "service/saferide-prod/saferide-trip-service" \
+  --scalable-dimension ecs:service:DesiredCount \
+  --scheduled-action-name "afternoon-cooldown" \
+  --schedule "cron(0 11 ? * MON-FRI *)" \
+  --scalable-target-action MinCapacity=1,MaxCapacity=10 \
+  --region ap-south-1
+```
+
+---
+
 ## What Happens on Each Deploy
 
-```
-git push origin main         # dev deploy
-  → GitHub Actions
-  → docker build (6 images)
-  → docker push to ECR
-  → ECS update-service (new task def revision per service)
-  → ECS replaces old task with new task (rolling)
-  → deploy Firestore rules to dev Firebase
+Each service deploys **independently**. Changing only `auth-service/` triggers only the
+auth-service workflow — nothing else rebuilds or restarts.
 
-git push origin release      # prod deploy
-  → typecheck + lint + test
-  → manual approval gate (GitHub Environments)
-  → same as above but to saferide-prod cluster
-  → waits for each service to reach steady state
-  → triggers mobile EAS build + submit
+```
+# auth-service change merged to main:
+git push origin main
+  → deploy-auth-service.yml triggers (path filter matched)
+  → deploy-tenant-service.yml does NOT trigger (path didn't match)
+  → docker build auth-service
+  → push to ECR: saferide-auth-service:{sha} + dev-latest
+  → ECS update saferide-dev: saferide-auth-service
+  → rolling replace (new task up → old task drained)
+
+# packages/types change merged to main:
+git push origin main
+  → ALL 6 deploy workflows trigger (packages/** path matches all)
+  → 6 parallel builds + 6 parallel ECS updates
+
+# Release deploy (any service):
+git push origin release
+  → per-service workflow triggers (path filter)
+  → manual approval gate (GitHub Environments: production)
+  → build → push prod-latest + {sha} tag
+  → ECS update saferide-prod: {service}
+  → aws ecs wait services-stable  ← blocks until healthy
 ```
 
 Zero SSH. Zero rsync. Zero manual steps after this initial setup.

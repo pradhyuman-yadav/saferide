@@ -1,0 +1,31 @@
+name: Deploy livetrack-gateway
+
+on:
+  push:
+    branches: [main, release]
+    paths:
+      - "livetrack-gateway/**"
+      - "packages/**"
+      - ".github/workflows/deploy-livetrack-gateway.yml"
+      - ".github/workflows/_deploy-service.yml"
+
+jobs:
+  deploy-dev:
+    name: Dev
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/_deploy-service.yml
+    with:
+      service-name: livetrack-gateway
+      ecs-cluster:  saferide-dev
+    secrets: inherit
+
+  deploy-prod:
+    name: Prod
+    if: github.ref == 'refs/heads/release'
+    uses: ./.github/workflows/_deploy-service.yml
+    with:
+      service-name:        livetrack-gateway
+      ecs-cluster:         saferide-prod
+      deploy-environment:  production
+      wait-for-stable:     true
+    secrets: inherit

@@ -1,0 +1,35 @@
+name: Deploy auth-service
+
+# Triggers only when auth-service code or shared packages change.
+# main → dev cluster (no approval)
+# release → prod cluster (manual approval gate)
+
+on:
+  push:
+    branches: [main, release]
+    paths:
+      - "auth-service/**"
+      - "packages/**"
+      - ".github/workflows/deploy-auth-service.yml"
+      - ".github/workflows/_deploy-service.yml"
+
+jobs:
+  deploy-dev:
+    name: Dev
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/_deploy-service.yml
+    with:
+      service-name: auth-service
+      ecs-cluster:  saferide-dev
+    secrets: inherit
+
+  deploy-prod:
+    name: Prod
+    if: github.ref == 'refs/heads/release'
+    uses: ./.github/workflows/_deploy-service.yml
+    with:
+      service-name:        auth-service
+      ecs-cluster:         saferide-prod
+      deploy-environment:  production
+      wait-for-stable:     true
+    secrets: inherit
