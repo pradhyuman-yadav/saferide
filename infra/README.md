@@ -234,7 +234,6 @@ put_param "/saferide/prod/auth-service/FIREBASE_SERVICE_ACCOUNT_JSON" '{"type":"
 put_param "/saferide/prod/auth-service/FIREBASE_DATABASE_URL"         "https://saferide-prod-a4336-default-rtdb.asia-southeast1.firebasedatabase.app"
 put_param "/saferide/prod/auth-service/JWT_PRIVATE_KEY"               "-----BEGIN RSA PRIVATE KEY-----\n..."
 put_param "/saferide/prod/auth-service/JWT_PUBLIC_KEY"                "-----BEGIN PUBLIC KEY-----\n..."
-put_param "/saferide/prod/auth-service/REDIS_URL"                     "redis://your-redis:6379"
 put_param "/saferide/prod/auth-service/LOG_LEVEL"                     "info"
 
 # ── tenant-service (prod) ──────────────────────────────────────────────────────
@@ -242,7 +241,6 @@ put_param "/saferide/prod/tenant-service/NODE_ENV"                      "product
 put_param "/saferide/prod/tenant-service/PORT"                          "4002"
 put_param "/saferide/prod/tenant-service/FIREBASE_SERVICE_ACCOUNT_JSON" '{"type":"service_account",...}'
 put_param "/saferide/prod/tenant-service/FIREBASE_DATABASE_URL"         "https://saferide-prod-a4336-default-rtdb.asia-southeast1.firebasedatabase.app"
-put_param "/saferide/prod/tenant-service/REDIS_URL"                     "redis://your-redis:6379"
 put_param "/saferide/prod/tenant-service/LOG_LEVEL"                     "info"
 
 # ── route-service (prod) ───────────────────────────────────────────────────────
@@ -251,7 +249,6 @@ put_param "/saferide/prod/route-service/PORT"                          "4003"
 put_param "/saferide/prod/route-service/FIREBASE_SERVICE_ACCOUNT_JSON" '{"type":"service_account",...}'
 put_param "/saferide/prod/route-service/FIREBASE_DATABASE_URL"         "https://saferide-prod-a4336-default-rtdb.asia-southeast1.firebasedatabase.app"
 put_param "/saferide/prod/route-service/GOOGLE_MAPS_API_KEY"           "AIza..."
-put_param "/saferide/prod/route-service/REDIS_URL"                     "redis://your-redis:6379"
 put_param "/saferide/prod/route-service/LOG_LEVEL"                     "info"
 
 # ── trip-service (prod) ────────────────────────────────────────────────────────
@@ -260,7 +257,6 @@ put_param "/saferide/prod/trip-service/PORT"                          "4004"
 put_param "/saferide/prod/trip-service/FIREBASE_SERVICE_ACCOUNT_JSON" '{"type":"service_account",...}'
 put_param "/saferide/prod/trip-service/FIREBASE_DATABASE_URL"         "https://saferide-prod-a4336-default-rtdb.asia-southeast1.firebasedatabase.app"
 put_param "/saferide/prod/trip-service/GOOGLE_MAPS_API_KEY"           "AIza..."
-put_param "/saferide/prod/trip-service/REDIS_URL"                     "redis://your-redis:6379"
 put_param "/saferide/prod/trip-service/LOG_LEVEL"                     "info"
 
 # ── livetrack-gateway (prod) ───────────────────────────────────────────────────
@@ -268,7 +264,6 @@ put_param "/saferide/prod/livetrack-gateway/NODE_ENV"                      "prod
 put_param "/saferide/prod/livetrack-gateway/PORT"                          "4005"
 put_param "/saferide/prod/livetrack-gateway/FIREBASE_SERVICE_ACCOUNT_JSON" '{"type":"service_account",...}'
 put_param "/saferide/prod/livetrack-gateway/FIREBASE_DATABASE_URL"         "https://saferide-prod-a4336-default-rtdb.asia-southeast1.firebasedatabase.app"
-put_param "/saferide/prod/livetrack-gateway/REDIS_URL"                     "redis://your-redis:6379"
 put_param "/saferide/prod/livetrack-gateway/LOG_LEVEL"                     "info"
 ```
 
@@ -349,7 +344,7 @@ Template (save as `task-def.json`, register, then delete the file):
       {"name": "FIREBASE_DATABASE_URL",         "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/FIREBASE_DATABASE_URL"},
       {"name": "JWT_PRIVATE_KEY",               "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/JWT_PRIVATE_KEY"},
       {"name": "JWT_PUBLIC_KEY",                "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/JWT_PUBLIC_KEY"},
-      {"name": "REDIS_URL",                     "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/REDIS_URL"}
+      {"name": "LOG_LEVEL",                     "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/LOG_LEVEL"}
     ],
     "logConfiguration": {
       "logDriver": "awslogs",

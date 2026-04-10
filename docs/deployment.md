@@ -436,7 +436,6 @@ put_param "/saferide/prod/auth-service/FIREBASE_SERVICE_ACCOUNT_JSON" '{"type":"
 put_param "/saferide/prod/auth-service/FIREBASE_DATABASE_URL"         "https://saferide-prod-a4336-default-rtdb.asia-southeast1.firebasedatabase.app"
 put_param "/saferide/prod/auth-service/JWT_PRIVATE_KEY"               "-----BEGIN RSA PRIVATE KEY-----\n..."
 put_param "/saferide/prod/auth-service/JWT_PUBLIC_KEY"                "-----BEGIN PUBLIC KEY-----\n..."
-put_param "/saferide/prod/auth-service/REDIS_URL"                     "redis://your-redis:6379"
 put_param "/saferide/prod/auth-service/LOG_LEVEL"                     "info"
 
 # Repeat the same pattern for tenant-service (PORT=4002), route-service (PORT=4003,
@@ -451,8 +450,6 @@ aws ssm get-parameter \
   --name "/saferide/prod/auth-service/PORT" \
   --with-decryption --query 'Parameter.Value' --output text --region ap-south-1
 ```
-
-**Note on Redis:** You need Redis for rate limiting and JWT revocation. Use ElastiCache Serverless (~$6/month minimum) or a t4g.micro ElastiCache cluster (~$12/month). Create it in the same default VPC and add `sg-ecs-saferide` as an allowed inbound source on port 6379. Then paste the endpoint into your `REDIS_URL` parameters.
 
 ### 6f. CloudWatch log groups
 
@@ -597,7 +594,7 @@ Save the following as `task-def.json`, register it, then delete the file. Repeat
       {"name": "FIREBASE_DATABASE_URL",         "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/FIREBASE_DATABASE_URL"},
       {"name": "JWT_PRIVATE_KEY",               "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/JWT_PRIVATE_KEY"},
       {"name": "JWT_PUBLIC_KEY",                "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/JWT_PUBLIC_KEY"},
-      {"name": "REDIS_URL",                     "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/REDIS_URL"}
+      {"name": "LOG_LEVEL",                     "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/LOG_LEVEL"}
     ],
     "logConfiguration": {
       "logDriver": "awslogs",
