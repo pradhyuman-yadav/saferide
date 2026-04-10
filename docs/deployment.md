@@ -287,8 +287,9 @@ Security groups are firewall rules. They control which traffic can reach your Fa
 
 ```bash
 # ALB SG — accepts internet traffic on 80 and 443
+# Note: names cannot start with "sg-" (AWS reserves that prefix for SG IDs)
 ALB_SG=$(aws ec2 create-security-group \
-  --group-name sg-alb-saferide \
+  --group-name saferide-alb \
   --description "SafeRide ALB" \
   --vpc-id $VPC_ID \
   --query 'GroupId' --output text --region ap-south-1)
@@ -300,7 +301,7 @@ aws ec2 authorize-security-group-ingress --group-id $ALB_SG --region ap-south-1 
 
 # ECS SG — only ALB can reach containers
 ECS_SG=$(aws ec2 create-security-group \
-  --group-name sg-ecs-saferide \
+  --group-name saferide-ecs \
   --description "SafeRide ECS tasks" \
   --vpc-id $VPC_ID \
   --query 'GroupId' --output text --region ap-south-1)

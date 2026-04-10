@@ -50,17 +50,21 @@ AWS Console → VPC → Your VPCs → Default VPC → Subnets tab.
 
 Create three security groups in the default VPC.
 
-### 2a. ALB Security Group (`sg-alb-saferide`)
+> Security group **names** cannot start with `sg-` — AWS reserves that prefix for SG IDs.
+> Use `saferide-alb` and `saferide-ecs` as names. The actual ID (e.g. `sg-0abc123`) is
+> assigned by AWS automatically.
+
+### 2a. ALB Security Group (name: `saferide-alb`)
 | Direction | Protocol | Port | Source |
 |---|---|---|---|
 | Inbound | HTTP | 80 | 0.0.0.0/0 |
 | Inbound | HTTPS | 443 | 0.0.0.0/0 |
 | Outbound | All | All | 0.0.0.0/0 |
 
-### 2b. ECS Tasks Security Group (`sg-ecs-saferide`)
+### 2b. ECS Tasks Security Group (name: `saferide-ecs`)
 | Direction | Protocol | Port | Source |
 |---|---|---|---|
-| Inbound | TCP | 4001–4005, 80 | sg-alb-saferide (the ALB SG ID) |
+| Inbound | TCP | 4001–4005, 80 | `saferide-alb` SG ID |
 | Outbound | All | All | 0.0.0.0/0 |
 
 This means only the ALB can reach your containers. Nothing else.
