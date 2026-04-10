@@ -1,11 +1,15 @@
 name: Deploy Prod
 
 # Triggers on push to release branch.
-# Runs full quality gate first, then deploys with a manual approval gate.
+# Full quality gate → manual approval gate → ECR push → ECS prod update.
 
 on:
   push:
     branches: [release]
+
+env:
+  AWS_REGION: ap-south-1
+  ECS_CLUSTER: saferide-prod
 
 jobs:
   # ── Quality gate ───────────────────────────────────────────────────────────
@@ -49,70 +53,114 @@ jobs:
           JWT_PRIVATE_KEY: "-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA0Z3VS5JJ\n-----END RSA PRIVATE KEY-----"
           GOOGLE_MAPS_API_KEY: test_key
 
-  # ── Production deploy (requires manual approval) ───────────────────────────
+  # ── Production deploy (requires manual approval in GitHub Environments) ────
   deploy:
-    name: Deploy to prod
+    name: Build → ECR → ECS Prod
     needs: quality
     runs-on: ubuntu-latest
-    environment: production   # pause here for manual approval in GitHub
+    environment: production   # pause here — reviewer approves in GitHub UI
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      # ── AWS auth ───────────────────────────────────────────────────────────
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          version: 9
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ap-south-1
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      # ── SSH key setup ──────────────────────────────────────────────────────
-      - name: Set up SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "${{ secrets.EC2_PROD_HOST }}" >> ~/.ssh/known_hosts
-
-      # ── Build web-admin with prod env vars ────────────────────────────────
-      - name: Build web-admin
-        run: pnpm --filter web-admin build
+      # ── Build + push backend images ────────────────────────────────────────
+      - name: Build and push backend images
         env:
-          VITE_AUTH_SERVICE_URL:              ${{ secrets.PROD_VITE_AUTH_SERVICE_URL }}
-          VITE_FIREBASE_API_KEY:              ${{ secrets.PROD_VITE_FIREBASE_API_KEY }}
-          VITE_FIREBASE_AUTH_DOMAIN:          ${{ secrets.PROD_VITE_FIREBASE_AUTH_DOMAIN }}
-          VITE_FIREBASE_PROJECT_ID:           ${{ secrets.PROD_VITE_FIREBASE_PROJECT_ID }}
-          VITE_FIREBASE_STORAGE_BUCKET:       ${{ secrets.PROD_VITE_FIREBASE_STORAGE_BUCKET }}
-          VITE_FIREBASE_MESSAGING_SENDER_ID:  ${{ secrets.PROD_VITE_FIREBASE_MESSAGING_SENDER_ID }}
-          VITE_FIREBASE_APP_ID:               ${{ secrets.PROD_VITE_FIREBASE_APP_ID }}
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          TAG:      ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          services=(auth-service tenant-service route-service trip-service livetrack-gateway)
+          for svc in "${services[@]}"; do
+            echo "▶ Building $svc"
+            docker build \
+              -f "$svc/Dockerfile" \
+              -t "$REGISTRY/saferide-$svc:$TAG" \
+              -t "$REGISTRY/saferide-$svc:prod-latest" \
+              .
+            docker push "$REGISTRY/saferide-$svc:$TAG"
+            docker push "$REGISTRY/saferide-$svc:prod-latest"
+            echo "✓ $svc pushed"
+          done
 
-      # ── Deploy backend: SSH → pull + docker compose up ────────────────────
-      - name: Deploy backend to prod EC2
+      # ── Build + push web-admin image ───────────────────────────────────────
+      - name: Build and push web-admin image
         env:
-          EC2_HOST:  ${{ secrets.EC2_PROD_HOST }}
-          PROD_ENV:  ${{ secrets.PROD_ENV_FILE }}
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          TAG:      ${{ github.sha }}
         run: |
-          ssh ubuntu@$EC2_HOST << 'ENDSSH'
-            set -e
-            cd /opt/saferide
-            printf '%s' "$PROD_ENV" > .env
-            git pull origin release
-            docker compose up --build -d
-            docker image prune -f
-          ENDSSH
+          set -euo pipefail
+          docker build \
+            -f web-admin/Dockerfile \
+            --build-arg VITE_AUTH_SERVICE_URL="${{ secrets.PROD_VITE_AUTH_SERVICE_URL }}" \
+            --build-arg VITE_FIREBASE_API_KEY="${{ secrets.PROD_VITE_FIREBASE_API_KEY }}" \
+            --build-arg VITE_FIREBASE_AUTH_DOMAIN="${{ secrets.PROD_VITE_FIREBASE_AUTH_DOMAIN }}" \
+            --build-arg VITE_FIREBASE_PROJECT_ID="${{ secrets.PROD_VITE_FIREBASE_PROJECT_ID }}" \
+            --build-arg VITE_FIREBASE_STORAGE_BUCKET="${{ secrets.PROD_VITE_FIREBASE_STORAGE_BUCKET }}" \
+            --build-arg VITE_FIREBASE_MESSAGING_SENDER_ID="${{ secrets.PROD_VITE_FIREBASE_MESSAGING_SENDER_ID }}" \
+            --build-arg VITE_FIREBASE_APP_ID="${{ secrets.PROD_VITE_FIREBASE_APP_ID }}" \
+            -t "$REGISTRY/saferide-web-admin:$TAG" \
+            -t "$REGISTRY/saferide-web-admin:prod-latest" \
+            .
+          docker push "$REGISTRY/saferide-web-admin:$TAG"
+          docker push "$REGISTRY/saferide-web-admin:prod-latest"
 
-      # ── Deploy web-admin: rsync dist/ to EC2 ─────────────────────────────
-      - name: Deploy web-admin to prod EC2
+      # ── Update ECS prod services ───────────────────────────────────────────
+      # Waits for each service to reach steady state before proceeding.
+      # This catches bad images before the next service is updated.
+      - name: Update ECS prod services
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          TAG:      ${{ github.sha }}
         run: |
-          rsync -avz --delete \
-            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
-            web-admin/dist/ \
-            ubuntu@${{ secrets.EC2_PROD_HOST }}:/opt/saferide/web-admin/dist/
+          set -euo pipefail
+          services=(auth-service tenant-service route-service trip-service livetrack-gateway web-admin)
+          for svc in "${services[@]}"; do
+            echo "▶ Updating ECS service saferide-$svc in $ECS_CLUSTER"
+
+            TASK_DEF=$(aws ecs describe-task-definition \
+              --task-definition "saferide-$svc" \
+              --query 'taskDefinition' \
+              --output json | jq 'del(
+                .taskDefinitionArn, .revision, .status,
+                .requiresAttributes, .compatibilities,
+                .registeredAt, .registeredBy
+              )')
+
+            NEW_TASK_DEF=$(echo "$TASK_DEF" | jq \
+              --arg img "$REGISTRY/saferide-$svc:$TAG" \
+              '.containerDefinitions[0].image = $img')
+
+            NEW_ARN=$(aws ecs register-task-definition \
+              --cli-input-json "$NEW_TASK_DEF" \
+              --query 'taskDefinition.taskDefinitionArn' \
+              --output text)
+
+            aws ecs update-service \
+              --cluster "$ECS_CLUSTER" \
+              --service "saferide-$svc" \
+              --task-definition "$NEW_ARN" \
+              --no-cli-pager
+
+            echo "⏳ Waiting for steady state: saferide-$svc"
+            aws ecs wait services-stable \
+              --cluster "$ECS_CLUSTER" \
+              --services "saferide-$svc"
+
+            echo "✓ saferide-$svc stable → $NEW_ARN"
+          done
 
       # ── Deploy Firestore rules to prod Firebase project ───────────────────
       - name: Deploy Firestore rules (prod)
@@ -121,3 +169,10 @@ jobs:
           npx firebase-tools@latest deploy --only firestore:rules,firestore:indexes,database
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+  # ── Trigger mobile build after successful prod deploy ──────────────────────
+  mobile:
+    name: EAS Build + Submit
+    needs: deploy
+    uses: ./.github/workflows/mobile.yml
+    secrets: inherit
