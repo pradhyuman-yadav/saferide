@@ -15,6 +15,7 @@ Complete setup guide. Run once. Everything after this is automated.
 
 1. [External Accounts](#1-external-accounts)
 2. [AWS Account Hardening](#2-aws-account-hardening)
+   - [2d. Cost Guard — Hard $100 Cap + Region Lock](#2d-cost-guard--hard-100-cap--region-lock)
 3. [Route 53 — Move DNS off GoDaddy](#3-route-53--move-dns-off-godaddy)
 4. [Google Workspace MX Records in Route 53](#4-google-workspace-mx-records-in-route-53)
 5. [Firebase Projects](#5-firebase-projects)
@@ -83,6 +84,224 @@ This catches runaway costs before they become a problem.
 
 ### 2c. Set your working region
 All resources live in **ap-south-2 (Hyderabad)**. DPDP 2023 requires children's location data to not leave India. Set the region selector in the AWS Console top bar before creating any resource.
+
+---
+
+## 2d. Cost Guard — Hard $100 Cap + Region Lock
+
+Run once, immediately after account setup. Protects against accidental expensive resources
+(like ACM Private CA) and prevents anyone from accidentally deploying to the wrong region.
+
+> **Important:** AWS has no true "kill switch" that cuts off running services mid-month.
+> What we do instead: at $100 a policy is automatically applied that blocks all new resource
+> creation — stopping runaway spend without killing what's already live.
+
+```bash
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+YOUR_EMAIL="admin@saferide.co.in"   # ← change this
+```
+
+#### Budget with three alert tiers
+
+```bash
+aws budgets create-budget \
+  --account-id $ACCOUNT_ID \
+  --budget '{
+    "BudgetName": "SafeRide-Monthly-Cap",
+    "BudgetLimit": { "Amount": "100", "Unit": "USD" },
+    "TimeUnit": "MONTHLY",
+    "BudgetType": "COST",
+    "CostTypes": {
+      "IncludeTax": true,
+      "IncludeSubscription": true,
+      "UseBlended": false,
+      "IncludeRefund": false,
+      "IncludeCredit": false
+    }
+  }' \
+  --notifications-with-subscribers "[
+    {
+      \"Notification\": {
+        \"NotificationType\": \"ACTUAL\",
+        \"ComparisonOperator\": \"GREATER_THAN\",
+        \"Threshold\": 50,
+        \"ThresholdType\": \"PERCENTAGE\"
+      },
+      \"Subscribers\": [{
+        \"SubscriptionType\": \"EMAIL\",
+        \"Address\": \"$YOUR_EMAIL\"
+      }]
+    },
+    {
+      \"Notification\": {
+        \"NotificationType\": \"ACTUAL\",
+        \"ComparisonOperator\": \"GREATER_THAN\",
+        \"Threshold\": 80,
+        \"ThresholdType\": \"PERCENTAGE\"
+      },
+      \"Subscribers\": [{
+        \"SubscriptionType\": \"EMAIL\",
+        \"Address\": \"$YOUR_EMAIL\"
+      }]
+    },
+    {
+      \"Notification\": {
+        \"NotificationType\": \"ACTUAL\",
+        \"ComparisonOperator\": \"GREATER_THAN\",
+        \"Threshold\": 100,
+        \"ThresholdType\": \"PERCENTAGE\"
+      },
+      \"Subscribers\": [{
+        \"SubscriptionType\": \"EMAIL\",
+        \"Address\": \"$YOUR_EMAIL\"
+      }]
+    }
+  ]"
+```
+
+| Threshold | What happens |
+|---|---|
+| $50 (50%) | Email warning — review Cost Explorer |
+| $80 (80%) | Email urgent — investigate immediately |
+| $100 (100%) | Email + IAM deny policy applied (see below) |
+
+#### Budget Action — auto-deny at $100
+
+When actual spend hits $100, AWS automatically attaches a deny-all policy to the
+`saferide-github-actions` IAM user. This blocks all new deploys and resource creation.
+Running ECS tasks are unaffected (they don't call IAM on every request).
+
+First, create the deny policy:
+
+```bash
+aws iam create-policy \
+  --policy-name SafeRide-EmergencyDeny \
+  --description "Applied automatically when monthly spend hits $100. Blocks all new resource creation." \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [{
+      "Sid": "DenyAll",
+      "Effect": "Deny",
+      "Action": "*",
+      "Resource": "*"
+    }]
+  }'
+```
+
+Then create the IAM role that Budget Actions uses to apply the policy:
+
+```bash
+aws iam create-role \
+  --role-name SafeRide-BudgetActionsRole \
+  --assume-role-policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [{
+      "Effect": "Allow",
+      "Principal": { "Service": "budgets.amazonaws.com" },
+      "Action": "sts:AssumeRole"
+    }]
+  }'
+
+aws iam attach-role-policy \
+  --role-name SafeRide-BudgetActionsRole \
+  --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+```
+
+Now attach the action to the budget (AWS Console — CLI support for budget actions is limited):
+
+**AWS Console → Billing → Budgets → SafeRide-Monthly-Cap → Actions → Create action:**
+- Threshold: 100% of budgeted amount (Actual)
+- Action type: Apply IAM policy
+- IAM role: `SafeRide-BudgetActionsRole`
+- Policy to apply: `SafeRide-EmergencyDeny`
+- Target: IAM User → `saferide-github-actions`
+- Execution: Automatic
+
+---
+
+#### Region lock — deny everything outside ap-south-2
+
+Attaches a boundary policy to the `saferide-github-actions` CI user so it physically
+cannot create resources in any region except Hyderabad. Global services (IAM, Route 53,
+Cost Explorer, Budgets) are exempted — they don't use a region and would break otherwise.
+
+```bash
+DENY_POLICY_ARN=$(aws iam create-policy \
+  --policy-name SafeRide-RegionLock \
+  --description "Denies all resource creation outside ap-south-2. Global services exempted." \
+  --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "DenyOutsideHyderabad",
+        "Effect": "Deny",
+        "NotAction": [
+          "iam:*",
+          "route53:*",
+          "budgets:*",
+          "ce:*",
+          "sts:*",
+          "acm-pca:*",
+          "support:*",
+          "billing:*",
+          "account:*",
+          "organizations:*"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringNotEquals": {
+            "aws:RequestedRegion": "ap-south-2"
+          }
+        }
+      }
+    ]
+  }' \
+  --query 'Policy.Arn' --output text)
+
+# Attach to the GitHub Actions CI user
+aws iam put-user-policy \
+  --user-name saferide-github-actions \
+  --policy-name SafeRide-RegionLock \
+  --policy-document file:///dev/stdin <<'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyOutsideHyderabad",
+      "Effect": "Deny",
+      "NotAction": [
+        "iam:*",
+        "route53:*",
+        "budgets:*",
+        "ce:*",
+        "sts:*",
+        "support:*",
+        "billing:*",
+        "account:*"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": {
+          "aws:RequestedRegion": "ap-south-2"
+        }
+      }
+    }
+  ]
+}
+EOF
+```
+
+Verify it's attached:
+```bash
+aws iam list-user-policies --user-name saferide-github-actions --output table
+```
+
+> **What this blocks:** Any `aws` CLI or GitHub Actions step that tries to create an ECR repo,
+> ECS cluster, ALB, SSM parameter, or any other resource in us-east-1, ap-south-1, or any
+> region other than ap-south-2 will get an immediate `AccessDenied` error.
+>
+> **What this does NOT block:** Route 53, IAM, Budgets — these are global services that
+> AWS routes through us-east-1 internally. They are exempted above so DNS and auth still work.
 
 ---
 
