@@ -14,7 +14,7 @@ on:
       - ".github/workflows/deploy-web-admin.yml"
 
 env:
-  AWS_REGION: ap-south-1
+  AWS_REGION: ap-south-2
 
 # ── Dev deploy ─────────────────────────────────────────────────────────────────
 jobs:
@@ -31,7 +31,7 @@ jobs:
         with:
           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region:            ap-south-1
+          aws-region:            ap-south-2
 
       - name: Login to ECR
         id: ecr
@@ -105,7 +105,7 @@ jobs:
         with:
           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region:            ap-south-1
+          aws-region:            ap-south-2
 
       - name: Login to ECR
         id: ecr

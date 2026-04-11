@@ -82,7 +82,7 @@ AWS Console → Billing → Budgets → Create budget:
 This catches runaway costs before they become a problem.
 
 ### 2c. Set your working region
-All resources live in **ap-south-1 (Mumbai)**. DPDP 2023 requires children's location data to not leave India. Set the region selector in the AWS Console top bar before creating any resource.
+All resources live in **ap-south-2 (Hyderabad)**. DPDP 2023 requires children's location data to not leave India. Set the region selector in the AWS Console top bar before creating any resource.
 
 ---
 
@@ -94,7 +94,7 @@ Moving both domains to Route 53 gives you one DNS panel for everything: A record
 
 ```bash
 # Route 53 is a global service — use us-east-1 for the CLI even though
-# your app resources are in ap-south-1
+# your app resources are in ap-south-2
 aws route53 create-hosted-zone \
   --name saferide.co.in \
   --caller-reference "saferide-co-in-$(date +%s)"
@@ -245,7 +245,7 @@ firebase deploy --only firestore:rules,firestore:indexes,database
 
 ## 6. AWS Infrastructure
 
-Run these steps in order. All in `ap-south-1` unless noted.
+Run these steps in order. All in `ap-south-2` unless noted.
 
 > **No EC2 instances in this stack.** There are no servers to SSH into, patch, or manage.
 > ECS Fargate runs your containers on AWS-managed compute.
@@ -269,17 +269,17 @@ VPC = Virtual Private Cloud. It's a private network inside AWS where your resour
 # Get the default VPC (already exists in every AWS account — you don't create it)
 VPC_ID=$(aws ec2 describe-vpcs \
   --filters "Name=isDefault,Values=true" \
-  --query 'Vpcs[0].VpcId' --output text --region ap-south-1)
+  --query 'Vpcs[0].VpcId' --output text --region ap-south-2)
 echo "VPC: $VPC_ID"
 
 # Get two public subnets in different availability zones (also pre-existing)
 aws ec2 describe-subnets \
   --filters "Name=vpc-id,Values=$VPC_ID" "Name=defaultForAz,Values=true" \
   --query 'Subnets[*].[SubnetId,AvailabilityZone]' \
-  --output table --region ap-south-1
+  --output table --region ap-south-2
 ```
 
-Note `SUBNET_A` (ap-south-1a) and `SUBNET_B` (ap-south-1b).
+Note `SUBNET_A` (ap-south-2a) and `SUBNET_B` (ap-south-2b).
 
 ### 6b. Security groups
 
@@ -292,9 +292,9 @@ ALB_SG=$(aws ec2 create-security-group \
   --group-name saferide-alb \
   --description "SafeRide ALB" \
   --vpc-id $VPC_ID \
-  --query 'GroupId' --output text --region ap-south-1)
+  --query 'GroupId' --output text --region ap-south-2)
 
-aws ec2 authorize-security-group-ingress --group-id $ALB_SG --region ap-south-1 \
+aws ec2 authorize-security-group-ingress --group-id $ALB_SG --region ap-south-2 \
   --ip-permissions \
     'IpProtocol=tcp,FromPort=80,ToPort=80,IpRanges=[{CidrIp=0.0.0.0/0}]' \
     'IpProtocol=tcp,FromPort=443,ToPort=443,IpRanges=[{CidrIp=0.0.0.0/0}]'
@@ -304,9 +304,9 @@ ECS_SG=$(aws ec2 create-security-group \
   --group-name saferide-ecs \
   --description "SafeRide ECS tasks" \
   --vpc-id $VPC_ID \
-  --query 'GroupId' --output text --region ap-south-1)
+  --query 'GroupId' --output text --region ap-south-2)
 
-aws ec2 authorize-security-group-ingress --group-id $ECS_SG --region ap-south-1 \
+aws ec2 authorize-security-group-ingress --group-id $ECS_SG --region ap-south-2 \
   --ip-permissions \
     "IpProtocol=tcp,FromPort=80,ToPort=80,UserIdGroupPairs=[{GroupId=$ALB_SG}]" \
     "IpProtocol=tcp,FromPort=4001,ToPort=4005,UserIdGroupPairs=[{GroupId=$ALB_SG}]"
@@ -322,14 +322,14 @@ for svc in auth-service tenant-service route-service trip-service livetrack-gate
   aws ecr create-repository \
     --repository-name "saferide-$svc" \
     --image-scanning-configuration scanOnPush=true \
-    --region ap-south-1
+    --region ap-south-2
 done
 ```
 
 Get your account ID — you'll use this everywhere:
 ```bash
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-REGISTRY="${ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com"
+REGISTRY="${ACCOUNT_ID}.dkr.ecr.ap-south-2.amazonaws.com"
 echo "Registry: $REGISTRY"
 ```
 
@@ -356,7 +356,7 @@ aws iam put-role-policy \
     "Statement":[{
       "Effect":"Allow",
       "Action":["ssm:GetParameters","ssm:GetParameter"],
-      "Resource":"arn:aws:ssm:ap-south-1:*:parameter/saferide/*"
+      "Resource":"arn:aws:ssm:ap-south-2:*:parameter/saferide/*"
     }]
   }'
 
@@ -426,7 +426,7 @@ put_param() {
   aws ssm put-parameter \
     --name "$1" --value "$2" \
     --type SecureString --overwrite \
-    --region ap-south-1
+    --region ap-south-2
 }
 
 # ── auth-service prod ──────────────────────────────────────────────────────────
@@ -448,20 +448,20 @@ Verify a value was stored:
 ```bash
 aws ssm get-parameter \
   --name "/saferide/prod/auth-service/PORT" \
-  --with-decryption --query 'Parameter.Value' --output text --region ap-south-1
+  --with-decryption --query 'Parameter.Value' --output text --region ap-south-2
 ```
 
 ### 6f. CloudWatch log groups
 
 ```bash
 for svc in auth-service tenant-service route-service trip-service livetrack-gateway web-admin; do
-  aws logs create-log-group --log-group-name "/ecs/saferide-$svc-prod" --region ap-south-1
-  aws logs create-log-group --log-group-name "/ecs/saferide-$svc-dev"  --region ap-south-1
+  aws logs create-log-group --log-group-name "/ecs/saferide-$svc-prod" --region ap-south-2
+  aws logs create-log-group --log-group-name "/ecs/saferide-$svc-dev"  --region ap-south-2
   # 30 days for prod, 7 days for dev (cost control)
   aws logs put-retention-policy \
-    --log-group-name "/ecs/saferide-$svc-prod" --retention-in-days 30 --region ap-south-1
+    --log-group-name "/ecs/saferide-$svc-prod" --retention-in-days 30 --region ap-south-2
   aws logs put-retention-policy \
-    --log-group-name "/ecs/saferide-$svc-dev" --retention-in-days 7 --region ap-south-1
+    --log-group-name "/ecs/saferide-$svc-dev" --retention-in-days 7 --region ap-south-2
 done
 ```
 
@@ -469,16 +469,16 @@ done
 
 ```bash
 aws ecs create-cluster --cluster-name saferide-prod \
-  --settings name=containerInsights,value=enabled --region ap-south-1
+  --settings name=containerInsights,value=enabled --region ap-south-2
 
-aws ecs create-cluster --cluster-name saferide-dev --region ap-south-1
+aws ecs create-cluster --cluster-name saferide-dev --region ap-south-2
 ```
 
 Container Insights on prod gives CPU/memory graphs per service in CloudWatch — worth the small extra cost.
 
 ### 6h. ACM Certificate
 
-AWS Console → Certificate Manager → **confirm region is ap-south-1** → Request → Public certificate:
+AWS Console → Certificate Manager → **confirm region is ap-south-2** → Request → Public certificate:
 
 Add domains:
 ```
@@ -517,7 +517,7 @@ nothing to do with EC2 instances.
 - HTTP:80 → Action: Redirect to HTTPS (built-in action, status code 301)
 - HTTPS:443 → Action: Return fixed 404 (override per rule below) → Certificate: select ACM cert
 
-Note the **ALB DNS name** after creation (looks like `saferide-alb-1234567890.ap-south-1.elb.amazonaws.com`).
+Note the **ALB DNS name** after creation (looks like `saferide-alb-1234567890.ap-south-2.elb.amazonaws.com`).
 
 **Target groups** — create one per service. For each:
 - Target type: **IP** (required for Fargate — not "Instance")
@@ -584,23 +584,23 @@ Save the following as `task-def.json`, register it, then delete the file. Repeat
   "taskRoleArn":      "arn:aws:iam::ACCOUNT_ID:role/saferide-ecs-task-role",
   "containerDefinitions": [{
     "name": "auth-service",
-    "image": "ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com/saferide-auth-service:prod-latest",
+    "image": "ACCOUNT_ID.dkr.ecr.ap-south-2.amazonaws.com/saferide-auth-service:prod-latest",
     "portMappings": [{"containerPort": 4001, "protocol": "tcp"}],
     "essential": true,
     "secrets": [
-      {"name": "NODE_ENV",                      "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/NODE_ENV"},
-      {"name": "PORT",                          "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/PORT"},
-      {"name": "FIREBASE_SERVICE_ACCOUNT_JSON", "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/FIREBASE_SERVICE_ACCOUNT_JSON"},
-      {"name": "FIREBASE_DATABASE_URL",         "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/FIREBASE_DATABASE_URL"},
-      {"name": "JWT_PRIVATE_KEY",               "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/JWT_PRIVATE_KEY"},
-      {"name": "JWT_PUBLIC_KEY",                "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/JWT_PUBLIC_KEY"},
-      {"name": "LOG_LEVEL",                     "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/LOG_LEVEL"}
+      {"name": "NODE_ENV",                      "valueFrom": "arn:aws:ssm:ap-south-2:ACCOUNT_ID:parameter/saferide/prod/auth-service/NODE_ENV"},
+      {"name": "PORT",                          "valueFrom": "arn:aws:ssm:ap-south-2:ACCOUNT_ID:parameter/saferide/prod/auth-service/PORT"},
+      {"name": "FIREBASE_SERVICE_ACCOUNT_JSON", "valueFrom": "arn:aws:ssm:ap-south-2:ACCOUNT_ID:parameter/saferide/prod/auth-service/FIREBASE_SERVICE_ACCOUNT_JSON"},
+      {"name": "FIREBASE_DATABASE_URL",         "valueFrom": "arn:aws:ssm:ap-south-2:ACCOUNT_ID:parameter/saferide/prod/auth-service/FIREBASE_DATABASE_URL"},
+      {"name": "JWT_PRIVATE_KEY",               "valueFrom": "arn:aws:ssm:ap-south-2:ACCOUNT_ID:parameter/saferide/prod/auth-service/JWT_PRIVATE_KEY"},
+      {"name": "JWT_PUBLIC_KEY",                "valueFrom": "arn:aws:ssm:ap-south-2:ACCOUNT_ID:parameter/saferide/prod/auth-service/JWT_PUBLIC_KEY"},
+      {"name": "LOG_LEVEL",                     "valueFrom": "arn:aws:ssm:ap-south-2:ACCOUNT_ID:parameter/saferide/prod/auth-service/LOG_LEVEL"}
     ],
     "logConfiguration": {
       "logDriver": "awslogs",
       "options": {
         "awslogs-group":         "/ecs/saferide-auth-service-prod",
-        "awslogs-region":        "ap-south-1",
+        "awslogs-region":        "ap-south-2",
         "awslogs-stream-prefix": "ecs"
       }
     },
@@ -616,7 +616,7 @@ Save the following as `task-def.json`, register it, then delete the file. Repeat
 ```
 
 ```bash
-aws ecs register-task-definition --cli-input-json file://task-def.json --region ap-south-1
+aws ecs register-task-definition --cli-input-json file://task-def.json --region ap-south-2
 ```
 
 Port reference for the other services:
@@ -759,13 +759,13 @@ GitHub Actions can't do the first ECS deploy until ECR has at least one image ta
 
 ```bash
 # Authenticate Docker to ECR
-aws ecr get-login-password --region ap-south-1 \
+aws ecr get-login-password --region ap-south-2 \
   | docker login \
     --username AWS \
     --password-stdin \
-    "${ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com"
+    "${ACCOUNT_ID}.dkr.ecr.ap-south-2.amazonaws.com"
 
-REGISTRY="${ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com"
+REGISTRY="${ACCOUNT_ID}.dkr.ecr.ap-south-2.amazonaws.com"
 
 # Backend services (build from repo root — Dockerfiles use monorepo context)
 for svc in auth-service tenant-service route-service trip-service livetrack-gateway; do
@@ -1092,19 +1092,19 @@ ECS retains the last 10 task definition revisions. Rolling back takes under 2 mi
 aws ecs list-task-definitions \
   --family-prefix saferide-auth-service \
   --sort DESC --query 'taskDefinitionArns[:5]' \
-  --output text --region ap-south-1
+  --output text --region ap-south-2
 
 # Roll back to a specific revision (e.g. revision 42)
 aws ecs update-service \
   --cluster saferide-prod \
   --service saferide-auth-service \
-  --task-definition arn:aws:ecs:ap-south-1:ACCOUNT_ID:task-definition/saferide-auth-service:42 \
-  --region ap-south-1
+  --task-definition arn:aws:ecs:ap-south-2:ACCOUNT_ID:task-definition/saferide-auth-service:42 \
+  --region ap-south-2
 
 aws ecs wait services-stable \
   --cluster saferide-prod \
   --services saferide-auth-service \
-  --region ap-south-1
+  --region ap-south-2
 ```
 
 ---
@@ -1115,7 +1115,7 @@ aws ecs wait services-stable \
 |---|---|
 | Deploy backend change | Merge PR to `main` (→ dev) or `release` (→ prod + approval) |
 | Deploy mobile update | Merge `mobile/` changes to `release` — `mobile.yml` triggers |
-| View live logs | `aws logs tail /ecs/saferide-auth-service-prod --follow --region ap-south-1` |
+| View live logs | `aws logs tail /ecs/saferide-auth-service-prod --follow --region ap-south-2` |
 | Rotate a secret | Update in Secrets Manager → restart service: `aws ecs update-service --cluster saferide-prod --service saferide-auth-service --force-new-deployment` |
 | Scale service manually | ECS Console → service → Update → change desired count |
 | Add auto-scaling | See `infra/README.md` Step 13 |

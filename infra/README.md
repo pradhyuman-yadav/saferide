@@ -3,7 +3,7 @@
 One-time AWS setup for ECR + ECS Fargate + ALB. Run these steps once. After that,
 GitHub Actions handles every deploy automatically.
 
-**Region:** `ap-south-1` (Mumbai) — all resources go here. No exceptions (DPDP 2023).
+**Region:** `ap-south-2` (Hyderabad) — all resources go here. No exceptions (DPDP 2023).
 
 ---
 
@@ -36,7 +36,7 @@ SSM Parameter Store (free)
 
 ## Step 1 — VPC (use the default)
 
-No custom VPC needed at MVP scale. Use the default VPC in ap-south-1.
+No custom VPC needed at MVP scale. Use the default VPC in ap-south-2.
 
 Make a note of:
 - Your default VPC ID: `vpc-xxxxxxxx`
@@ -76,19 +76,19 @@ This means only the ALB can reach your containers. Nothing else.
 Create one repository per service. All private.
 
 ```bash
-aws ecr create-repository --repository-name saferide-auth-service      --region ap-south-1
-aws ecr create-repository --repository-name saferide-tenant-service    --region ap-south-1
-aws ecr create-repository --repository-name saferide-route-service     --region ap-south-1
-aws ecr create-repository --repository-name saferide-trip-service      --region ap-south-1
-aws ecr create-repository --repository-name saferide-livetrack-gateway --region ap-south-1
-aws ecr create-repository --repository-name saferide-web-admin         --region ap-south-1
+aws ecr create-repository --repository-name saferide-auth-service      --region ap-south-2
+aws ecr create-repository --repository-name saferide-tenant-service    --region ap-south-2
+aws ecr create-repository --repository-name saferide-route-service     --region ap-south-2
+aws ecr create-repository --repository-name saferide-trip-service      --region ap-south-2
+aws ecr create-repository --repository-name saferide-livetrack-gateway --region ap-south-2
+aws ecr create-repository --repository-name saferide-web-admin         --region ap-south-2
 ```
 
 Enable image scanning on each repo (AWS Console → ECR → repo → Edit → Scan on push: On).
 
 Note your account ID: run `aws sts get-caller-identity --query Account --output text`
 
-Your ECR registry URL: `{ACCOUNT_ID}.dkr.ecr.ap-south-1.amazonaws.com`
+Your ECR registry URL: `{ACCOUNT_ID}.dkr.ecr.ap-south-2.amazonaws.com`
 
 ---
 
@@ -126,7 +126,7 @@ aws iam put-role-policy \
     "Statement": [{
       "Effect": "Allow",
       "Action": ["ssm:GetParameters", "ssm:GetParameter"],
-      "Resource": "arn:aws:ssm:ap-south-1:*:parameter/saferide/*"
+      "Resource": "arn:aws:ssm:ap-south-2:*:parameter/saferide/*"
     }]
   }'
 ```
@@ -224,7 +224,7 @@ put_param() {
     --value "$2" \
     --type SecureString \
     --overwrite \
-    --region ap-south-1
+    --region ap-south-2
 }
 
 # ── auth-service (prod) ────────────────────────────────────────────────────────
@@ -276,7 +276,7 @@ aws ssm get-parameter \
   --with-decryption \
   --query 'Parameter.Value' \
   --output text \
-  --region ap-south-1
+  --region ap-south-2
 ```
 
 ---
@@ -288,11 +288,11 @@ One log group per service per environment:
 ```bash
 SERVICES=(auth-service tenant-service route-service trip-service livetrack-gateway web-admin)
 for svc in "${SERVICES[@]}"; do
-  aws logs create-log-group --log-group-name "/ecs/saferide-$svc-prod" --region ap-south-1
-  aws logs create-log-group --log-group-name "/ecs/saferide-$svc-dev"  --region ap-south-1
+  aws logs create-log-group --log-group-name "/ecs/saferide-$svc-prod" --region ap-south-2
+  aws logs create-log-group --log-group-name "/ecs/saferide-$svc-dev"  --region ap-south-2
   # Retain 30 days (cost control)
-  aws logs put-retention-policy --log-group-name "/ecs/saferide-$svc-prod" --retention-in-days 30 --region ap-south-1
-  aws logs put-retention-policy --log-group-name "/ecs/saferide-$svc-dev"  --retention-in-days 7  --region ap-south-1
+  aws logs put-retention-policy --log-group-name "/ecs/saferide-$svc-prod" --retention-in-days 30 --region ap-south-2
+  aws logs put-retention-policy --log-group-name "/ecs/saferide-$svc-dev"  --retention-in-days 7  --region ap-south-2
 done
 ```
 
@@ -301,8 +301,8 @@ done
 ## Step 7 — ECS Clusters
 
 ```bash
-aws ecs create-cluster --cluster-name saferide-prod --region ap-south-1
-aws ecs create-cluster --cluster-name saferide-dev  --region ap-south-1
+aws ecs create-cluster --cluster-name saferide-prod --region ap-south-2
+aws ecs create-cluster --cluster-name saferide-dev  --region ap-south-2
 ```
 
 Enable Container Insights for prod:
@@ -310,7 +310,7 @@ Enable Container Insights for prod:
 aws ecs update-cluster-settings \
   --cluster saferide-prod \
   --settings name=containerInsights,value=enabled \
-  --region ap-south-1
+  --region ap-south-2
 ```
 
 ---
@@ -319,7 +319,7 @@ aws ecs update-cluster-settings \
 
 Do this once before the first GitHub Actions deploy. Replace `ACCOUNT_ID` with your 12-digit AWS account ID.
 
-SSM ARN format: `arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/KEY`
+SSM ARN format: `arn:aws:ssm:ap-south-2:ACCOUNT_ID:parameter/saferide/prod/auth-service/KEY`
 
 Template (save as `task-def.json`, register, then delete the file):
 
@@ -334,23 +334,23 @@ Template (save as `task-def.json`, register, then delete the file):
   "taskRoleArn":      "arn:aws:iam::ACCOUNT_ID:role/saferide-ecs-task-role",
   "containerDefinitions": [{
     "name": "auth-service",
-    "image": "ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com/saferide-auth-service:prod-latest",
+    "image": "ACCOUNT_ID.dkr.ecr.ap-south-2.amazonaws.com/saferide-auth-service:prod-latest",
     "portMappings": [{"containerPort": 4001, "protocol": "tcp"}],
     "essential": true,
     "secrets": [
-      {"name": "NODE_ENV",                      "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/NODE_ENV"},
-      {"name": "PORT",                          "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/PORT"},
-      {"name": "FIREBASE_SERVICE_ACCOUNT_JSON", "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/FIREBASE_SERVICE_ACCOUNT_JSON"},
-      {"name": "FIREBASE_DATABASE_URL",         "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/FIREBASE_DATABASE_URL"},
-      {"name": "JWT_PRIVATE_KEY",               "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/JWT_PRIVATE_KEY"},
-      {"name": "JWT_PUBLIC_KEY",                "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/JWT_PUBLIC_KEY"},
-      {"name": "LOG_LEVEL",                     "valueFrom": "arn:aws:ssm:ap-south-1:ACCOUNT_ID:parameter/saferide/prod/auth-service/LOG_LEVEL"}
+      {"name": "NODE_ENV",                      "valueFrom": "arn:aws:ssm:ap-south-2:ACCOUNT_ID:parameter/saferide/prod/auth-service/NODE_ENV"},
+      {"name": "PORT",                          "valueFrom": "arn:aws:ssm:ap-south-2:ACCOUNT_ID:parameter/saferide/prod/auth-service/PORT"},
+      {"name": "FIREBASE_SERVICE_ACCOUNT_JSON", "valueFrom": "arn:aws:ssm:ap-south-2:ACCOUNT_ID:parameter/saferide/prod/auth-service/FIREBASE_SERVICE_ACCOUNT_JSON"},
+      {"name": "FIREBASE_DATABASE_URL",         "valueFrom": "arn:aws:ssm:ap-south-2:ACCOUNT_ID:parameter/saferide/prod/auth-service/FIREBASE_DATABASE_URL"},
+      {"name": "JWT_PRIVATE_KEY",               "valueFrom": "arn:aws:ssm:ap-south-2:ACCOUNT_ID:parameter/saferide/prod/auth-service/JWT_PRIVATE_KEY"},
+      {"name": "JWT_PUBLIC_KEY",                "valueFrom": "arn:aws:ssm:ap-south-2:ACCOUNT_ID:parameter/saferide/prod/auth-service/JWT_PUBLIC_KEY"},
+      {"name": "LOG_LEVEL",                     "valueFrom": "arn:aws:ssm:ap-south-2:ACCOUNT_ID:parameter/saferide/prod/auth-service/LOG_LEVEL"}
     ],
     "logConfiguration": {
       "logDriver": "awslogs",
       "options": {
         "awslogs-group":         "/ecs/saferide-auth-service-prod",
-        "awslogs-region":        "ap-south-1",
+        "awslogs-region":        "ap-south-2",
         "awslogs-stream-prefix": "ecs"
       }
     },
@@ -368,7 +368,7 @@ Template (save as `task-def.json`, register, then delete the file):
 Repeat for the other 5 services — adjust `family`, `name`, `containerPort`, `image`, and SSM parameter paths accordingly.
 
 ```bash
-aws ecs register-task-definition --cli-input-json file://task-def.json --region ap-south-1
+aws ecs register-task-definition --cli-input-json file://task-def.json --region ap-south-2
 ```
 
 ---
@@ -520,7 +520,7 @@ for svc in "${SERVICES[@]}"; do
     --scalable-dimension ecs:service:DesiredCount \
     --min-capacity 1 \
     --max-capacity 10 \
-    --region ap-south-1
+    --region ap-south-2
 done
 
 # livetrack-gateway: always keep 2+ tasks (WebSocket reconnect cost is high)
@@ -530,7 +530,7 @@ aws application-autoscaling register-scalable-target \
   --scalable-dimension ecs:service:DesiredCount \
   --min-capacity 2 \
   --max-capacity 20 \
-  --region ap-south-1
+  --region ap-south-2
 ```
 
 ### CPU-based scale-out (all backend services)
@@ -554,7 +554,7 @@ for svc in "${SERVICES[@]}"; do
       "ScaleOutCooldown": 120,
       "ScaleInCooldown": 600
     }' \
-    --region ap-south-1
+    --region ap-south-2
 done
 ```
 
@@ -595,7 +595,7 @@ for svc in trip-service livetrack-gateway; do
       \"ScaleOutCooldown\": 60,
       \"ScaleInCooldown\": 300
     }" \
-    --region ap-south-1
+    --region ap-south-2
 done
 ```
 
@@ -615,7 +615,7 @@ aws application-autoscaling put-scheduled-action \
   --scheduled-action-name "morning-prewarm" \
   --schedule "cron(30 1 ? * MON-FRI *)" \
   --scalable-target-action MinCapacity=3,MaxCapacity=10 \
-  --region ap-south-1
+  --region ap-south-2
 
 # Scale back down at 9:30 AM IST (04:00 UTC)
 aws application-autoscaling put-scheduled-action \
@@ -625,7 +625,7 @@ aws application-autoscaling put-scheduled-action \
   --scheduled-action-name "morning-cooldown" \
   --schedule "cron(0 4 ? * MON-FRI *)" \
   --scalable-target-action MinCapacity=1,MaxCapacity=10 \
-  --region ap-south-1
+  --region ap-south-2
 
 # Scale up at 2:00 PM IST (08:30 UTC)
 aws application-autoscaling put-scheduled-action \
@@ -635,7 +635,7 @@ aws application-autoscaling put-scheduled-action \
   --scheduled-action-name "afternoon-prewarm" \
   --schedule "cron(30 8 ? * MON-FRI *)" \
   --scalable-target-action MinCapacity=3,MaxCapacity=10 \
-  --region ap-south-1
+  --region ap-south-2
 
 # Scale back down at 4:30 PM IST (11:00 UTC)
 aws application-autoscaling put-scheduled-action \
@@ -645,7 +645,7 @@ aws application-autoscaling put-scheduled-action \
   --scheduled-action-name "afternoon-cooldown" \
   --schedule "cron(0 11 ? * MON-FRI *)" \
   --scalable-target-action MinCapacity=1,MaxCapacity=10 \
-  --region ap-south-1
+  --region ap-south-2
 ```
 
 ---
