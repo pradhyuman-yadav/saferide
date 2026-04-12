@@ -4,7 +4,7 @@ RUN corepack enable
 WORKDIR /app
 
 # Workspace manifests first (maximises layer cache)
-COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json tsconfig.base.json ./
 
 # Shared packages + this service
 COPY packages/     ./packages/

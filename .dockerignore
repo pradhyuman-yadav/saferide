@@ -10,8 +10,6 @@ node_modules
 # Mobile app — not deployed server-side
 mobile/
 
-# Web admin — deployed to Firebase Hosting, not EC2
-web-admin/
 
 # Git history
 .git

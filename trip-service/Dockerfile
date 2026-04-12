@@ -3,7 +3,7 @@ FROM node:22-alpine AS builder
 RUN corepack enable
 WORKDIR /app
 
-COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json tsconfig.base.json ./
 COPY packages/     ./packages/
 COPY trip-service/ ./trip-service/
 
