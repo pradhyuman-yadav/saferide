@@ -3,8 +3,9 @@
   "configurations": [
     {
       "name": "web-admin",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "saferide-web-admin", "dev"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "web-admin",
       "port": 5173
     }
   ]
