@@ -18,7 +18,7 @@ resource "aws_ecr_lifecycle_policy" "saferide_ecr_policy" {
     rules = [
       {
         rulePriority = 1
-        description  = "Keep last 10 tagged images"
+        description  = "Keep last 10 prod images"
         selection = {
           tagStatus     = "tagged"
           tagPrefixList = ["prod"]
@@ -29,6 +29,17 @@ resource "aws_ecr_lifecycle_policy" "saferide_ecr_policy" {
       },
       {
         rulePriority = 2
+        description  = "Keep last 5 dev images"
+        selection = {
+          tagStatus     = "tagged"
+          tagPrefixList = ["dev"]
+          countType     = "imageCountMoreThan"
+          countNumber   = 5
+        }
+        action = { type = "expire" }
+      },
+      {
+        rulePriority = 3
         description  = "Expire untagged images older than 7 days"
         selection = {
           tagStatus   = "untagged"
@@ -55,33 +66,6 @@ resource "aws_ecs_cluster" "saferide" {
   tags = { Name = "saferide-cluster" }
 }
 
-# ─── IAM — EC2 INSTANCE ROLE (lets EC2 register with ECS cluster) ────────────
-
-data "aws_iam_policy_document" "ecs_instance_assume" {
-  statement {
-    actions = ["sts:AssumeRole"]
-    principals {
-      type        = "Service"
-      identifiers = ["ec2.amazonaws.com"]
-    }
-  }
-}
-
-resource "aws_iam_role" "ecs_instance_role" {
-  name               = "saferide-ecs-instance-role"
-  assume_role_policy = data.aws_iam_policy_document.ecs_instance_assume.json
-}
-
-resource "aws_iam_role_policy_attachment" "ecs_instance_policy" {
-  role       = aws_iam_role.ecs_instance_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
-}
-
-resource "aws_iam_instance_profile" "ecs_instance_profile" {
-  name = "saferide-ecs-instance-profile"
-  role = aws_iam_role.ecs_instance_role.name
-}
-
 # ─── IAM — ECS TASK EXECUTION ROLE (pulls ECR image, reads SSM secrets) ──────
 
 resource "aws_iam_role" "ecs_execution_role" {
@@ -102,7 +86,6 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_base" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# Allows the execution role to pull secrets from SSM Parameter Store
 resource "aws_iam_role_policy" "ecs_execution_ssm" {
   name = "SSMParameterRead"
   role = aws_iam_role.ecs_execution_role.id
@@ -132,16 +115,21 @@ resource "aws_iam_role" "ecs_task_role" {
   })
 }
 
-# ─── CLOUDWATCH LOG GROUP ─────────────────────────────────────────────────────
+# ─── CLOUDWATCH LOG GROUPS ────────────────────────────────────────────────────
 
 resource "aws_cloudwatch_log_group" "saferide" {
   name              = "/ecs/saferide-monolith"
   retention_in_days = 30
-
-  tags = { Name = "saferide-monolith-logs" }
+  tags              = { Name = "saferide-prod-logs" }
 }
 
-# ─── SECURITY GROUP — ALB (internet-facing) ───────────────────────────────────
+resource "aws_cloudwatch_log_group" "saferide_dev" {
+  name              = "/ecs/saferide-dev"
+  retention_in_days = 7  # shorter retention for dev
+  tags              = { Name = "saferide-dev-logs" }
+}
+
+# ─── SECURITY GROUP — ALB ────────────────────────────────────────────────────
 
 resource "aws_security_group" "alb" {
   name_prefix = "saferide-alb-sg-"
@@ -171,14 +159,11 @@ resource "aws_security_group" "alb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  lifecycle {
-    create_before_destroy = true
-  }
-
+  lifecycle { create_before_destroy = true }
   tags = { Name = "saferide-alb-sg" }
 }
 
-# ─── SECURITY GROUP — ECS EC2 INSTANCES (only accept traffic from ALB) ───────
+# ─── SECURITY GROUP — ECS FARGATE TASKS ──────────────────────────────────────
 
 resource "aws_security_group" "ecs_instances" {
   name_prefix = "saferide-ecs-instances-sg-"
@@ -200,110 +185,8 @@ resource "aws_security_group" "ecs_instances" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  lifecycle {
-    create_before_destroy = true
-  }
-
+  lifecycle { create_before_destroy = true }
   tags = { Name = "saferide-ecs-instances-sg" }
-}
-
-# ─── LAUNCH TEMPLATE ─────────────────────────────────────────────────────────
-
-data "aws_ssm_parameter" "ecs_ami" {
-  name = "/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id"
-}
-
-resource "aws_launch_template" "ecs_lt" {
-  name_prefix   = "saferide-ecs-lt-"
-  image_id      = data.aws_ssm_parameter.ecs_ami.value
-  instance_type = var.instance_type
-  key_name      = "saferide_key" # EC2 key pair — create in AWS Console before terraform apply
-
-  iam_instance_profile {
-    name = aws_iam_instance_profile.ecs_instance_profile.name
-  }
-
-  network_interfaces {
-    security_groups             = [aws_security_group.ecs_instances.id]
-    associate_public_ip_address = false # instances live in private subnets
-  }
-
-  user_data = base64encode(<<-EOF
-    #!/bin/bash
-    echo ECS_CLUSTER=${aws_ecs_cluster.saferide.name} >> /etc/ecs/ecs.config
-  EOF
-  )
-
-  lifecycle {
-    create_before_destroy = true
-  }
-
-  tags = { Name = "saferide-ecs-lt" }
-}
-
-# ─── AUTO SCALING GROUP ───────────────────────────────────────────────────────
-
-resource "aws_autoscaling_group" "ecs_asg" {
-  name             = "saferide-ecs-asg"
-  min_size         = 1
-  max_size         = 4
-  desired_capacity = var.desired_instance_count
-
-  launch_template {
-    id      = aws_launch_template.ecs_lt.id
-    version = "$Latest"
-  }
-
-  vpc_zone_identifier = [
-    aws_subnet.private_1.id,
-    aws_subnet.private_2.id,
-  ]
-
-  health_check_type         = "ELB"
-  health_check_grace_period = 120
-
-  lifecycle {
-    create_before_destroy = true
-    # ECS manages desired_capacity via capacity provider — prevent Terraform drift
-    ignore_changes = [desired_capacity]
-  }
-
-  tag {
-    key                 = "Name"
-    value               = "saferide-ecs-instance"
-    propagate_at_launch = true
-  }
-
-  tag {
-    key                 = "AmazonECSManaged"
-    value               = "true"
-    propagate_at_launch = true
-  }
-}
-
-# ─── ECS CAPACITY PROVIDER (links the ASG to the ECS cluster) ────────────────
-
-resource "aws_ecs_capacity_provider" "saferide" {
-  name = "saferide-capacity-provider"
-
-  auto_scaling_group_provider {
-    auto_scaling_group_arn = aws_autoscaling_group.ecs_asg.arn
-
-    managed_scaling {
-      status          = "ENABLED"
-      target_capacity = 80 # keep instances at ~80% utilisation before scaling out
-    }
-  }
-}
-
-resource "aws_ecs_cluster_capacity_providers" "saferide" {
-  cluster_name       = aws_ecs_cluster.saferide.name
-  capacity_providers = [aws_ecs_capacity_provider.saferide.name]
-
-  default_capacity_provider_strategy {
-    capacity_provider = aws_ecs_capacity_provider.saferide.name
-    weight            = 1
-  }
 }
 
 # ─── APPLICATION LOAD BALANCER ───────────────────────────────────────────────
@@ -319,17 +202,20 @@ resource "aws_lb" "saferide_alb" {
     aws_subnet.public_2.id,
   ]
 
-  enable_deletion_protection = false # set to true once you have real users
+  enable_deletion_protection = false
 
   tags = { Name = "saferide-alb" }
 }
 
-resource "aws_lb_target_group" "ecs_tg" {
-  name        = "saferide-ecs-tg"
+# ─── TARGET GROUPS ────────────────────────────────────────────────────────────
+# Fargate uses awsvpc networking → target_type must be "ip"
+
+resource "aws_lb_target_group" "prod" {
+  name        = "saferide-prod-tg"
   port        = 80
   protocol    = "HTTP"
   vpc_id      = aws_vpc.saferide_vpc.id
-  target_type = "instance"
+  target_type = "ip"
 
   health_check {
     path                = "/health"
@@ -341,8 +227,32 @@ resource "aws_lb_target_group" "ecs_tg" {
     unhealthy_threshold = 3
   }
 
-  tags = { Name = "saferide-ecs-tg" }
+  lifecycle { create_before_destroy = true }
+  tags = { Name = "saferide-prod-tg" }
 }
+
+resource "aws_lb_target_group" "dev" {
+  name        = "saferide-dev-tg"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.saferide_vpc.id
+  target_type = "ip"
+
+  health_check {
+    path                = "/health"
+    protocol            = "HTTP"
+    matcher             = "200"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+  }
+
+  lifecycle { create_before_destroy = true }
+  tags = { Name = "saferide-dev-tg" }
+}
+
+# ─── ALB LISTENERS ───────────────────────────────────────────────────────────
 
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.saferide_alb.arn
@@ -359,21 +269,16 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# ─── ECS TASK DEFINITION ─────────────────────────────────────────────────────
-# Memory budget for t3.small (2 GB total):
-#   OS + ECS agent: ~400 MB reserved
-#   Task:          1500 MB  ← what we declare here
-#   Headroom:       ~100 MB
-#
-# Each Node process uses ~100-200 MB idle.
-# 5 processes × 150 MB + nginx ~50 MB ≈ 800 MB working set — fits comfortably.
+# ─── PROD ECS TASK DEFINITION ────────────────────────────────────────────────
+# Fargate valid combination: 512 CPU (0.5 vCPU) + 2048 MB (2 GB)
+# Cost: ~$21/month. Headroom for 5 Node processes + nginx (~800 MB peak).
 
 resource "aws_ecs_task_definition" "saferide" {
   family                   = "saferide-monolith"
-  network_mode             = "bridge"
-  requires_compatibilities = ["EC2"]
-  cpu                      = "512"  # leave the other 1024 for the OS
-  memory                   = "1500"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "512"
+  memory                   = "2048"
   execution_role_arn       = aws_iam_role.ecs_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
 
@@ -384,7 +289,6 @@ resource "aws_ecs_task_definition" "saferide" {
 
     portMappings = [{
       containerPort = 80
-      hostPort      = 80
       protocol      = "tcp"
     }]
 
@@ -425,63 +329,180 @@ resource "aws_ecs_task_definition" "saferide" {
     }
   }])
 
-  # Terraform manages the task definition shape, not the image tag.
-  # Image updates happen via `docker push :prod-latest` + force-new-deployment.
-  lifecycle {
-    ignore_changes = [container_definitions]
-  }
+  lifecycle { ignore_changes = [container_definitions] }
 }
 
-# ─── ECS SERVICE ─────────────────────────────────────────────────────────────
-# Note on deployments: bridge networking + hostPort 80 means only one task
-# can run per instance. With desired_count=1 and one instance, a rolling
-# deploy briefly stops the old task before starting the new one (~30-60s
-# downtime). Deploy during off-peak hours until you scale to 2+ instances.
+# ─── DEV ECS TASK DEFINITION ─────────────────────────────────────────────────
+# Fargate valid combination: 256 CPU (0.25 vCPU) + 512 MB
+# Cost: ~$5/month running 24/7, ~$1.50/month with night scale-down.
+
+resource "aws_ecs_task_definition" "dev" {
+  family                   = "saferide-dev"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = aws_iam_role.ecs_execution_role.arn
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
+
+  container_definitions = jsonencode([{
+    name      = "saferide"
+    image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.name}.amazonaws.com/saferide_ecr:dev-latest"
+    essential = true
+
+    portMappings = [{
+      containerPort = 80
+      protocol      = "tcp"
+    }]
+
+    environment = [
+      { name = "NODE_ENV", value = "development" }
+    ]
+
+    secrets = [
+      {
+        name      = "FIREBASE_SERVICE_ACCOUNT_JSON"
+        valueFrom = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/saferide/dev/auth-service/FIREBASE_SERVICE_ACCOUNT_JSON"
+      },
+      {
+        name      = "JWT_PRIVATE_KEY"
+        valueFrom = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/saferide/dev/auth-service/JWT_PRIVATE_KEY"
+      },
+      {
+        name      = "JWT_PUBLIC_KEY"
+        valueFrom = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/saferide/dev/auth-service/JWT_PUBLIC_KEY"
+      },
+      {
+        name      = "FIREBASE_DATABASE_URL"
+        valueFrom = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/saferide/dev/auth-service/FIREBASE_DATABASE_URL"
+      },
+      {
+        name      = "GOOGLE_MAPS_API_KEY"
+        valueFrom = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/saferide/dev/route-service/GOOGLE_MAPS_API_KEY"
+      }
+    ]
+
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = "/ecs/saferide-dev"
+        "awslogs-region"        = data.aws_region.current.name
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
+  }])
+
+  lifecycle { ignore_changes = [container_definitions] }
+}
+
+# ─── PROD ECS SERVICE ─────────────────────────────────────────────────────────
 
 resource "aws_ecs_service" "saferide" {
   name            = "saferide-monolith"
   cluster         = aws_ecs_cluster.saferide.id
   task_definition = aws_ecs_task_definition.saferide.arn
   desired_count   = 1
+  launch_type     = "FARGATE"
 
-  capacity_provider_strategy {
-    capacity_provider = aws_ecs_capacity_provider.saferide.name
-    weight            = 1
+  network_configuration {
+    subnets          = [aws_subnet.public_1.id, aws_subnet.public_2.id]
+    security_groups  = [aws_security_group.ecs_instances.id]
+    assign_public_ip = true  # replaces NAT gateway — tasks pull ECR via public internet
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.ecs_tg.arn
+    target_group_arn = aws_lb_target_group.prod.arn
     container_name   = "saferide"
     container_port   = 80
   }
 
-  deployment_minimum_healthy_percent = 0   # required on single-instance: stop old before starting new
-  deployment_maximum_percent         = 100
-  health_check_grace_period_seconds  = 90  # give PM2 + services time to fully start
+  deployment_minimum_healthy_percent = 100  # Fargate: rolling deploy with no downtime
+  deployment_maximum_percent         = 200
+  health_check_grace_period_seconds  = 90
 
-  depends_on = [
-    aws_lb_listener.http,
-    aws_ecs_cluster_capacity_providers.saferide,
-  ]
+  depends_on = [aws_lb_listener.http]
 
-  lifecycle {
-    # CI/CD rotates task definitions — Terraform should not override them
-    ignore_changes = [task_definition]
-  }
+  lifecycle { ignore_changes = [task_definition] }
 
   tags = { Name = "saferide-monolith-service" }
+}
+
+# ─── DEV ECS SERVICE ──────────────────────────────────────────────────────────
+
+resource "aws_ecs_service" "dev" {
+  name            = "saferide-dev"
+  cluster         = aws_ecs_cluster.saferide.id
+  task_definition = aws_ecs_task_definition.dev.arn
+  desired_count   = 0  # starts at 0; first deploy-dev push brings it to 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = [aws_subnet.public_1.id, aws_subnet.public_2.id]
+    security_groups  = [aws_security_group.ecs_instances.id]
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.dev.arn
+    container_name   = "saferide"
+    container_port   = 80
+  }
+
+  deployment_minimum_healthy_percent = 0
+  deployment_maximum_percent         = 100
+  health_check_grace_period_seconds  = 90
+
+  depends_on = [aws_lb_listener.http]
+
+  lifecycle { ignore_changes = [task_definition, desired_count] }
+
+  tags = { Name = "saferide-dev-service" }
+}
+
+# ─── DEV SCHEDULED SCALING (scale to 0 at night, back up in morning IST) ────
+
+resource "aws_appautoscaling_target" "dev" {
+  max_capacity       = 1
+  min_capacity       = 0
+  resource_id        = "service/${aws_ecs_cluster.saferide.name}/${aws_ecs_service.dev.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+}
+
+resource "aws_appautoscaling_scheduled_action" "dev_scale_down" {
+  name               = "saferide-dev-scale-down"
+  service_namespace  = "ecs"
+  resource_id        = aws_appautoscaling_target.dev.resource_id
+  scalable_dimension = aws_appautoscaling_target.dev.scalable_dimension
+  schedule           = "cron(30 14 * * ? *)"  # 8:00 PM IST (UTC+5:30) = 14:30 UTC
+
+  scalable_target_action {
+    min_capacity = 0
+    max_capacity = 0
+  }
+}
+
+resource "aws_appautoscaling_scheduled_action" "dev_scale_up" {
+  name               = "saferide-dev-scale-up"
+  service_namespace  = "ecs"
+  resource_id        = aws_appautoscaling_target.dev.resource_id
+  scalable_dimension = aws_appautoscaling_target.dev.scalable_dimension
+  schedule           = "cron(30 2 * * ? *)"  # 8:00 AM IST (UTC+5:30) = 02:30 UTC
+
+  scalable_target_action {
+    min_capacity = 1
+    max_capacity = 1
+  }
 }
 
 # ─── OUTPUTS ─────────────────────────────────────────────────────────────────
 
 output "alb_dns_name" {
-  description = "Point your domain CNAME at this"
-  value       = aws_lb.saferide_alb.dns_name
+  value = aws_lb.saferide_alb.dns_name
 }
 
 output "ecr_repository_url" {
-  description = "Use this in your docker push commands"
-  value       = aws_ecr_repository.saferide_ecr.repository_url
+  value = aws_ecr_repository.saferide_ecr.repository_url
 }
 
 output "ecs_cluster_name" {

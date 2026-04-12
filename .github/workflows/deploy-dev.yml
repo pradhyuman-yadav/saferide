@@ -1,45 +1,46 @@
-name: Deploy to Production
+name: Deploy to Dev
 
 on:
   push:
-    branches: [main]
+    branches: [develop]
 
 concurrency:
-  group: deploy-production
-  cancel-in-progress: false   # never cancel a running deploy mid-flight
+  group: deploy-dev
+  cancel-in-progress: true
+
+permissions:
+  id-token: write   # required for OIDC
+  contents: read
 
 jobs:
   deploy:
-    name: Build, Push & Deploy
+    name: Build, Push & Deploy (Dev)
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region:            ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region:     ${{ secrets.AWS_REGION }}
 
       - name: Log in to ECR
-        id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build & push Docker image
         env:
-          IMAGE: ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
-          IMAGE_LATEST: ${{ secrets.ECR_REPOSITORY }}:prod-latest
-          ALB: https://saferide.co.in
+          IMAGE:        ${{ secrets.ECR_REPOSITORY }}:dev-${{ github.sha }}
+          IMAGE_LATEST: ${{ secrets.ECR_REPOSITORY }}:dev-latest
+          BASE_URL:     https://dev.saferide.co.in
         run: |
           docker build -f Dockerfile.monolith \
-            --build-arg VITE_AUTH_SERVICE_URL=$ALB \
-            --build-arg VITE_ROUTE_SERVICE_URL=$ALB \
-            --build-arg VITE_TENANT_SERVICE_URL=$ALB \
-            --build-arg VITE_TRIP_SERVICE_URL=$ALB \
+            --build-arg VITE_AUTH_SERVICE_URL=$BASE_URL \
+            --build-arg VITE_ROUTE_SERVICE_URL=$BASE_URL \
+            --build-arg VITE_TENANT_SERVICE_URL=$BASE_URL \
+            --build-arg VITE_TRIP_SERVICE_URL=$BASE_URL \
             --build-arg VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY }} \
             --build-arg VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }} \
             --build-arg VITE_FIREBASE_PROJECT_ID=${{ secrets.VITE_FIREBASE_PROJECT_ID }} \
@@ -47,22 +48,18 @@ jobs:
             --build-arg VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }} \
             --build-arg VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID }} \
             --build-arg VITE_GOOGLE_MAPS_API_KEY=${{ secrets.VITE_GOOGLE_MAPS_API_KEY }} \
-            -t $IMAGE \
-            -t $IMAGE_LATEST \
-            .
+            -t $IMAGE -t $IMAGE_LATEST .
           docker push $IMAGE
           docker push $IMAGE_LATEST
 
       - name: Register new task definition revision
         id: task-def
         env:
-          IMAGE: ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
+          IMAGE: ${{ secrets.ECR_REPOSITORY }}:dev-${{ github.sha }}
         run: |
-          # Fetch current task definition, swap image tag, register new revision
           TASK_DEF=$(aws ecs describe-task-definition \
-            --task-definition saferide-monolith \
-            --query 'taskDefinition' \
-            --output json)
+            --task-definition saferide-dev \
+            --query 'taskDefinition' --output json)
 
           NEW_TASK_DEF=$(echo "$TASK_DEF" | jq \
             --arg IMAGE "$IMAGE" \
@@ -71,33 +68,30 @@ jobs:
 
           NEW_ARN=$(aws ecs register-task-definition \
             --cli-input-json "$NEW_TASK_DEF" \
-            --query 'taskDefinition.taskDefinitionArn' \
-            --output text)
+            --query 'taskDefinition.taskDefinitionArn' --output text)
 
           echo "task_def_arn=$NEW_ARN" >> $GITHUB_OUTPUT
 
-      - name: Deploy to ECS
+      - name: Deploy to ECS (Dev)
         run: |
           aws ecs update-service \
             --cluster saferide-cluster \
-            --service saferide-monolith \
+            --service saferide-dev \
             --task-definition ${{ steps.task-def.outputs.task_def_arn }} \
-            --query 'service.{status:status,desired:desiredCount}' \
-            --output table
+            --desired-count 1 \
+            --output table \
+            --query 'service.{status:status,desired:desiredCount}'
 
       - name: Wait for stable deployment
         run: |
           aws ecs wait services-stable \
             --cluster saferide-cluster \
-            --services saferide-monolith
-          echo "Deployment stable ✓"
+            --services saferide-dev
+          echo "Dev deployment stable ✓"
 
       - name: Smoke test
         run: |
           sleep 5
-          STATUS=$(curl -sf https://saferide.co.in/health | jq -r '.data.status')
-          if [ "$STATUS" != "ok" ]; then
-            echo "Smoke test failed — health endpoint returned: $STATUS"
-            exit 1
-          fi
+          STATUS=$(curl -sf https://dev.saferide.co.in/health | jq -r '.data.status')
+          [ "$STATUS" = "ok" ] || { echo "Smoke test failed: $STATUS"; exit 1; }
           echo "Health check passed: $STATUS ✓"

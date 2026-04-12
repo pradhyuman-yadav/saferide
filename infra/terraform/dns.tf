@@ -157,7 +157,7 @@ resource "aws_lb_listener" "https" {
   # Default: forward saferide.co.in / api.saferide.co.in / app.saferide.co.in to the app
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.ecs_tg.arn
+    target_group_arn = aws_lb_target_group.prod.arn
   }
 
   tags = { Name = "saferide-https-listener" }
@@ -185,6 +185,37 @@ resource "aws_lb_listener_rule" "trysaferide_redirect" {
   }
 }
 
+# ─── DEV DNS + ALB ROUTING ───────────────────────────────────────────────────
+
+resource "aws_route53_record" "dev" {
+  zone_id = data.aws_route53_zone.saferide_co_in.zone_id
+  name    = "dev.saferide.co.in"
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.saferide_alb.dns_name
+    zone_id                = aws_lb.saferide_alb.zone_id
+    evaluate_target_health = true
+  }
+}
+
+# Route dev.saferide.co.in → dev target group (priority 20, below trysaferide redirect)
+resource "aws_lb_listener_rule" "dev" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 20
+
+  condition {
+    host_header {
+      values = ["dev.saferide.co.in"]
+    }
+  }
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.dev.arn
+  }
+}
+
 # ─── OUTPUTS ─────────────────────────────────────────────────────────────────
 
 output "app_url" {
@@ -195,4 +226,9 @@ output "app_url" {
 output "api_url" {
   description = "API base URL for mobile app"
   value       = "https://api.saferide.co.in"
+}
+
+output "dev_url" {
+  description = "Dev environment URL"
+  value       = "https://dev.saferide.co.in"
 }

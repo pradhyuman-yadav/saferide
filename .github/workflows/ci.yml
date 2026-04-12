@@ -1,16 +1,19 @@
 name: CI
 
-# Runs on every PR targeting main or release.
+# Runs on every push to feature branches and every PR targeting main/develop.
 # Must pass before merge is allowed.
 
 on:
+  push:
+    branches-ignore: [main, develop]
   pull_request:
-    branches: [main, release]
+    branches: [main, develop]
 
 jobs:
-  quality:
+  lint-typecheck-test:
     name: Typecheck · Lint · Test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +39,6 @@ jobs:
       - name: Test
         run: pnpm test
         env:
-          # Tests mock Firebase — this placeholder satisfies the Zod schema at startup
           FIREBASE_SERVICE_ACCOUNT_JSON: >-
             {"type":"service_account","project_id":"test","private_key_id":"key",
             "private_key":"-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA0Z3VS5JJ\n-----END RSA PRIVATE KEY-----\n",
