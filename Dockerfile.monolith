@@ -1,0 +1,84 @@
+# ── Stage 1: Build all services ───────────────────────────────────────────────
+FROM node:22-alpine AS builder
+RUN corepack enable
+WORKDIR /app
+
+# Workspace manifests + tsconfig
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json tsconfig.base.json ./
+
+# All source
+COPY packages/          ./packages/
+COPY auth-service/      ./auth-service/
+COPY tenant-service/    ./tenant-service/
+COPY route-service/     ./route-service/
+COPY trip-service/      ./trip-service/
+COPY livetrack-gateway/ ./livetrack-gateway/
+COPY web-admin/         ./web-admin/
+
+RUN pnpm install --frozen-lockfile
+
+# Build shared packages first
+RUN pnpm --filter "@saferide/*" run build
+
+# Build each service
+RUN pnpm --filter saferide-auth-service      run build
+RUN pnpm --filter saferide-tenant-service    run build
+RUN pnpm --filter saferide-route-service     run build
+RUN pnpm --filter saferide-trip-service      run build
+RUN pnpm --filter saferide-livetrack-gateway run build
+
+# Self-contained deploys (no symlinks)
+RUN pnpm --filter saferide-auth-service      deploy --prod --legacy /deploy/auth
+RUN pnpm --filter saferide-tenant-service    deploy --prod --legacy /deploy/tenant
+RUN pnpm --filter saferide-route-service     deploy --prod --legacy /deploy/route
+RUN pnpm --filter saferide-trip-service      deploy --prod --legacy /deploy/trip
+RUN pnpm --filter saferide-livetrack-gateway deploy --prod --legacy /deploy/livetrack
+
+# Web admin — VITE_ vars baked into bundle at build time
+ARG VITE_AUTH_SERVICE_URL
+ARG VITE_FIREBASE_API_KEY
+ARG VITE_FIREBASE_AUTH_DOMAIN
+ARG VITE_FIREBASE_PROJECT_ID
+ARG VITE_FIREBASE_STORAGE_BUCKET
+ARG VITE_FIREBASE_MESSAGING_SENDER_ID
+ARG VITE_FIREBASE_APP_ID
+
+RUN printf '%s\n' \
+    "VITE_AUTH_SERVICE_URL=${VITE_AUTH_SERVICE_URL}" \
+    "VITE_FIREBASE_API_KEY=${VITE_FIREBASE_API_KEY}" \
+    "VITE_FIREBASE_AUTH_DOMAIN=${VITE_FIREBASE_AUTH_DOMAIN}" \
+    "VITE_FIREBASE_PROJECT_ID=${VITE_FIREBASE_PROJECT_ID}" \
+    "VITE_FIREBASE_STORAGE_BUCKET=${VITE_FIREBASE_STORAGE_BUCKET}" \
+    "VITE_FIREBASE_MESSAGING_SENDER_ID=${VITE_FIREBASE_MESSAGING_SENDER_ID}" \
+    "VITE_FIREBASE_APP_ID=${VITE_FIREBASE_APP_ID}" \
+    > .env
+
+RUN pnpm --filter saferide-web-admin build
+
+# ── Stage 2: Run ──────────────────────────────────────────────────────────────
+FROM node:22-alpine AS runner
+
+# Install nginx and PM2
+RUN apk add --no-cache nginx && npm install -g pm2 --quiet
+
+WORKDIR /app
+
+# Copy all deployed services
+COPY --from=builder /deploy/auth      ./auth
+COPY --from=builder /deploy/tenant    ./tenant
+COPY --from=builder /deploy/route     ./route
+COPY --from=builder /deploy/trip      ./trip
+COPY --from=builder /deploy/livetrack ./livetrack
+
+# Copy web-admin static files
+COPY --from=builder /app/web-admin/dist /usr/share/nginx/html
+
+# Config files
+COPY nginx.monolith.conf /etc/nginx/nginx.conf
+COPY pm2.config.js       ./pm2.config.js
+COPY start.sh            ./start.sh
+RUN chmod +x ./start.sh
+
+EXPOSE 80
+
+CMD ["./start.sh"]

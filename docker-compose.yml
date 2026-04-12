@@ -1,76 +1,23 @@
 services:
-
-  auth:
+  saferide:
     build:
       context: .
-      dockerfile: auth-service/Dockerfile
+      dockerfile: Dockerfile.monolith
+      args:
+        VITE_AUTH_SERVICE_URL: "http://localhost/api/v1/auth"
+        VITE_FIREBASE_API_KEY: "${VITE_FIREBASE_API_KEY}"
+        VITE_FIREBASE_AUTH_DOMAIN: "${VITE_FIREBASE_AUTH_DOMAIN}"
+        VITE_FIREBASE_PROJECT_ID: "${VITE_FIREBASE_PROJECT_ID}"
+        VITE_FIREBASE_STORAGE_BUCKET: "${VITE_FIREBASE_STORAGE_BUCKET}"
+        VITE_FIREBASE_MESSAGING_SENDER_ID: "${VITE_FIREBASE_MESSAGING_SENDER_ID}"
+        VITE_FIREBASE_APP_ID: "${VITE_FIREBASE_APP_ID}"
     ports:
-      - "4001:4001"
+      - "80:80"
     env_file: .env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:4001/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost/health"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 10s
-
-  tenant:
-    build:
-      context: .
-      dockerfile: tenant-service/Dockerfile
-    ports:
-      - "4002:4002"
-    env_file: .env
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:4002/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-
-  route:
-    build:
-      context: .
-      dockerfile: route-service/Dockerfile
-    ports:
-      - "4003:4003"
-    env_file: .env
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:4003/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-
-  trip:
-    build:
-      context: .
-      dockerfile: trip-service/Dockerfile
-    ports:
-      - "4004:4004"
-    env_file: .env
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:4004/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-
-  livetrack:
-    build:
-      context: .
-      dockerfile: livetrack-gateway/Dockerfile
-    ports:
-      - "4005:4005"
-    env_file: .env
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:4005/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
+      start_period: 15s
