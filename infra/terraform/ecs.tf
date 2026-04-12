@@ -144,8 +144,8 @@ resource "aws_cloudwatch_log_group" "saferide" {
 # ─── SECURITY GROUP — ALB (internet-facing) ───────────────────────────────────
 
 resource "aws_security_group" "alb" {
-  name        = "saferide-alb-sg"
-  description = "ALB — HTTP and HTTPS from internet"
+  name_prefix = "saferide-alb-sg-"
+  description = "ALB - HTTP and HTTPS from internet"
   vpc_id      = aws_vpc.saferide_vpc.id
 
   ingress {
@@ -171,14 +171,18 @@ resource "aws_security_group" "alb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  lifecycle {
+    create_before_destroy = true
+  }
+
   tags = { Name = "saferide-alb-sg" }
 }
 
 # ─── SECURITY GROUP — ECS EC2 INSTANCES (only accept traffic from ALB) ───────
 
 resource "aws_security_group" "ecs_instances" {
-  name        = "saferide-ecs-instances-sg"
-  description = "ECS EC2 instances — port 80 from ALB only"
+  name_prefix = "saferide-ecs-instances-sg-"
+  description = "ECS EC2 instances - port 80 from ALB only"
   vpc_id      = aws_vpc.saferide_vpc.id
 
   ingress {
@@ -194,6 +198,10 @@ resource "aws_security_group" "ecs_instances" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 
   tags = { Name = "saferide-ecs-instances-sg" }
@@ -341,10 +349,13 @@ resource "aws_lb_listener" "http" {
   port              = 80
   protocol          = "HTTP"
 
-  # TODO: once ACM cert is provisioned, change this to HTTPS redirect
   default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.ecs_tg.arn
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
   }
 }
 
@@ -384,15 +395,23 @@ resource "aws_ecs_task_definition" "saferide" {
     secrets = [
       {
         name      = "FIREBASE_SERVICE_ACCOUNT_JSON"
-        valueFrom = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/saferide/prod/FIREBASE_SERVICE_ACCOUNT_JSON"
+        valueFrom = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/saferide/prod/auth-service/FIREBASE_SERVICE_ACCOUNT_JSON"
       },
       {
         name      = "JWT_PRIVATE_KEY"
-        valueFrom = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/saferide/prod/JWT_PRIVATE_KEY"
+        valueFrom = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/saferide/prod/auth-service/JWT_PRIVATE_KEY"
       },
       {
         name      = "JWT_PUBLIC_KEY"
-        valueFrom = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/saferide/prod/JWT_PUBLIC_KEY"
+        valueFrom = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/saferide/prod/auth-service/JWT_PUBLIC_KEY"
+      },
+      {
+        name      = "FIREBASE_DATABASE_URL"
+        valueFrom = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/saferide/prod/auth-service/FIREBASE_DATABASE_URL"
+      },
+      {
+        name      = "GOOGLE_MAPS_API_KEY"
+        valueFrom = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/saferide/prod/route-service/GOOGLE_MAPS_API_KEY"
       }
     ]
 

@@ -8,15 +8,12 @@ terraform {
     }
   }
 
-  # Remote state — create the bucket + table first (Step 3 in deployment guide),
-  # then uncomment this block and run `terraform init -migrate-state`.
-  # backend "s3" {
-  #   bucket         = "saferide-terraform-state"
-  #   key            = "infra/terraform.tfstate"
-  #   region         = "ap-south-2"
-  #   dynamodb_table = "saferide-terraform-locks"
-  #   encrypt        = true
-  # }
+  backend "s3" {
+    bucket  = "terraform-state-bucket-saferide"
+    key     = "terraform.tfstate"
+    region  = "ap-south-2"
+    encrypt = true
+  }
 }
 
 provider "aws" {
