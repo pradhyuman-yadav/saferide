@@ -74,9 +74,9 @@ COPY --from=builder /deploy/livetrack ./livetrack
 COPY --from=builder /app/web-admin/dist /usr/share/nginx/html
 
 # Config files
-COPY nginx.monolith.conf /etc/nginx/nginx.conf
-COPY pm2.config.js       ./pm2.config.js
-COPY start.sh            ./start.sh
+COPY nginx/nginx.monolith.conf /etc/nginx/nginx.conf
+COPY docker/pm2.config.js      ./pm2.config.js
+COPY docker/start.sh           ./start.sh
 RUN chmod +x ./start.sh
 
 EXPOSE 80
