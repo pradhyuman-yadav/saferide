@@ -10,7 +10,7 @@ COPY tenant-service/ ./tenant-service/
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter "@saferide/*" run build
 RUN pnpm --filter saferide-tenant-service run build
-RUN pnpm --filter saferide-tenant-service deploy --prod /deploy
+RUN pnpm --filter saferide-tenant-service deploy --prod --legacy /deploy
 
 # ── Stage 2: Run ──────────────────────────────────────────────────────────────
 FROM node:22-alpine AS runner

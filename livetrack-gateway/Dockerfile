@@ -10,7 +10,7 @@ COPY livetrack-gateway/ ./livetrack-gateway/
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter "@saferide/*" run build
 RUN pnpm --filter saferide-livetrack-gateway run build
-RUN pnpm --filter saferide-livetrack-gateway deploy --prod /deploy
+RUN pnpm --filter saferide-livetrack-gateway deploy --prod --legacy /deploy
 
 # ── Stage 2: Run ──────────────────────────────────────────────────────────────
 FROM node:22-alpine AS runner

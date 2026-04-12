@@ -18,7 +18,7 @@ RUN pnpm --filter "@saferide/*" run build
 RUN pnpm --filter saferide-auth-service run build
 
 # Produce a self-contained production deployment (resolves workspace deps)
-RUN pnpm --filter saferide-auth-service deploy --prod /deploy
+RUN pnpm --filter saferide-auth-service deploy --prod --legacy /deploy
 
 # ── Stage 2: Run ──────────────────────────────────────────────────────────────
 FROM node:22-alpine AS runner
