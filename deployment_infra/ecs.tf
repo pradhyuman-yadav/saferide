@@ -116,20 +116,27 @@ resource "aws_iam_instance_profile" "ecs_instance_profile" {
   role = aws_iam_role.ecs_instance_role.name
 }
 
-# ─── LAUNCH CONFIGURATION — t3.micro in private subnet ───────────────────────
+# ─── LAUNCH TEMPLATE — t3.micro in private subnet ────────────────────────────
 
 data "aws_ssm_parameter" "ecs_ami" {
   # Latest ECS-optimised Amazon Linux 2 AMI for the region
   name = "/aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id"
 }
 
-resource "aws_launch_configuration" "ecs_lc" {
-  name_prefix          = "saferide-ecs-lc-"
-  image_id             = data.aws_ssm_parameter.ecs_ami.value
-  instance_type        = "t3.micro"
-  iam_instance_profile = aws_iam_instance_profile.ecs_instance_profile.name
-  key_name             = "saferide_key"   # must match the key pair name in AWS (saferide_key.pem)
-  security_groups      = [aws_security_group.ecs_instances.id]
+resource "aws_launch_template" "ecs_lt" {
+  name_prefix   = "saferide-ecs-lt-"
+  image_id      = data.aws_ssm_parameter.ecs_ami.value
+  instance_type = "t3.micro"
+  key_name      = "saferide_key" # must match the key pair name in AWS (saferide_key.pem)
+
+  iam_instance_profile {
+    name = aws_iam_instance_profile.ecs_instance_profile.name
+  }
+
+  network_interfaces {
+    security_groups             = [aws_security_group.ecs_instances.id]
+    associate_public_ip_address = false # instances stay in private subnets
+  }
 
   user_data = base64encode(<<-EOF
     #!/bin/bash
@@ -145,11 +152,15 @@ resource "aws_launch_configuration" "ecs_lc" {
 # ─── AUTO SCALING GROUP ───────────────────────────────────────────────────────
 
 resource "aws_autoscaling_group" "ecs_asg" {
-  name                 = "saferide-ecs-asg"
-  launch_configuration = aws_launch_configuration.ecs_lc.name
-  min_size             = 1
-  max_size             = 4
-  desired_capacity     = 2
+  name             = "saferide-ecs-asg"
+  min_size         = 1
+  max_size         = 4
+  desired_capacity = 2
+
+  launch_template {
+    id      = aws_launch_template.ecs_lt.id
+    version = "$Latest"
+  }
 
   # Instances live in the private subnets
   vpc_zone_identifier = [
