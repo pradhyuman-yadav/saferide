@@ -98,7 +98,7 @@ Run once, immediately after account setup. Protects against accidental expensive
 
 ```bash
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-YOUR_EMAIL="admin@saferide.co.in"   # ← change this
+YOUR_EMAIL="pradhyuman@saferide.co.in"   # ← change this
 ```
 
 #### Budget with three alert tiers
@@ -996,11 +996,11 @@ done
 docker build \
   -f web-admin/Dockerfile \
   --build-arg VITE_AUTH_SERVICE_URL="https://api.saferide.co.in" \
-  --build-arg VITE_FIREBASE_API_KEY="YOUR_PROD_API_KEY" \
+  --build-arg VITE_FIREBASE_API_KEY="AIzaSyB1lU5Z9Mae_0d5JuiLO_Mt6wR0ok90qJI" \
   --build-arg VITE_FIREBASE_AUTH_DOMAIN="saferide-prod-a4336.firebaseapp.com" \
   --build-arg VITE_FIREBASE_PROJECT_ID="saferide-prod-a4336" \
   --build-arg VITE_FIREBASE_STORAGE_BUCKET="saferide-prod-a4336.appspot.com" \
-  --build-arg VITE_FIREBASE_MESSAGING_SENDER_ID="YOUR_SENDER_ID" \
+  --build-arg VITE_FIREBASE_MESSAGING_SENDER_ID="557205115466" \
   --build-arg VITE_FIREBASE_APP_ID="YOUR_APP_ID" \
   -t $REGISTRY/saferide-web-admin:prod-latest \
   .

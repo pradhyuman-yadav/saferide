@@ -14,7 +14,7 @@ import { routeRouter, stopRouter } from './routes/route.routes';
 import { driverRouter } from './routes/driver.routes';
 import { studentRouter } from './routes/student.routes';
 
-const app = express();
+const app: express.Application = express();
 
 // ── Security headers ──────────────────────────────────────────────────────────
 app.use(helmet());

@@ -4,7 +4,7 @@ import { ClaimInviteSchema } from '@saferide/types';
 import { AuthController } from '../controllers/auth.controller';
 
 const controller = new AuthController();
-export const authRouter = Router();
+export const authRouter: Router = Router();
 
 // POST /api/v1/auth/invites/claim — rate limited, no pre-auth required (new user)
 authRouter.post(

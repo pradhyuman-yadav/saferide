@@ -11,7 +11,7 @@ import { tenantsRouter } from './routes/tenants.routes';
 // Initialize Firebase Admin SDK before anything else
 initFirebaseAdmin();
 
-const app = express();
+const app: express.Application = express();
 
 // ── Security headers ────────────────────────────────────────────────────────
 app.use(helmet());

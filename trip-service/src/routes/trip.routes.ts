@@ -7,7 +7,7 @@ import { TelemetryController } from '../controllers/telemetry.controller';
 const tripCtrl      = new TripController();
 const telemetryCtrl = new TelemetryController();
 
-export const tripRouter = Router();
+export const tripRouter: Router = Router();
 
 // All trip endpoints — rate limited then authenticated
 tripRouter.use(readRateLimiter);

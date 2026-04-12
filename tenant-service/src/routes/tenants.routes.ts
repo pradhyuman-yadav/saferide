@@ -4,7 +4,7 @@ import { CreateTenantSchema } from '@saferide/types';
 import { TenantsController } from '../controllers/tenants.controller';
 
 const controller = new TenantsController();
-export const tenantsRouter = Router();
+export const tenantsRouter: Router = Router();
 
 // All tenant routes require authentication + rate limiting
 tenantsRouter.use(adminRateLimiter);

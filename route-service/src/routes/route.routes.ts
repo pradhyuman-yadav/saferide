@@ -13,7 +13,7 @@ const DirectionsSchema = z.object({
 const routeController = new RouteController();
 const stopController  = new StopController();
 
-export const routeRouter = Router();
+export const routeRouter: Router = Router();
 
 routeRouter.use(readRateLimiter);
 routeRouter.use(verifyJwt);
@@ -93,7 +93,7 @@ routeRouter.post(
 // ── Flat stop endpoints (PATCH + DELETE) ──────────────────────────────────
 // Mounted at /api/v1/stops via stopRouter in index.ts
 
-export const stopRouter = Router();
+export const stopRouter: Router = Router();
 stopRouter.use(readRateLimiter);
 stopRouter.use(verifyJwt);
 

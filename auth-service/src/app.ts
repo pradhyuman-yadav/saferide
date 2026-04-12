@@ -10,7 +10,7 @@ import { requestId, errorHandler, httpLogger } from '@saferide/middleware';
 import { config } from './config';
 import { authRouter } from './routes/auth.routes';
 
-const app = express();
+const app: express.Application = express();
 
 // ── Security headers ──────────────────────────────────────────────────────────
 app.use(helmet());

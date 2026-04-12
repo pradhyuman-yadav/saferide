@@ -11,7 +11,7 @@ import { config } from './config';
 import { tripRouter } from './routes/trip.routes';
 import { webhookRouter } from './routes/webhook.routes';
 
-const app = express();
+const app: express.Application = express();
 
 // ── Security headers ───────────────────────────────────────────────────────────
 app.use(helmet());

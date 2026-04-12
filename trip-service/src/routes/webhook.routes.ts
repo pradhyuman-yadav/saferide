@@ -5,7 +5,7 @@ import { WebhookController } from '../controllers/webhook.controller';
 
 const ctrl = new WebhookController();
 
-export const webhookRouter = Router();
+export const webhookRouter: Router = Router();
 
 webhookRouter.use(readRateLimiter);
 webhookRouter.use(verifyJwt);

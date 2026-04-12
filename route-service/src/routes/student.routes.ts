@@ -4,7 +4,7 @@ import { CreateStudentSchema, UpdateStudentSchema } from '@saferide/types';
 import { StudentController } from '../controllers/student.controller';
 
 const controller = new StudentController();
-export const studentRouter = Router();
+export const studentRouter: Router = Router();
 
 // All student routes require authentication + standard rate limiting
 studentRouter.use(readRateLimiter);

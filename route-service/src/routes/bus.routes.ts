@@ -4,7 +4,7 @@ import { CreateBusSchema, UpdateBusSchema, AssignBusDriverSchema, AssignBusRoute
 import { BusController } from '../controllers/bus.controller';
 
 const controller = new BusController();
-export const busRouter = Router();
+export const busRouter: Router = Router();
 
 // All bus routes require authentication + standard rate limiting
 busRouter.use(readRateLimiter);

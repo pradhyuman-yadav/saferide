@@ -4,7 +4,7 @@ import { CreateDriverSchema, UpdateDriverSchema } from '@saferide/types';
 import { DriverController } from '../controllers/driver.controller';
 
 const controller = new DriverController();
-export const driverRouter = Router();
+export const driverRouter: Router = Router();
 
 // All driver routes require authentication + standard rate limiting
 driverRouter.use(readRateLimiter);
