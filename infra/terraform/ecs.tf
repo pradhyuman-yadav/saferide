@@ -420,7 +420,7 @@ resource "aws_ecs_service" "saferide" {
   deployment_maximum_percent         = 200
   health_check_grace_period_seconds  = 90
 
-  depends_on = [aws_lb_listener.http]
+  depends_on = [aws_lb_listener.http, aws_lb_listener.https]
 
   lifecycle { ignore_changes = [task_definition] }
 
@@ -452,7 +452,7 @@ resource "aws_ecs_service" "dev" {
   deployment_maximum_percent         = 100
   health_check_grace_period_seconds  = 90
 
-  depends_on = [aws_lb_listener.http]
+  depends_on = [aws_lb_listener.http, aws_lb_listener.https]
 
   lifecycle { ignore_changes = [task_definition, desired_count] }
 
