@@ -93,12 +93,14 @@ export class BoardingService {
       });
 
     // ── 6. Notify parent (fire-and-forget) ──────────────────────────────────
+    // Use generic copy — student name must not pass through Expo's push
+    // infrastructure (a third-party server) to minimise PII exposure per DPDP 2023.
     const title = input.eventType === 'boarded'
-      ? `${student.name} has boarded the bus`
-      : `${student.name} has left the bus`;
+      ? 'Your child has boarded the bus'
+      : 'Your child has left the bus';
     const body = input.eventType === 'boarded'
-      ? `Your child boarded Bus ${trip.busId} at ${now}.`
-      : `Your child deboarded Bus ${trip.busId}.`;
+      ? `Boarding confirmed. Have a safe trip.`
+      : `Your child has deboarded the bus.`;
 
     void notifications.notifyParentOfStudent(student.parentFirebaseUid, tenantId, title, body);
 
@@ -165,11 +167,12 @@ export class BoardingService {
             updatedAt: Date.now(),
           });
 
-        // Notify parent
+        // Notify parent — generic copy to avoid sending child's name through
+        // Expo's third-party push infrastructure.
         void notifications.notifyParentOfStudent(
           student.parentFirebaseUid, tenantId,
-          `${student.name} has arrived`,
-          `${student.name}'s bus trip has ended. They should be home soon.`,
+          'Your child has arrived',
+          `The bus trip has ended. Your child should be home soon.`,
         );
 
         // Webhook

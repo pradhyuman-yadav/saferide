@@ -26,4 +26,27 @@ export class StudentRepository {
     if (data.tenantId !== tenantId) return null;
     return data;
   }
+
+  /**
+   * Returns any active student whose parent matches the given Firebase UID
+   * AND who is assigned to the given bus.
+   * Used to verify a parent's access to a specific bus before returning trip data.
+   */
+  async findByParentUidAndBusId(
+    parentFirebaseUid: string,
+    busId:             string,
+    tenantId:          string,
+  ): Promise<Student | null> {
+    const snap = await getDb()
+      .collection('students')
+      .where('tenantId',          '==', tenantId)
+      .where('parentFirebaseUid', '==', parentFirebaseUid)
+      .where('busId',             '==', busId)
+      .where('isActive',          '==', true)
+      .limit(1)
+      .get();
+
+    if (snap.empty) return null;
+    return StudentSchema.parse({ ...snap.docs[0]!.data(), id: snap.docs[0]!.id });
+  }
 }

@@ -39,8 +39,8 @@ export type BoardingEvent = z.infer<typeof BoardingEventSchema>;
  * controller rejects any other value. When RFID ships, widen to z.enum.
  */
 export const CreateBoardingEventSchema = z.object({
-  studentId:  z.string().min(1),
-  stopId:     z.string().nullable(),
+  studentId:  z.string().min(1).max(500),
+  stopId:     z.string().min(1).max(500).nullable(),
   eventType:  z.enum(BOARDING_EVENT_TYPES),
   method:     z.literal('manual'),
   recordedAt: z.number(),

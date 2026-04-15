@@ -4,9 +4,21 @@ const isDev = process.env['NODE_ENV'] !== 'production';
 
 export const logger = pino({
   level: process.env['LOG_LEVEL'] ?? 'info',
-  // Redact auth tokens and sensitive fields from all logs everywhere
+  // Redact auth tokens, credentials, and GPS coordinates from all logs.
+  // GPS fields (lat/lon) are sensitive personal data under DPDP 2023 —
+  // they must never appear in plaintext in CloudWatch or any log store.
   redact: {
-    paths: ['req.headers.authorization', 'req.headers.cookie', '*.password', '*.token', '*.secret'],
+    paths: [
+      'req.headers.authorization',
+      'req.headers.cookie',
+      '*.password',
+      '*.token',
+      '*.secret',
+      '*.lat',
+      '*.lon',
+      '*.latitude',
+      '*.longitude',
+    ],
     censor: '[REDACTED]',
   },
   ...(isDev && {

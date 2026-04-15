@@ -59,11 +59,16 @@ export class WebhookService {
     return created;
   }
 
-  /** Soft-delete: sets isActive = false. */
+  /** Soft-delete: sets isActive = false and purges delivery logs older than 30 days. */
   async delete(id: string, tenantId: string): Promise<void> {
     const existing = await repo.findById(id, tenantId);
     if (!existing) throw new Error('WEBHOOK_NOT_FOUND');
     await repo.deactivate(id);
+    // DPDP 2023: purge delivery logs (which may contain trip event data) older
+    // than 30 days. Fire-and-forget — failure here must not block the delete response.
+    void repo.purgeOldDeliveries(id, tenantId, 30 * 24 * 60 * 60 * 1_000).catch((err) => {
+      logger.warn({ err, webhookId: id, tenantId }, '[WebhookService] purgeOldDeliveries failed (non-fatal)');
+    });
   }
 
   /** Recent delivery log for a single webhook. */

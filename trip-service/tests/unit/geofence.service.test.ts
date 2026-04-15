@@ -164,13 +164,15 @@ describe('GeofenceService', () => {
     expect(notificationMock.notifyParentsAtStop).toHaveBeenCalledOnce();
   });
 
-  it('delivers bus.approaching_stop webhook with correct payload', async () => {
+  it('delivers bus.approaching_stop webhook with correct payload (no GPS coords)', async () => {
     const stop = makeStop();
     stopRepoMock.listByRouteId.mockResolvedValue([stop]);
     studentRepoMock.listByStopId.mockResolvedValue([makeStudent()]);
 
     await service.check(makeTrip({ alertedStopIds: [] }), BUS_LAT, BUS_LON, 'tenant-001');
 
+    // lat/lon intentionally excluded from webhook payload (DPDP 2023 — GPS coords
+    // are sensitive personal data and must not be sent to third-party webhook URLs).
     expect(webhookMock.deliverEvent).toHaveBeenCalledWith(
       'bus.approaching_stop',
       {
@@ -178,11 +180,13 @@ describe('GeofenceService', () => {
         busId:    'bus-001',
         stopId:   stop.id,
         stopName: stop.name,
-        lat:      BUS_LAT,
-        lon:      BUS_LON,
       },
       'tenant-001',
     );
+    // Verify lat/lon are NOT present in the payload
+    const payload = webhookMock.deliverEvent.mock.calls[0]?.[1] as Record<string, unknown>;
+    expect(payload).not.toHaveProperty('lat');
+    expect(payload).not.toHaveProperty('lon');
   });
 
   it('does not throw when stopRepo throws (fire-and-forget resilience)', async () => {

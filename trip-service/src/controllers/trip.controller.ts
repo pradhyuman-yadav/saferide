@@ -1,8 +1,10 @@
 import type { Request, Response } from 'express';
 import { TripService } from '../services/trip.service';
+import { StudentRepository } from '../repositories/student.repository';
 import { auditLog } from '@saferide/logger';
 
-const service = new TripService();
+const service     = new TripService();
+const studentRepo = new StudentRepository();
 
 export class TripController {
   /** GET /api/v1/trips — driver's own trip history, newest first */
@@ -95,26 +97,47 @@ export class TripController {
 
   /** GET /api/v1/trips/bus/:busId — trip history for a bus (parents, managers) */
   async listForBus(req: Request, res: Response): Promise<void> {
-    const { tenantId } = req.user;
+    const { uid, role, tenantId } = req.user;
     if (tenantId === null) {
       res.status(403).json({ success: false, error: { code: 'FORBIDDEN', message: 'A school context is required.' } });
       return;
     }
 
     const { busId } = req.params as { busId: string };
+
+    // Parents may only access buses their own child is assigned to.
+    // Managers and school_admins have full tenant-scoped access.
+    if (role === 'parent') {
+      const linked = await studentRepo.findByParentUidAndBusId(uid, busId, tenantId);
+      if (linked === null) {
+        res.status(403).json({ success: false, error: { code: 'FORBIDDEN', message: 'You do not have access to this bus.' } });
+        return;
+      }
+    }
+
     const trips = await service.listTripsForBus(busId, tenantId);
     res.json({ success: true, data: trips });
   }
 
   /** GET /api/v1/trips/bus/:busId/active — parents poll bus location */
   async getActiveForBus(req: Request, res: Response): Promise<void> {
-    const { tenantId } = req.user;
+    const { uid, role, tenantId } = req.user;
     if (tenantId === null) {
       res.status(403).json({ success: false, error: { code: 'FORBIDDEN', message: 'A school context is required.' } });
       return;
     }
 
     const { busId } = req.params as { busId: string };
+
+    // Parents may only see live data for buses their own child is assigned to.
+    if (role === 'parent') {
+      const linked = await studentRepo.findByParentUidAndBusId(uid, busId, tenantId);
+      if (linked === null) {
+        res.status(403).json({ success: false, error: { code: 'FORBIDDEN', message: 'You do not have access to this bus.' } });
+        return;
+      }
+    }
+
     const trip = await service.findActiveForBus(busId, tenantId);
     res.json({ success: true, data: trip });
   }

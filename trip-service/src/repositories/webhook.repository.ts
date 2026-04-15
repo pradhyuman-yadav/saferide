@@ -79,4 +79,33 @@ export class WebhookRepository {
     const deliveries = snap.docs.map((d) => WebhookDeliverySchema.parse({ ...d.data(), id: d.id }));
     return deliveries.sort((a, b) => b.createdAt - a.createdAt).slice(0, limit);
   }
+
+  /**
+   * Deletes all delivery logs for a webhook that are older than `olderThanMs`.
+   * Called when a webhook is deactivated to satisfy the DPDP 2023 30-day
+   * data retention ceiling. Each Firestore delete is batched (max 500 per batch).
+   */
+  async purgeOldDeliveries(webhookId: string, tenantId: string, olderThanMs: number): Promise<number> {
+    const cutoff = Date.now() - olderThanMs;
+    const snap   = await this.deliveriesCol()
+      .where('tenantId',  '==', tenantId)
+      .where('webhookId', '==', webhookId)
+      .where('createdAt', '<',  cutoff)
+      .get();
+
+    if (snap.empty) return 0;
+
+    // Firestore batch writes are capped at 500 operations
+    const BATCH_SIZE = 500;
+    let   deleted    = 0;
+
+    for (let i = 0; i < snap.docs.length; i += BATCH_SIZE) {
+      const batch = getDb().batch();
+      snap.docs.slice(i, i + BATCH_SIZE).forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+      deleted += Math.min(BATCH_SIZE, snap.docs.length - i);
+    }
+
+    return deleted;
+  }
 }

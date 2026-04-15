@@ -6,14 +6,15 @@ import type { Webhook, WebhookDelivery } from '@saferide/types';
 // ---------------------------------------------------------------------------
 
 const repoMock = vi.hoisted(() => ({
-  listByTenant:       vi.fn(),
-  listActiveForEvent: vi.fn(),
-  findById:           vi.fn(),
-  create:             vi.fn(),
-  deactivate:         vi.fn(),
-  createDelivery:     vi.fn(),
-  updateDelivery:     vi.fn(),
-  listDeliveries:     vi.fn(),
+  listByTenant:        vi.fn(),
+  listActiveForEvent:  vi.fn(),
+  findById:            vi.fn(),
+  create:              vi.fn(),
+  deactivate:          vi.fn(),
+  createDelivery:      vi.fn(),
+  updateDelivery:      vi.fn(),
+  listDeliveries:      vi.fn(),
+  purgeOldDeliveries:  vi.fn().mockResolvedValue(0),
 }));
 
 vi.mock('../../src/repositories/webhook.repository', () => ({
@@ -75,6 +76,7 @@ describe('WebhookService', () => {
     repoMock.createDelivery.mockResolvedValue('del-001');
     repoMock.updateDelivery.mockResolvedValue(undefined);
     repoMock.deactivate.mockResolvedValue(undefined);
+    repoMock.purgeOldDeliveries.mockResolvedValue(0);
     repoMock.listDeliveries.mockResolvedValue([makeDelivery()]);
     service = new WebhookService();
   });
@@ -131,12 +133,17 @@ describe('WebhookService', () => {
   // ── delete ──────────────────────────────────────────────────────────────────
 
   describe('delete()', () => {
-    it('deactivates an existing webhook', async () => {
+    it('deactivates an existing webhook and schedules delivery log purge', async () => {
       repoMock.findById.mockResolvedValue(makeWebhook());
 
       await service.delete('wh-001', 'tenant-001');
 
       expect(repoMock.deactivate).toHaveBeenCalledWith('wh-001');
+      // purge is fire-and-forget — give the microtask queue a tick to run it
+      await Promise.resolve();
+      expect(repoMock.purgeOldDeliveries).toHaveBeenCalledWith(
+        'wh-001', 'tenant-001', expect.any(Number),
+      );
     });
 
     it('throws WEBHOOK_NOT_FOUND when webhook does not exist', async () => {

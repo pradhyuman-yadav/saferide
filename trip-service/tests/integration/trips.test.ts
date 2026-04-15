@@ -53,6 +53,17 @@ vi.mock('../../src/services/telemetry.service', () => ({
   TelemetryService: vi.fn().mockImplementation(() => telemetryServiceMock),
 }));
 
+// Mock StudentRepository — used by TripController to verify parent-bus access
+const studentRepoMock = vi.hoisted(() => ({
+  findByParentUidAndBusId: vi.fn(),
+  listByStopId:            vi.fn(),
+  findById:                vi.fn(),
+}));
+
+vi.mock('../../src/repositories/student.repository', () => ({
+  StudentRepository: vi.fn().mockImplementation(() => studentRepoMock),
+}));
+
 // Import app AFTER mocks are registered
 import { app } from '../../src/app';
 
@@ -223,9 +234,11 @@ describe('GET /api/v1/trips/bus/:busId', () => {
     resetFirebaseMock();
     configureFirebaseUser({ role: 'parent', tenantId: 'tenant-001' });
     configureFirebaseTenant({ status: 'active' });
+    // Default: parent has a child on bus-001
+    studentRepoMock.findByParentUidAndBusId.mockResolvedValue({ id: 'student-001' });
   });
 
-  it('returns 200 with trips for a bus (parent role)', async () => {
+  it('returns 200 with trips for a bus (parent role — child on bus)', async () => {
     tripServiceMock.listTripsForBus.mockResolvedValue([makeTrip(), makeTrip({ id: 'trip-002', status: 'ended' })]);
 
     const res = await request(app)
@@ -237,7 +250,19 @@ describe('GET /api/v1/trips/bus/:busId', () => {
     expect(res.body.data).toHaveLength(2);
   });
 
-  it('returns 200 with trips for a bus (manager role)', async () => {
+  it('returns 403 for parent whose child is NOT on the requested bus', async () => {
+    studentRepoMock.findByParentUidAndBusId.mockResolvedValue(null);
+
+    const res = await request(app)
+      .get('/api/v1/trips/bus/bus-999')
+      .set('Authorization', AUTH_HEADER);
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('FORBIDDEN');
+    expect(tripServiceMock.listTripsForBus).not.toHaveBeenCalled();
+  });
+
+  it('returns 200 with trips for a bus (manager role — no bus check)', async () => {
     configureFirebaseUser({ role: 'manager', tenantId: 'tenant-001' });
     tripServiceMock.listTripsForBus.mockResolvedValue([makeTrip()]);
 
@@ -247,6 +272,8 @@ describe('GET /api/v1/trips/bus/:busId', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(1);
+    // Managers bypass the student-bus check
+    expect(studentRepoMock.findByParentUidAndBusId).not.toHaveBeenCalled();
   });
 
   it('returns 403 when role is driver (not allowed)', async () => {
@@ -281,9 +308,11 @@ describe('GET /api/v1/trips/bus/:busId/active', () => {
     resetFirebaseMock();
     configureFirebaseUser({ role: 'parent', tenantId: 'tenant-001' });
     configureFirebaseTenant({ status: 'active' });
+    // Default: parent has a child on bus-001
+    studentRepoMock.findByParentUidAndBusId.mockResolvedValue({ id: 'student-001' });
   });
 
-  it('returns 200 with active trip when bus is on route', async () => {
+  it('returns 200 with active trip when bus is on route (parent — child on bus)', async () => {
     tripServiceMock.findActiveForBus.mockResolvedValue(makeTrip());
 
     const res = await request(app)
@@ -292,6 +321,18 @@ describe('GET /api/v1/trips/bus/:busId/active', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data.busId).toBe('bus-001');
+  });
+
+  it('returns 403 for parent whose child is NOT on the requested bus', async () => {
+    studentRepoMock.findByParentUidAndBusId.mockResolvedValue(null);
+
+    const res = await request(app)
+      .get('/api/v1/trips/bus/bus-999/active')
+      .set('Authorization', AUTH_HEADER);
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('FORBIDDEN');
+    expect(tripServiceMock.findActiveForBus).not.toHaveBeenCalled();
   });
 
   it('returns 200 with null when no active trip for bus', async () => {

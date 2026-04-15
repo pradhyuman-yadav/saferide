@@ -66,6 +66,8 @@ export class GeofenceService {
 
         void this.notifications.notifyParentsAtStop(stop.id, stop.name, tenantId, title, body);
 
+        // NOTE: lat/lon intentionally omitted — GPS coords are sensitive personal
+        // data under DPDP 2023 and must not be sent to third-party webhook URLs.
         void this.webhooks.deliverEvent(
           'bus.approaching_stop',
           {
@@ -73,8 +75,6 @@ export class GeofenceService {
             busId:    trip.busId,
             stopId:   stop.id,
             stopName: stop.name,
-            lat,
-            lon,
           },
           tenantId,
         );
