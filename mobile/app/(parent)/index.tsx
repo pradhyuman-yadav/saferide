@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { Map, Navigation, Bell, User, Bus, Crosshair } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useLiveTrack } from '@/hooks/useLiveTrack';
+import { useBoardingStatus } from '@/hooks/useBoardingStatus';
 import { useAuthStore } from '@/store/auth.store';
 import { BusMarker } from '@/components/map/BusMarker';
 import { SRText } from '@/components/ui/SRText';
@@ -36,8 +37,12 @@ export default function ParentHomeScreen() {
     return t('live.minutesAgo', { n: Math.floor(diff / 60) });
   }
 
-  const busId = profile?.busId ?? '';
+  const busId       = profile?.busId ?? '';
+  const studentId   = profile?.studentId ?? '';
   const { location, isConnected } = useLiveTrack(busId);
+  const boardingStatus = useBoardingStatus(busId);
+  const myChildStatus  = studentId ? boardingStatus[studentId] : undefined;
+  const isChildBoarded = myChildStatus?.status === 'boarded';
 
   // Locate-me: animate map to the user's current device position
   const handleLocateMe = useCallback(async () => {
@@ -139,9 +144,13 @@ export default function ParentHomeScreen() {
             busLabel={busLabel}
             location={location}
             formatAge={formatAge}
+            isChildBoarded={isChildBoarded}
           />
         ) : (
-          <OfflineState childName={profile?.childName} />
+          <OfflineState
+            childName={profile?.childName}
+            isChildBoarded={isChildBoarded}
+          />
         )}
 
         {/* ── In-card tab navigation ───────────────────────────────── */}
@@ -176,13 +185,14 @@ export default function ParentHomeScreen() {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 interface LiveStateProps {
-  childName?:  string;
-  busLabel:    string;
-  location:    { speed: number | null; updatedAt: number };
-  formatAge:   (ms: number) => string;
+  childName?:     string;
+  busLabel:       string;
+  location:       { speed: number | null; updatedAt: number };
+  formatAge:      (ms: number) => string;
+  isChildBoarded: boolean;
 }
 
-function LiveState({ childName, busLabel, location, formatAge }: LiveStateProps) {
+function LiveState({ childName, busLabel, location, formatAge, isChildBoarded }: LiveStateProps) {
   const { t } = useTranslation();
   return (
     <>
@@ -208,16 +218,21 @@ function LiveState({ childName, busLabel, location, formatAge }: LiveStateProps)
         {location.speed !== null && location.speed > 0 && (
           <SRBadge label={`${Math.round(location.speed)} ${t('live.kmh')}`} variant="muted" />
         )}
+        <SRBadge
+          label={isChildBoarded ? t('boarding.onBoard') : t('boarding.notBoarded')}
+          variant={isChildBoarded ? 'active' : 'muted'}
+        />
       </View>
     </>
   );
 }
 
 interface OfflineStateProps {
-  childName?: string;
+  childName?:     string;
+  isChildBoarded: boolean;
 }
 
-function OfflineState({ childName }: OfflineStateProps) {
+function OfflineState({ childName, isChildBoarded }: OfflineStateProps) {
   const { t } = useTranslation();
   return (
     <>
@@ -233,6 +248,13 @@ function OfflineState({ childName }: OfflineStateProps) {
             {t('live.busNotStarted')}
           </SRText>
         </View>
+      </View>
+
+      <View style={styles.badges}>
+        <SRBadge
+          label={isChildBoarded ? t('boarding.onBoard') : t('boarding.notBoarded')}
+          variant={isChildBoarded ? 'active' : 'muted'}
+        />
       </View>
 
       <SRText variant="caption" color={colors.slate} style={styles.offlineHint}>

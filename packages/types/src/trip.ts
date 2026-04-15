@@ -28,6 +28,13 @@ export const TripSchema = z.object({
   sosActive:      z.boolean().optional(),
   sosTriggeredAt: z.number().optional(),
 
+  /** Geofencing — stopIds already alerted this trip; prevents re-alerting per ping. */
+  alertedStopIds: z.array(z.string()).optional(),
+
+  /** Speeding / rash-driving alert cooldowns — Unix ms of last alert sent. */
+  lastSpeedingAlertAt:    z.number().optional(),
+  lastRashDrivingAlertAt: z.number().optional(),
+
   createdAt: z.number(),
   updatedAt: z.number(),
 });

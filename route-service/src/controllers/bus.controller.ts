@@ -1,8 +1,10 @@
 import type { Request, Response } from 'express';
 import { BusService } from '../services/bus.service';
+import { StudentService } from '../services/student.service';
 import { auditLog } from '@saferide/logger';
 
-const service = new BusService();
+const service        = new BusService();
+const studentService = new StudentService();
 
 export class BusController {
   async list(req: Request, res: Response): Promise<void> {
@@ -98,6 +100,18 @@ export class BusController {
       }
       throw err;
     }
+  }
+
+  /** GET /api/v1/buses/:id/students — list active students assigned to a bus */
+  async listStudents(req: Request, res: Response): Promise<void> {
+    const tenantId = req.user.tenantId;
+    if (tenantId === null) {
+      res.status(403).json({ success: false, error: { code: 'FORBIDDEN', message: 'A school context is required.' } });
+      return;
+    }
+    const { id } = req.params as { id: string };
+    const students = await studentService.listStudentsByBus(id, tenantId);
+    res.json({ success: true, data: students });
   }
 
   async assignDriver(req: Request, res: Response): Promise<void> {

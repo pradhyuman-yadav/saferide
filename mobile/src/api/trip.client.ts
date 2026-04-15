@@ -82,6 +82,28 @@ export interface LocationPing {
   recordedAt:  number;
 }
 
+export type BoardingEventType = 'boarded' | 'deboarded';
+
+export interface BoardingEvent {
+  id:         string;
+  tripId:     string;
+  studentId:  string;
+  busId:      string;
+  stopId:     string | null;
+  eventType:  BoardingEventType;
+  method:     'manual';
+  recordedAt: number;
+  createdAt:  number;
+}
+
+export interface RecordBoardingInput {
+  studentId:  string;
+  stopId:     string | null;
+  eventType:  BoardingEventType;
+  method:     'manual';
+  recordedAt: number;
+}
+
 // ── API methods ───────────────────────────────────────────────────────────────
 
 export const tripClient = {
@@ -124,4 +146,15 @@ export const tripClient = {
   /** Driver: cancel an active SOS alert. */
   cancelSOS: (tripId: string) =>
     apiFetch<void>(`/api/v1/trips/${tripId}/sos/cancel`, { method: 'POST' }),
+
+  /** Driver: record a boarding or deboarding event for a student. */
+  recordBoarding: (tripId: string, input: RecordBoardingInput) =>
+    apiFetch<{ id: string }>(`/api/v1/trips/${tripId}/boarding`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+
+  /** Manager / school_admin: list all boarding events for a trip. */
+  listBoarding: (tripId: string) =>
+    apiFetch<BoardingEvent[]>(`/api/v1/trips/${tripId}/boarding`),
 };

@@ -4,12 +4,14 @@ import { createServiceLogger } from '@saferide/logger';
 import { TripRepository } from '../repositories/trip.repository';
 import { NotificationService } from './notification.service';
 import { WebhookService } from './webhook.service';
+import { BoardingService } from './boarding.service';
 
 const log = createServiceLogger('trip');
 
-const repo          = new TripRepository();
-const notifications = new NotificationService();
-const webhooks      = new WebhookService();
+const repo           = new TripRepository();
+const notifications  = new NotificationService();
+const webhooks       = new WebhookService();
+const boardingService = new BoardingService();
 
 export class TripService {
   /** Recent trips for the calling driver, newest first. */
@@ -129,6 +131,9 @@ export class TripService {
     // Remove RTDB node — connected clients receive null immediately,
     // which the mobile hook interprets as "bus offline"
     await getRtdb().ref(`liveLocation/${trip.busId}`).remove();
+
+    // ── Boarding sweep — deboard any still-boarded students (fire-and-forget) ──
+    void boardingService.sweepOnTripEnd(tripId, trip.busId, tenantId);
 
     // Notify parents the trip is over (fire-and-forget)
     void notifications.notifyParentsOfBus(

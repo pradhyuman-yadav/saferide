@@ -20,8 +20,9 @@ import {
 
 vi.mock('@saferide/firebase-admin', () => buildFirebaseMock());
 vi.mock('@saferide/logger', () => ({
-  logger:   { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-  auditLog: vi.fn(),
+  logger:              { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  auditLog:            vi.fn(),
+  createServiceLogger: vi.fn().mockReturnValue({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
 }));
 
 // Mock TripService so tests stay fast and predictable

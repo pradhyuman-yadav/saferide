@@ -62,3 +62,10 @@ busRouter.patch(
   validateBody(AssignBusRouteSchema),
   (req, res, next) => { controller.assignRoute(req, res).catch(next); },
 );
+
+// GET /api/v1/buses/:id/students — list active students assigned to this bus
+busRouter.get(
+  '/:id/students',
+  requireRole('driver', 'manager', 'school_admin'),
+  (req, res, next) => { controller.listStudents(req, res).catch(next); },
+);

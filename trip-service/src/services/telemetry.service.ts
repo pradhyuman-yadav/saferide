@@ -3,11 +3,15 @@ import { getRtdb } from '@saferide/firebase-admin';
 import { createServiceLogger } from '@saferide/logger';
 import { TelemetryRepository } from '../repositories/telemetry.repository';
 import { TripService } from './trip.service';
+import { GeofenceService } from './geofence.service';
+import { SpeedAlertService } from './speed-alert.service';
 
 const log = createServiceLogger('telemetry');
 
-const repo        = new TelemetryRepository();
-const tripService = new TripService();
+const repo              = new TelemetryRepository();
+const tripService       = new TripService();
+const geofenceService   = new GeofenceService();
+const speedAlertService = new SpeedAlertService();
 
 export class TelemetryService {
   /** Latest telemetry for a trip (parent read path — REST fallback). */
@@ -90,6 +94,14 @@ export class TelemetryService {
         recordedAt: input.recordedAt,
         updatedAt:  now,
       });
+
+    // ── 4. Geofence check — fire-and-forget (never blocks the response) ──────
+    void geofenceService.check(trip, input.lat, input.lon, tenantId);
+
+    // ── 5. Speed / rash-driving alerts — fire-and-forget ─────────────────────
+    if (input.speed !== undefined) {
+      void speedAlertService.check(trip, input.speed, tenantId);
+    }
 
     return {
       id,

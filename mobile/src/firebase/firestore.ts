@@ -73,17 +73,20 @@ export async function claimPendingInviteByEmail(
 
 /**
  * Fetch the student record linked to a parent's Firebase UID.
- * Returns the child's name, assigned bus, and stop — or null if not yet linked.
+ * Returns the child's name, assigned bus, stop, and Firestore student document ID.
+ * Returns null if the parent has no linked student yet.
  */
 export async function getStudentForParent(
   parentUid: string,
-): Promise<{ busId: string; childName: string; stopId: string } | null> {
+): Promise<{ studentId: string; busId: string; childName: string; stopId: string } | null> {
   const q    = query(collection(db, 'students'), where('parentFirebaseUid', '==', parentUid));
   const snap = await getDocs(q);
   if (snap.empty) return null;
 
-  const data = snap.docs[0]!.data() as { name?: string; busId?: string; stopId?: string };
+  const doc  = snap.docs[0]!;
+  const data = doc.data() as { name?: string; busId?: string; stopId?: string };
   return {
+    studentId: doc.id,
     busId:     data.busId     ?? '',
     childName: data.name      ?? '',
     stopId:    data.stopId    ?? '',

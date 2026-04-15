@@ -90,6 +90,70 @@ export class NotificationService {
   }
 
   /**
+   * Sends a push notification to all parents whose children board at a specific stop.
+   * Used by geofencing to alert "bus is approaching your stop".
+   */
+  async notifyParentsAtStop(
+    stopId:   string,
+    stopName: string,
+    tenantId: string,
+    title:    string,
+    body:     string,
+  ): Promise<void> {
+    try {
+      const db = getDb();
+
+      // Find all active students assigned to this stop
+      const studentsSnap = await db.collection('students')
+        .where('tenantId', '==', tenantId)
+        .where('stopId',   '==', stopId)
+        .where('isActive', '==', true)
+        .get();
+
+      if (studentsSnap.empty) return;
+
+      const parentUids = studentsSnap.docs.map(
+        (d) => (d.data() as { parentFirebaseUid: string }).parentFirebaseUid,
+      ).filter(Boolean);
+
+      if (parentUids.length === 0) return;
+
+      const tokens: string[] = [];
+      await Promise.all(
+        parentUids.map(async (uid) => {
+          const snap = await db.collection('users').doc(uid).get();
+          const token = (snap.data() as { expoPushToken?: string } | undefined)?.expoPushToken;
+          if (token && Expo.isExpoPushToken(token)) tokens.push(token);
+        }),
+      );
+
+      await this.sendPush(tokens, title, body);
+    } catch (err) {
+      logger.error({ err, stopId, stopName, tenantId }, '[NotificationService] notifyParentsAtStop failed');
+    }
+  }
+
+  /**
+   * Sends a push notification to a single parent identified by their Firebase UID.
+   * Used by boarding events to alert "your child has boarded / deboarded".
+   */
+  async notifyParentOfStudent(
+    parentFirebaseUid: string,
+    tenantId:          string,
+    title:             string,
+    body:              string,
+  ): Promise<void> {
+    try {
+      const snap = await getDb().collection('users').doc(parentFirebaseUid).get();
+      const token = (snap.data() as { expoPushToken?: string } | undefined)?.expoPushToken;
+      if (!token || !Expo.isExpoPushToken(token)) return;
+      await this.sendPush([token], title, body);
+    } catch (err) {
+      logger.error({ err, parentFirebaseUid, tenantId }, '[NotificationService] notifyParentOfStudent failed');
+    }
+  }
+
+  /**
    * Sends push messages in Expo-recommended batches of 100.
    * Logs delivery errors but never throws.
    */

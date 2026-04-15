@@ -17,6 +17,11 @@ export class StudentService {
     return repo.listByTenantId(tenantId);
   }
 
+  /** Returns all active students assigned to a specific bus. Used by the driver Students tab. */
+  listStudentsByBus(busId: string, tenantId: string): Promise<Student[]> {
+    return repo.listByBusId(busId, tenantId);
+  }
+
   /** Returns the student if it exists and belongs to tenantId; null otherwise. */
   async findStudent(id: string, tenantId: string): Promise<Student | null> {
     const student = await repo.findById(id, tenantId);

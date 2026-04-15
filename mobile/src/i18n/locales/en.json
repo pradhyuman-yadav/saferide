@@ -73,7 +73,12 @@
     "signOut": "Sign out",
     "signOutMessage": "You will be signed out of SafeRide.",
     "cancel": "Cancel",
-    "selectLanguage": "Select language"
+    "selectLanguage": "Select language",
+    "deleteAccount": "Request account deletion",
+    "deleteAccountConfirmTitle": "Delete your account?",
+    "deleteAccountConfirmMessage": "We will email you a data export within 30 days, then permanently delete your account and all personal data. This cannot be undone.",
+    "deleteAccountConfirmCancel": "Cancel",
+    "deleteAccountConfirmProceed": "Send request"
   },
   "auth": {
     "tagline": "School bus safety platform",
@@ -101,5 +106,49 @@
     "heading": "Your school hasn't added you yet.",
     "body": "Ask your school's transport manager to register your child. Once they do, sign out and sign back in — your account will be ready automatically.",
     "signOut": "Sign out"
+  },
+  "permissions": {
+    "title": "Before we begin",
+    "subtitle": "SafeRide needs a couple of permissions to keep children safe. We only use them as described below.",
+    "notificationsTitle": "Notifications",
+    "notificationsDescParent": "We'll alert you when the bus departs, is 10 minutes away, and when your child arrives safely.",
+    "notificationsDescDriver": "Receive trip assignments and school communications.",
+    "locationTitle": "Location",
+    "locationDesc": "Your live position is shared with parents only during an active trip. It is never tracked outside a trip.",
+    "required": "Required",
+    "optional": "Optional",
+    "finePrint": "You can change these at any time in your device settings. SafeRide complies with India's DPDP Act 2023 — your data is never sold.",
+    "grantButton": "Grant permissions",
+    "grantingButton": "Requesting\u2026",
+    "skipButton": "Not now — I'll do this in settings"
+  },
+  "boarding": {
+    "onBoard":        "On board",
+    "notBoarded":     "Not boarded",
+    "tab":            "Students",
+    "boardedNotif":   "{{name}} boarded at {{stop}}",
+    "tripEndedNotif": "{{name}} has arrived",
+    "markBoarded":    "Mark boarded",
+    "markDeboarded":  "Mark deboarded",
+    "noStudents":     "No students assigned to this bus.",
+    "errorBoarding":  "Could not update boarding status. Try again.",
+    "alreadyBoarded": "Already marked as boarded."
+  },
+  "driver": {
+    "tab": {
+      "trip":     "Trip",
+      "history":  "History",
+      "students": "Students",
+      "profile":  "Profile"
+    },
+    "assignment": "Assignment",
+    "account":    "Account",
+    "legal":      "Legal",
+    "signOut":    "Sign out",
+    "signOutMessage": "You will be signed out of SafeRide.",
+    "cancel":     "Cancel",
+    "noAssignment": "No bus or route assigned yet. Contact your transport manager.",
+    "privacyPolicy":  "Privacy Policy",
+    "termsOfService": "Terms of Service"
   }
 }

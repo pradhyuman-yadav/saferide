@@ -17,6 +17,7 @@ export interface UserProfile {
   childClass?: string;
   busId?: string;
   stopId?: string;
+  studentId?: string;        // Firestore student document ID — used for boarding status
   preferredLanguage?: string;
 
   // driver-specific

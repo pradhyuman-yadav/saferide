@@ -1,3 +1,4 @@
+import { FieldValue } from 'firebase-admin/firestore';
 import { getDb } from '@saferide/firebase-admin';
 import { TripSchema } from '@saferide/types';
 import type { Trip } from '@saferide/types';
@@ -125,5 +126,19 @@ export class TripRepository {
       patch['sosTriggeredAt'] = triggeredAt;
     }
     await this.docRef(id).update(patch);
+  }
+
+  /**
+   * Atomically appends a stop ID to alertedStopIds using FieldValue.arrayUnion.
+   * Safe under concurrent GPS pings — Firestore merges concurrent arrayUnion writes.
+   */
+  async addAlertedStopId(id: string, tenantId: string, stopId: string): Promise<void> {
+    // Tenant guard: ensure the trip belongs to this tenant before writing
+    const existing = await this.findById(id, tenantId);
+    if (!existing) throw new Error('NOT_FOUND');
+    await this.docRef(id).update({
+      alertedStopIds: FieldValue.arrayUnion(stopId),
+      updatedAt:      Date.now(),
+    });
   }
 }

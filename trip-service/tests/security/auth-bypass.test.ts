@@ -15,8 +15,9 @@ import { buildFirebaseMock } from '../helpers/firebase-mock';
 
 vi.mock('@saferide/firebase-admin', () => buildFirebaseMock());
 vi.mock('@saferide/logger', () => ({
-  logger:   { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-  auditLog: vi.fn(),
+  logger:              { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  auditLog:            vi.fn(),
+  createServiceLogger: vi.fn().mockReturnValue({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
 }));
 vi.mock('../../src/services/trip.service', () => ({
   TripService: vi.fn().mockImplementation(() => ({

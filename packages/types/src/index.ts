@@ -10,3 +10,4 @@ export * from './student';
 export * from './trip';
 export * from './telemetry';
 export * from './webhook';
+export * from './boarding';

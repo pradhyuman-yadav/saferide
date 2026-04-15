@@ -1,8 +1,10 @@
 import { Tabs } from 'expo-router';
-import { Play, Clock, UserCircle } from 'lucide-react-native';
+import { Play, Clock, Users, UserCircle } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { colors, iconSize } from '@/theme';
 
 export default function DriverLayout() {
+  const { t } = useTranslation();
   return (
     <Tabs
       screenOptions={{
@@ -22,21 +24,28 @@ export default function DriverLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Trip',
+          title: t('driver.tab.trip'),
           tabBarIcon: ({ color }) => <Play size={iconSize.lg} color={color} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
-          title: 'History',
+          title: t('driver.tab.history'),
           tabBarIcon: ({ color }) => <Clock size={iconSize.lg} color={color} strokeWidth={2} />,
+        }}
+      />
+      <Tabs.Screen
+        name="students"
+        options={{
+          title: t('driver.tab.students'),
+          tabBarIcon: ({ color }) => <Users size={iconSize.lg} color={color} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: t('driver.tab.profile'),
           tabBarIcon: ({ color }) => <UserCircle size={iconSize.lg} color={color} strokeWidth={2} />,
         }}
       />

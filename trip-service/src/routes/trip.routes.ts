@@ -1,11 +1,13 @@
 import { Router } from 'express';
 import { verifyJwt, requireRole, validateBody, readRateLimiter, gpsRateLimiter } from '@saferide/middleware';
-import { StartTripInputSchema, CreateTelemetryInputSchema } from '@saferide/types';
+import { StartTripInputSchema, CreateTelemetryInputSchema, CreateBoardingEventSchema } from '@saferide/types';
 import { TripController } from '../controllers/trip.controller';
 import { TelemetryController } from '../controllers/telemetry.controller';
+import { BoardingController } from '../controllers/boarding.controller';
 
 const tripCtrl      = new TripController();
 const telemetryCtrl = new TelemetryController();
+const boardingCtrl  = new BoardingController();
 
 export const tripRouter: Router = Router();
 
@@ -105,4 +107,21 @@ tripRouter.get(
   '/:id/location/latest',
   requireRole('parent', 'driver', 'manager', 'school_admin'),
   (req, res, next) => telemetryCtrl.getLatest(req, res).catch(next),
+);
+
+// ── Boarding ───────────────────────────────────────────────────────────────────
+
+// POST /api/v1/trips/:id/boarding — driver records a boarding/deboarding event
+tripRouter.post(
+  '/:id/boarding',
+  requireRole('driver'),
+  validateBody(CreateBoardingEventSchema),
+  (req, res, next) => boardingCtrl.record(req, res).catch(next),
+);
+
+// GET /api/v1/trips/:id/boarding — manager/school_admin lists boarding events
+tripRouter.get(
+  '/:id/boarding',
+  requireRole('manager', 'school_admin'),
+  (req, res, next) => boardingCtrl.list(req, res).catch(next),
 );

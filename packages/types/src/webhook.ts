@@ -5,6 +5,14 @@ export const WEBHOOK_EVENTS = [
   'trip.ended',
   'sos.triggered',
   'sos.cancelled',
+  // Geofencing
+  'bus.approaching_stop',
+  // Safety alerts
+  'bus.speeding',
+  'bus.rash_driving',
+  // Attendance
+  'student.boarded',
+  'student.deboarded',
 ] as const;
 export type WebhookEvent = typeof WEBHOOK_EVENTS[number];
 
@@ -22,7 +30,7 @@ export type Webhook = z.infer<typeof WebhookSchema>;
 
 export const CreateWebhookSchema = z.object({
   url:    z.string().url().max(500),
-  events: z.array(z.enum(WEBHOOK_EVENTS)).min(1).max(4),
+  events: z.array(z.enum(WEBHOOK_EVENTS)).min(1).max(WEBHOOK_EVENTS.length),
 });
 export type CreateWebhookInput = z.infer<typeof CreateWebhookSchema>;
 

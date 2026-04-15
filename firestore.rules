@@ -96,6 +96,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Boarding events — backend only (Admin SDK bypasses these rules).
+    // No direct client access; served via trip-service API.
+    match /boardingEvents/{eventId} {
+      allow read, write: if false;
+    }
+
     // ── Deny everything else by default ────────────────────────────────────
     match /{document=**} {
       allow read, write: if false;

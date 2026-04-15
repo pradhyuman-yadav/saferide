@@ -88,6 +88,19 @@ export interface Driver {
   updatedAt:     number;
 }
 
+export interface Student {
+  id:               string;
+  tenantId:         string;
+  name:             string;
+  parentName:       string;
+  parentPhone:      string;
+  busId:            string | null;
+  stopId:           string | null;
+  isActive:         boolean;
+  createdAt:        number;
+  updatedAt:        number;
+}
+
 // ── API methods ───────────────────────────────────────────────────────────────
 
 export const routeClient = {
@@ -128,6 +141,10 @@ export const routeClient = {
     const pts = await apiFetch<{ lat: number; lon: number }[]>(`/api/v1/routes/${routeId}/polyline`);
     return pts.map((p) => ({ latitude: p.lat, longitude: p.lon }));
   },
+
+  /** Driver: list active students assigned to a specific bus. */
+  listStudentsByBus: (busId: string) =>
+    apiFetch<Student[]>(`/api/v1/buses/${busId}/students`),
 
   /**
    * Road-following line from one coordinate to another (driver → next stop).
