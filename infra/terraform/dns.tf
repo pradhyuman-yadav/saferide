@@ -71,6 +71,10 @@ resource "aws_acm_certificate_validation" "saferide" {
     [for r in aws_route53_record.cert_validation_saferide : r.fqdn],
     [for r in aws_route53_record.cert_validation_trysaferide : r.fqdn],
   )
+
+  timeouts {
+    create = "2h"
+  }
 }
 
 # ─── ALB DNS RECORDS — saferide.co.in ────────────────────────────────────────
