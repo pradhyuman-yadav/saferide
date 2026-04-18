@@ -127,17 +127,17 @@ describe('Driver Trip Screen — with assignment', () => {
     });
   });
 
-  it('shows "Start Trip" button when no active trip', async () => {
+  it('shows "Start trip" button when no active trip', async () => {
     render(<DriverTripScreen />);
     await waitFor(() => {
-      expect(screen.getByText('Start Trip')).toBeTruthy();
+      expect(screen.getByText('Start trip')).toBeTruthy();
     });
   });
 
   it('shows hint about departing when assignment is ready', async () => {
     render(<DriverTripScreen />);
     await waitFor(() => {
-      expect(screen.getByText(/Tap "Start Trip"/i)).toBeTruthy();
+      expect(screen.getByText(/Tap Start trip when ready/i)).toBeTruthy();
     });
   });
 
@@ -155,10 +155,14 @@ describe('Driver Trip Screen — with assignment', () => {
 
     render(<DriverTripScreen />);
     await waitFor(() => {
-      expect(screen.getByText('End Trip')).toBeTruthy();
+      expect(screen.getByText('End trip')).toBeTruthy();
     });
-    fireEvent.press(screen.getByText('End Trip'));
-    expect(alertSpy).toHaveBeenCalledWith('End trip', expect.any(String), expect.any(Array));
+    fireEvent.press(screen.getByText('End trip'));
+    expect(alertSpy).toHaveBeenCalledWith(
+      expect.stringMatching(/end trip/i),
+      expect.any(String),
+      expect.any(Array),
+    );
   });
 
   it('shows SOS button when trip is active', async () => {
@@ -192,6 +196,11 @@ describe('Driver Trip Screen — with assignment', () => {
       expect(screen.getByText(/SOS — Emergency/i)).toBeTruthy();
     });
     fireEvent.press(screen.getByText(/SOS — Emergency/i));
-    expect(alertSpy).toHaveBeenCalledWith('SOS Alert', expect.any(String), expect.any(Array));
+    // Title includes an emoji — match only the text portion to stay resilient
+    expect(alertSpy).toHaveBeenCalledWith(
+      expect.stringContaining('SOS Alert'),
+      expect.any(String),
+      expect.any(Array),
+    );
   });
 });

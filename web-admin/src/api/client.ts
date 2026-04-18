@@ -67,9 +67,12 @@ export const tenantApi = {
   reactivate: (id: string)     => apiFetch<void>(TENANT_URL, `/api/v1/tenants/${id}/reactivate`, { method: 'PATCH' }),
 };
 
+import type { CreateInviteInput, InviteCreated } from '@/types/invite';
+
 export const authApi = {
-  claimInvite: (idToken: string) => apiFetch<{ role: string; tenantId: string }>(AUTH_URL, '/api/v1/auth/invites/claim', { method: 'POST', body: JSON.stringify({ idToken }) }),
-  getMe:       ()                => apiFetch<unknown>(AUTH_URL, '/api/v1/auth/me'),
+  claimInvite:  (idToken: string)         => apiFetch<{ role: string; tenantId: string }>(AUTH_URL, '/api/v1/auth/invites/claim', { method: 'POST', body: JSON.stringify({ idToken }) }),
+  getMe:        ()                        => apiFetch<unknown>(AUTH_URL, '/api/v1/auth/me'),
+  createInvite: (body: CreateInviteInput) => apiFetch<InviteCreated>(AUTH_URL, '/api/v1/auth/invites', { method: 'POST', body: JSON.stringify(body) }),
 };
 
 // ── Route Service ─────────────────────────────────────────────────────────

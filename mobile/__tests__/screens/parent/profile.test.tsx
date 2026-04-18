@@ -76,4 +76,27 @@ describe('Parent Profile Screen', () => {
       expect.any(Array),
     );
   });
+
+  it('language row shows current language', () => {
+    render(<ProfileScreen />);
+    expect(screen.getByText('English')).toBeTruthy();
+  });
+
+  it('tapping language row opens selection alert', () => {
+    const alertSpy = jest.spyOn(require('react-native').Alert, 'alert');
+    render(<ProfileScreen />);
+    // Language row — look for the row containing the language value
+    fireEvent.press(screen.getByText('English'));
+    expect(alertSpy).toHaveBeenCalled();
+  });
+
+  it('renders Privacy policy row', () => {
+    render(<ProfileScreen />);
+    expect(screen.getByText(/privacy policy/i)).toBeTruthy();
+  });
+
+  it('renders Terms of service row', () => {
+    render(<ProfileScreen />);
+    expect(screen.getByText(/terms of service/i)).toBeTruthy();
+  });
 });

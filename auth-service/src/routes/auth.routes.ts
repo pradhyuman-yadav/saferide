@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { verifyJwt, authRateLimiter, createAccountRateLimiter, readRateLimiter, validateBody } from '@saferide/middleware';
-import { ClaimInviteSchema } from '@saferide/types';
+import { verifyJwt, requireRole, authRateLimiter, createAccountRateLimiter, readRateLimiter, validateBody } from '@saferide/middleware';
+import { ClaimInviteSchema, CreateInviteInputSchema } from '@saferide/types';
 import { AuthController } from '../controllers/auth.controller';
 
 const controller = new AuthController();
@@ -12,6 +12,16 @@ authRouter.post(
   createAccountRateLimiter,
   validateBody(ClaimInviteSchema),
   (req, res, next) => { controller.claimInvite(req, res).catch(next); },
+);
+
+// POST /api/v1/auth/invites — super_admin only; create a manual account invite
+authRouter.post(
+  '/invites',
+  readRateLimiter,
+  verifyJwt,
+  requireRole('super_admin'),
+  validateBody(CreateInviteInputSchema),
+  (req, res, next) => { controller.createInvite(req, res).catch(next); },
 );
 
 // GET /api/v1/auth/me — requires valid JWT

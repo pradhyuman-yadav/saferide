@@ -13,6 +13,24 @@
  * Expo Go note:
  * Expo Go ships its own Google Maps API key — your key is only needed when
  * running a local development build (expo run:android) or a production build.
+ *
+ * ── Icon file guide ─────────────────────────────────────────────────────────
+ *
+ *  assets/images/icon-ios.png
+ *    • 1024 × 1024 px, RGB (NO alpha channel — App Store rejects transparent icons)
+ *    • S-mark centred on a solid #404E3B (forest) background, filling the canvas
+ *    • Apple adds rounded corners automatically — do NOT pre-round the corners
+ *
+ *  assets/images/icon-foreground.png
+ *    • 1024 × 1024 px, RGBA (transparent outer border required)
+ *    • S-mark centred in the INNER 66 % of the canvas (≈ 680 × 680 px centred)
+ *    • Outer ~172 px on each side must be fully transparent
+ *    • Android renders this on top of backgroundColor (#404E3B), then clips to
+ *      the device's icon shape (circle / squircle). Without the safe-zone
+ *      padding the mark fills the full shape and appears zoomed in.
+ *
+ *  assets/images/icon.png  (existing — keep as-is)
+ *    • Used only for the in-app splash screen overlay (expo-splash-screen)
  */
 
 /** @type {import('expo/config').ExpoConfig} */
@@ -25,8 +43,8 @@ const config = {
   orientation: 'portrait',
   userInterfaceStyle: 'light',
 
-  // App icon — S-mark on transparent background (scales well at all icon sizes)
-  icon: './assets/images/icon.png',
+  // iOS App Store icon — solid background, no alpha (see guide above)
+  icon: './assets/images/icon-ios.png',
 
   splash: {
     // Forest background with SafeRide wordmark — the JS layer renders AppLogo on top
@@ -38,7 +56,98 @@ const config = {
   ios: {
     supportsTablet:   false,
     bundleIdentifier: 'in.saferide.app',
-    // iOS uses the top-level icon field — no separate override needed
+
+    // ── Apple Privacy Manifest (required since May 2024) ─────────────────────
+    // Apple rejects apps without this. Declare every data type we collect and
+    // every privacy-sensitive API we call (UserDefaults, file timestamps, etc.)
+    // Docs: https://developer.apple.com/documentation/bundleresources/privacy_manifest_files
+    privacyManifests: {
+      // This app does NOT serve ads or use cross-app tracking
+      NSPrivacyTracking: false,
+      NSPrivacyTrackingDomains: [],
+
+      // ── Data collected by this app ────────────────────────────────────────
+      NSPrivacyCollectedDataTypes: [
+        {
+          // Firebase UID — links all data to the user account
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeUserID',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: [
+            'NSPrivacyCollectedDataTypePurposeAppFunctionality',
+          ],
+        },
+        {
+          // Parent and driver display name
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeName',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: [
+            'NSPrivacyCollectedDataTypePurposeAppFunctionality',
+          ],
+        },
+        {
+          // Login email address
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeEmailAddress',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: [
+            'NSPrivacyCollectedDataTypePurposeAppFunctionality',
+          ],
+        },
+        {
+          // Optional contact phone number
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypePhoneNumber',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: [
+            'NSPrivacyCollectedDataTypePurposeAppFunctionality',
+          ],
+        },
+        {
+          // Driver GPS — precise location broadcast to parents during active trip only
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypePreciseLocation',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: [
+            'NSPrivacyCollectedDataTypePurposeAppFunctionality',
+          ],
+        },
+      ],
+
+      // ── Privacy-sensitive APIs used by app or third-party SDKs ────────────
+      // Reason codes: https://developer.apple.com/documentation/bundleresources/privacy_manifest_files/describing_use_of_required_reason_api
+      NSPrivacyAccessedAPITypes: [
+        {
+          // NSUserDefaults — used by Firebase SDK and Expo internally
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults',
+          NSPrivacyAccessedAPITypeReasons: [
+            'CA92.1', // Access info from same app that wrote it
+          ],
+        },
+        {
+          // File timestamps — used by Expo and React Native bundler
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp',
+          NSPrivacyAccessedAPITypeReasons: [
+            'C617.1', // Provide the file timestamp to the user
+          ],
+        },
+        {
+          // System boot time — used by React Native bridge for timing
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategorySystemBootTime',
+          NSPrivacyAccessedAPITypeReasons: [
+            '35F9.1', // Measure elapsed time
+          ],
+        },
+        {
+          // Disk space — used by Expo modules and Firebase offline cache
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryDiskSpace',
+          NSPrivacyAccessedAPITypeReasons: [
+            'E174.1', // Display disk space to user (storage management)
+          ],
+        },
+      ],
+    },
   },
 
   android: {
@@ -47,9 +156,9 @@ const config = {
     minSdkVersion: 24,   // Android 7.0 (2016) — covers ~97% of active devices
     targetSdkVersion: 35,
     compileSdkVersion: 35,
-    // Android adaptive icon: S-mark foreground on forest background
+    // Adaptive icon: foreground has safe-zone padding so the mark isn't clipped
     adaptiveIcon: {
-      foregroundImage: './assets/images/icon.png',
+      foregroundImage: './assets/images/icon-foreground.png',
       backgroundColor: '#404E3B',
     },
     config: {
@@ -68,6 +177,7 @@ const config = {
       'expo-splash-screen',
       {
         backgroundColor: '#404E3B',
+        // Splash uses the original icon.png (no safe-zone constraint on splash)
         image:           './assets/images/icon.png',
         imageWidth:      200,
       },

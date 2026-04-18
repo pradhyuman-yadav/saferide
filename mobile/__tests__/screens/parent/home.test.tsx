@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react-native';
+import { render, screen, fireEvent } from '@testing-library/react-native';
 import ParentHomeScreen from '@app/(parent)/index';
 import { useAuthStore } from '@/store/auth.store';
 import type { UserProfile } from '@/types/user';
@@ -84,5 +84,29 @@ describe('Parent Home Screen', () => {
     // The offline state is rendered when isConnected = false; confirm text exists in source
     // Full isolation requires module re-require; confirm the conditional logic is present.
     expect(true).toBe(true);
+  });
+
+  it('pressing Route tab calls router.push for route screen', () => {
+    const sharedPush = jest.fn();
+    jest.requireMock('expo-router').useRouter.mockReturnValue({ push: sharedPush, replace: jest.fn(), back: jest.fn() });
+    render(<ParentHomeScreen />);
+    fireEvent.press(screen.getByText('Route'));
+    expect(sharedPush).toHaveBeenCalledWith('/(parent)/route');
+  });
+
+  it('pressing Alerts tab calls router.push for notifications screen', () => {
+    const sharedPush = jest.fn();
+    jest.requireMock('expo-router').useRouter.mockReturnValue({ push: sharedPush, replace: jest.fn(), back: jest.fn() });
+    render(<ParentHomeScreen />);
+    fireEvent.press(screen.getByText('Alerts'));
+    expect(sharedPush).toHaveBeenCalledWith('/(parent)/notifications');
+  });
+
+  it('pressing Profile tab calls router.push for profile screen', () => {
+    const sharedPush = jest.fn();
+    jest.requireMock('expo-router').useRouter.mockReturnValue({ push: sharedPush, replace: jest.fn(), back: jest.fn() });
+    render(<ParentHomeScreen />);
+    fireEvent.press(screen.getByText('Profile'));
+    expect(sharedPush).toHaveBeenCalledWith('/(parent)/profile');
   });
 });

@@ -71,7 +71,7 @@ export default function PrivacyScreen() {
           • GPS is collected only during active school trips{'\n'}
           • A parent sees only their own child's bus{'\n'}
           • GPS coordinates are deleted after 30 days{'\n'}
-          • Consent may be withdrawn at any time by emailing privacy@saferide.co.in
+          • Consent may be withdrawn at any time by emailing support@saferide.co.in
         </Section>
 
         <Section title="6. Data retention">
@@ -83,7 +83,7 @@ export default function PrivacyScreen() {
 
         <Section title="7. Your rights">
           Under DPDP 2023 you have the right to access, correct, erase, and port your data.
-          To exercise any right, email privacy@saferide.co.in. We respond within 30 days.
+          To exercise any right, email support@saferide.co.in. We respond within 30 days.
         </Section>
 
         <Section title="8. Security">
@@ -93,7 +93,7 @@ export default function PrivacyScreen() {
 
         <Section title="9. Contact &amp; Grievance Officer">
           Grievance Officer, SafeRide Technologies{'\n'}
-          privacy@saferide.co.in{'\n'}
+          support@saferide.co.in{'\n'}
           saferide.co.in/privacy{'\n\n'}
           Response time: within 30 days of receipt
         </Section>

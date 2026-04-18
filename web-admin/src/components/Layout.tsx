@@ -58,6 +58,14 @@ export function Layout() {
               >
                 Analytics
               </NavLink>
+              <NavLink
+                to="/invite-admin"
+                className={({ isActive }) =>
+                  `sidebar-nav-item${isActive ? ' active' : ''}`
+                }
+              >
+                Invite Admin
+              </NavLink>
             </>
           )}
 

@@ -19,6 +19,7 @@ import { StudentsPage }        from '@/pages/school/StudentsPage';
 import { WebhooksPage }        from '@/pages/school/WebhooksPage';
 import { AnalyticsPage }      from '@/pages/school/AnalyticsPage';
 import { SuperAnalyticsPage } from '@/pages/SuperAnalyticsPage';
+import { InviteAdminPage }    from '@/pages/InviteAdminPage';
 import { SetupAccountPage }    from '@/pages/SetupAccountPage';
 import { PrivacyPage }         from '@/pages/PrivacyPage';
 import { TermsPage }           from '@/pages/TermsPage';
@@ -65,11 +66,12 @@ export default function App() {
         {/* Super admin routes */}
         <Route element={<SuperAdminRoute />}>
           <Route element={<Layout />}>
-            <Route path="/dashboard"   element={<DashboardPage />} />
-            <Route path="/schools"     element={<SchoolsPage />} />
-            <Route path="/schools/new" element={<OnboardSchoolPage />} />
-            <Route path="/schools/:id" element={<SchoolDetailPage />} />
-            <Route path="/analytics"   element={<SuperAnalyticsPage />} />
+            <Route path="/dashboard"      element={<DashboardPage />} />
+            <Route path="/schools"        element={<SchoolsPage />} />
+            <Route path="/schools/new"    element={<OnboardSchoolPage />} />
+            <Route path="/schools/:id"    element={<SchoolDetailPage />} />
+            <Route path="/analytics"      element={<SuperAnalyticsPage />} />
+            <Route path="/invite-admin"   element={<InviteAdminPage />} />
           </Route>
         </Route>
 

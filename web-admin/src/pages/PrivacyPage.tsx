@@ -8,9 +8,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import './legal.css';
 
 const EFFECTIVE_DATE = 'April 2026';
-const CONTACT_EMAIL  = 'privacy@saferide.co.in';
-const GRIEVANCE_NAME = 'Grievance Officer, SafeRide Technologies';
-const GRIEVANCE_ADDR = 'saferide.co.in/privacy · ' + CONTACT_EMAIL;
+const CONTACT_EMAIL  = 'support@saferide.co.in';
 
 export function PrivacyPage() {
   usePageTitle('Privacy Policy — SafeRide');
@@ -235,18 +233,24 @@ export function PrivacyPage() {
             </p>
           </div>
 
-          <hr className="legal-divider" />
-
           {/* Contact */}
           <div className="legal-contact">
             <p className="legal-contact-label">Grievance Officer (DPDP 2023)</p>
-            <p className="legal-contact-text">
-              {GRIEVANCE_NAME}<br />
-              {GRIEVANCE_ADDR}<br />
-              <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-              <br />
-              Response time: within 30 days of receipt
-            </p>
+            <p className="legal-contact-company">Grievance Officer, SafeRide Technologies</p>
+            <div className="legal-contact-links">
+              <a href={`mailto:${CONTACT_EMAIL}`} className="legal-contact-link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                {CONTACT_EMAIL}
+              </a>
+              <a href="https://saferide.co.in/privacy" className="legal-contact-link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                saferide.co.in/privacy
+              </a>
+              <span className="legal-contact-meta">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Response within 30 days of receipt
+              </span>
+            </div>
           </div>
 
         </div>

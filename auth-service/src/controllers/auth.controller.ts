@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { auditLog } from '@saferide/logger';
+import { CreateInviteInputSchema } from '@saferide/types';
 
 const service = new AuthService();
 
@@ -30,5 +31,18 @@ export class AuthController {
       return;
     }
     res.json({ success: true, data: profile });
+  }
+
+  async createInvite(req: Request, res: Response): Promise<void> {
+    const input  = CreateInviteInputSchema.parse(req.body);
+    const invite = await service.createInvite(input);
+    auditLog({
+      action:      'INVITE_CREATED',
+      actorId:     req.user.uid,
+      targetEmail: input.email,
+      role:        input.role,
+      tenantId:    input.tenantId ?? null,
+    });
+    res.status(201).json({ success: true, data: invite });
   }
 }

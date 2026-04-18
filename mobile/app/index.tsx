@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import { useAuthStore } from '@/store/auth.store';
+import { permissionsShownKey } from './(auth)/permissions';
 import { colors } from '@/theme';
 
 /**
@@ -37,14 +39,28 @@ export default function Index() {
       return;
     }
 
-    switch (role) {
-      case 'parent':       router.replace('/(parent)/');  break;
-      case 'driver':       router.replace('/(driver)/');  break;
-      case 'manager':      router.replace('/(manager)/'); break;
-      case 'school_admin': router.replace('/(admin)/');   break;
-      // super_admin uses the web dashboard — redirect to login on mobile
-      default:             router.replace('/(auth)/login'); break;
-    }
+    // Check if we've already shown the permissions screen for this user.
+    // Using an async IIFE so we can await SecureStore without making the
+    // effect itself async (which would break the cleanup return pattern).
+    void (async () => {
+      const shown = await SecureStore.getItemAsync(permissionsShownKey(user.uid)).catch(() => '1');
+
+      if (!shown) {
+        // First login for this user on this device — show permissions screen
+        router.replace('/(auth)/permissions');
+        return;
+      }
+
+      // Permissions already handled — route straight to role screen
+      switch (role) {
+        case 'parent':       router.replace('/(parent)/');  break;
+        case 'driver':       router.replace('/(driver)/');  break;
+        case 'manager':      router.replace('/(manager)/'); break;
+        case 'school_admin': router.replace('/(admin)/');   break;
+        // super_admin uses the web dashboard — redirect to login on mobile
+        default:             router.replace('/(auth)/login'); break;
+      }
+    })();
   }, [isLoading, user, role]);
 
   // Render a spinner while resolving — the splash screen covers this on startup

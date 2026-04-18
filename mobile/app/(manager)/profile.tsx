@@ -17,7 +17,7 @@ import {
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LogOut, User, Mail, Phone, School, Bus, Route as RouteIcon, Users, FileText, Shield } from 'lucide-react-native';
+import { LogOut, User, Mail, Phone, School, Bus, Route as RouteIcon, Users, FileText, Shield, Trash2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/store/auth.store';
 import { SRText } from '@/components/ui/SRText';
@@ -81,6 +81,28 @@ export default function ManagerProfileScreen() {
         { text: 'Sign out', style: 'destructive', onPress: () => {
             void signOut().then(() => router.replace('/(auth)/welcome'));
           } },
+      ],
+    );
+  }
+
+  function handleDeleteAccount() {
+    Alert.alert(
+      'Delete your account?',
+      'We will email you a data export within 30 days, then permanently delete your account and all personal data. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Send request',
+          style: 'destructive',
+          onPress: () => {
+            const email   = profile?.email ?? '';
+            const subject = encodeURIComponent('Account Deletion Request');
+            const body    = encodeURIComponent(
+              `Hi SafeRide,\n\nPlease delete my account and all associated personal data.\n\nAccount email: ${email}\n\nI understand this cannot be undone.`,
+            );
+            void Linking.openURL(`mailto:support@saferide.co.in?subject=${subject}&body=${body}`);
+          },
+        },
       ],
     );
   }
@@ -201,7 +223,7 @@ export default function ManagerProfileScreen() {
             <SRText variant="body" style={{ flex: 1, fontWeight: '500' }}>Privacy Policy</SRText>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.infoRow, styles.infoRowLast]}
+            style={styles.infoRow}
             onPress={() => { void Linking.openURL('https://saferide.co.in/terms'); }}
             activeOpacity={0.7}
           >
@@ -209,6 +231,18 @@ export default function ManagerProfileScreen() {
               <FileText size={iconSize.sm} color={colors.slate} strokeWidth={2} />
             </View>
             <SRText variant="body" style={{ flex: 1, fontWeight: '500' }}>Terms of Service</SRText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.infoRow, styles.infoRowLast]}
+            onPress={handleDeleteAccount}
+            activeOpacity={0.7}
+          >
+            <View style={styles.infoIcon}>
+              <Trash2 size={iconSize.sm} color={colors.gold} strokeWidth={2} />
+            </View>
+            <SRText variant="body" color={colors.gold} style={{ flex: 1, fontWeight: '500' }}>
+              Request account deletion
+            </SRText>
           </TouchableOpacity>
         </View>
 

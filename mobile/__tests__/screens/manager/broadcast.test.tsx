@@ -2,6 +2,15 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import BroadcastScreen from '@app/(manager)/broadcast';
 
+beforeEach(() => {
+  const { routeClient } = jest.requireMock('@/api/route.client');
+  routeClient.listRoutes.mockResolvedValue([
+    { id: 'route_a', name: 'Route A — Indiranagar', isActive: true,  tenantId: 't1', createdAt: 0, updatedAt: 0 },
+    { id: 'route_b', name: 'Route B — Koramangala', isActive: true,  tenantId: 't1', createdAt: 0, updatedAt: 0 },
+    { id: 'route_c', name: 'Route C — Whitefield',  isActive: false, tenantId: 't1', createdAt: 0, updatedAt: 0 },
+  ]);
+});
+
 describe('Manager Broadcast Screen', () => {
   it('renders "Broadcast" heading', () => {
     render(<BroadcastScreen />);
@@ -18,10 +27,12 @@ describe('Manager Broadcast Screen', () => {
     expect(screen.getByText('All routes')).toBeTruthy();
   });
 
-  it('renders route chips for each fleet bus', () => {
+  it('renders route chips for active routes', async () => {
     render(<BroadcastScreen />);
-    expect(screen.getByText(/Route A/)).toBeTruthy();
-    expect(screen.getByText(/Route B/)).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.getByText(/Route A/)).toBeTruthy();
+      expect(screen.getByText(/Route B/)).toBeTruthy();
+    });
   });
 
   it('renders quick template buttons', () => {

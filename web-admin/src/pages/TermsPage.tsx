@@ -240,17 +240,20 @@ export function TermsPage() {
             </p>
           </div>
 
-          <hr className="legal-divider" />
-
           {/* Contact */}
           <div className="legal-contact">
             <p className="legal-contact-label">Contact</p>
-            <p className="legal-contact-text">
-              SafeRide Technologies<br />
-              <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-              <br />
-              <a href="https://saferide.co.in">saferide.co.in</a>
-            </p>
+            <p className="legal-contact-company">SafeRide Technologies</p>
+            <div className="legal-contact-links">
+              <a href={`mailto:${CONTACT_EMAIL}`} className="legal-contact-link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                {CONTACT_EMAIL}
+              </a>
+              <a href="https://saferide.co.in" className="legal-contact-link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                saferide.co.in
+              </a>
+            </div>
           </div>
 
         </div>

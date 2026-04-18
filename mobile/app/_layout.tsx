@@ -9,6 +9,9 @@ import { DMSerifDisplay_400Regular } from '@expo-google-fonts/dm-serif-display';
 import { useAuthStore } from '@/store/auth.store';
 import { StatusBar } from 'expo-status-bar';
 import { AppLogo } from '@/components/ui/AppLogo';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { SRToastProvider } from '@/components/ui/SRToast';
+import { useNotificationListeners } from '@/notifications/listener';
 import { colors } from '@/theme';
 
 // Must be imported at module scope so the background task definition is registered
@@ -19,6 +22,12 @@ import { setupNotificationHandler, registerForPushNotifications } from '@/notifi
 
 // Configure foreground notification display before any notification can arrive
 setupNotificationHandler();
+
+// Null-rendering component — mounts notification listeners once at root level
+function NotificationListeners() {
+  useNotificationListeners();
+  return null;
+}
 
 SplashScreen.preventAutoHideAsync();
 
@@ -77,17 +86,24 @@ export default function RootLayout() {
   }
 
   return (
-    <>
-      <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(parent)" />
-        <Stack.Screen name="(driver)" />
-        <Stack.Screen name="(manager)" />
-        <Stack.Screen name="(admin)" />
-      </Stack>
-    </>
+    <ErrorBoundary>
+      {/* View wrapper is required so SRToastProvider can position absolutely above Stack */}
+      <View style={{ flex: 1 }}>
+        <StatusBar style="light" />
+        <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(parent)" />
+          <Stack.Screen name="(driver)" />
+          <Stack.Screen name="(manager)" />
+          <Stack.Screen name="(admin)" />
+        </Stack>
+        {/* Notification listeners — no UI, just subscriptions */}
+        <NotificationListeners />
+        {/* In-app toast overlay — renders above all screens */}
+        <SRToastProvider />
+      </View>
+    </ErrorBoundary>
   );
 }
 

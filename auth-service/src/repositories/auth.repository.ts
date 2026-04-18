@@ -14,6 +14,15 @@ export class AuthRepository {
     return snap.data() as Record<string, unknown>;
   }
 
+  async inviteExists(inviteKey: string): Promise<boolean> {
+    const snap = await getDb().collection('pendingInvites').doc(inviteKey).get();
+    return snap.exists;
+  }
+
+  async createInvite(inviteKey: string, data: Record<string, unknown>): Promise<void> {
+    await getDb().collection('pendingInvites').doc(inviteKey).set(data);
+  }
+
   /**
    * Atomically create the user profile and delete the invite in a single
    * Firestore transaction to prevent TOCTOU races where two concurrent
@@ -37,12 +46,24 @@ export class AuthRepository {
   /**
    * Move a tenant from 'pending' → 'trial' or 'active' when the school
    * admin claims their invite. Trial clock starts NOW, not at onboarding.
+   *
+   * Guards: no-ops if tenantId is null (super_admin invites) or if the
+   * tenant is already active/trial (manual invite for an existing school).
    */
-  async activateTenant(tenantId: string, plan: TenantPlan): Promise<void> {
+  async activateTenant(tenantId: string | null, plan: TenantPlan): Promise<void> {
+    if (!tenantId) return;
+
+    const ref  = getDb().collection('tenants').doc(tenantId);
+    const snap = await ref.get();
+    if (!snap.exists) return;
+
+    // Only activate if still pending — don't reset an already-live tenant
+    if ((snap.data() as Record<string, unknown>)['status'] !== 'pending') return;
+
     const isTrial     = plan === 'trial';
     const now         = Date.now();
     const trialEndsAt = isTrial ? now + 30 * 24 * 60 * 60 * 1000 : null;
-    await getDb().collection('tenants').doc(tenantId).update({
+    await ref.update({
       status:      isTrial ? 'trial' : 'active',
       trialEndsAt,
       updatedAt:   now,

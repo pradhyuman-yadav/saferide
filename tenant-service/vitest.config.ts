@@ -1,6 +1,15 @@
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@saferide/firebase-admin': path.resolve(__dirname, '../packages/firebase-admin/src/index.ts'),
+      '@saferide/logger':        path.resolve(__dirname, '../packages/logger/src/index.ts'),
+      '@saferide/types':         path.resolve(__dirname, '../packages/types/src/index.ts'),
+      '@saferide/middleware':    path.resolve(__dirname, '../packages/middleware/src/index.ts'),
+    },
+  },
   test: {
     globals: true,
     environment: 'node',

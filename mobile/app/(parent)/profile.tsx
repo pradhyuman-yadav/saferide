@@ -17,7 +17,7 @@ import {
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LogOut, User, Mail, Phone, Globe, Bus, MapPin, FileText, Shield } from 'lucide-react-native';
+import { LogOut, User, Mail, Phone, Globe, Bus, MapPin, FileText, Shield, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/store/auth.store';
@@ -62,6 +62,28 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: () => {
             void signOut().then(() => router.replace('/(auth)/welcome'));
+          },
+        },
+      ],
+    );
+  }
+
+  function handleDeleteAccount() {
+    Alert.alert(
+      t('profile.deleteAccountConfirmTitle'),
+      t('profile.deleteAccountConfirmMessage'),
+      [
+        { text: t('profile.deleteAccountConfirmCancel'), style: 'cancel' },
+        {
+          text: t('profile.deleteAccountConfirmProceed'),
+          style: 'destructive',
+          onPress: () => {
+            const email    = profile?.email ?? '';
+            const subject  = encodeURIComponent('Account Deletion Request');
+            const body     = encodeURIComponent(
+              `Hi SafeRide,\n\nPlease delete my account and all associated personal data.\n\nAccount email: ${email}\n\nI understand this cannot be undone.`,
+            );
+            void Linking.openURL(`mailto:support@saferide.co.in?subject=${subject}&body=${body}`);
           },
         },
       ],
@@ -182,18 +204,24 @@ export default function ProfileScreen() {
           <SRText variant="label" color={colors.slate} style={styles.sectionTitle}>
             {t('profile.legal')}
           </SRText>
-          <InfoRow
+          <ActionRow
             icon={<Shield size={iconSize.sm} color={colors.slate} strokeWidth={2} />}
             label={t('profile.privacyPolicy')}
-            value=""
+            color={colors.ink}
             onPress={() => { void Linking.openURL('https://saferide.co.in/privacy'); }}
           />
-          <InfoRow
+          <ActionRow
             icon={<FileText size={iconSize.sm} color={colors.slate} strokeWidth={2} />}
             label={t('profile.termsOfService')}
-            value=""
-            last
+            color={colors.ink}
             onPress={() => { void Linking.openURL('https://saferide.co.in/terms'); }}
+          />
+          <ActionRow
+            icon={<Trash2 size={iconSize.sm} color={colors.gold} strokeWidth={2} />}
+            label={t('profile.deleteAccount')}
+            color={colors.gold}
+            last
+            onPress={handleDeleteAccount}
           />
         </View>
 
@@ -241,6 +269,31 @@ function InfoRow({ icon, label, value, last = false, onPress }: InfoRowProps) {
           {value}
         </SRText>
       </View>
+    </TouchableOpacity>
+  );
+}
+
+// ── ActionRow — for destructive / single-label tappable rows ─────────────────
+
+interface ActionRowProps {
+  icon:    React.ReactNode;
+  label:   string;
+  color:   string;
+  last?:   boolean;
+  onPress: () => void;
+}
+
+function ActionRow({ icon, label, color, last = false, onPress }: ActionRowProps) {
+  return (
+    <TouchableOpacity
+      style={[styles.infoRow, last && styles.infoRowLast]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <View style={styles.infoIcon}>{icon}</View>
+      <SRText variant="body" color={color} style={{ fontWeight: '500', flex: 1 }}>
+        {label}
+      </SRText>
     </TouchableOpacity>
   );
 }

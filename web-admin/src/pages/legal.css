@@ -129,10 +129,8 @@
 
 /* Contact block */
 .legal-contact {
-  background-color: var(--white);
-  border: 1px solid var(--mist);
-  border-radius: var(--radius-md);
-  padding: var(--space-5) var(--space-6);
+  padding: var(--space-8) 0 0;
+  border-top: 1px solid var(--mist);
 }
 
 .legal-contact-label {
@@ -141,25 +139,53 @@
   color: var(--slate);
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
-  margin: 0 0 var(--space-2) 0;
+  margin: 0 0 var(--space-3) 0;
 }
 
-.legal-contact-text {
+.legal-contact-company {
   font-size: var(--text-body);
-  line-height: var(--leading-relaxed);
-  color: var(--ink);
-  margin: 0;
+  font-weight: var(--weight-medium);
+  color: var(--forest);
+  margin: 0 0 var(--space-4) 0;
 }
 
-.legal-contact a {
+.legal-contact-links {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.legal-contact-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body);
   color: var(--forest);
   text-decoration: underline;
   text-underline-offset: 2px;
   transition: color var(--motion-micro);
 }
 
-.legal-contact a:hover {
+.legal-contact-link:hover {
   color: var(--sage);
+}
+
+.legal-contact-link svg {
+  flex-shrink: 0;
+  color: var(--slate);
+}
+
+.legal-contact-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-caption);
+  color: var(--slate);
+  margin-top: var(--space-1);
+}
+
+.legal-contact-meta svg {
+  flex-shrink: 0;
 }
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */

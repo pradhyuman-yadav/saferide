@@ -3,12 +3,16 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react-nativ
 import LoginScreen from '@app/(auth)/login';
 import * as firebaseAuth from '@/firebase/auth';
 
-describe('LoginScreen', () => {
-  it('renders the SafeRide brand name in the hero', () => {
-    render(<LoginScreen />);
-    expect(screen.getByText('SafeRide')).toBeTruthy();
-  });
+// Ensure resetPassword is available on the mock
+jest.mock('@/firebase/auth', () => ({
+  subscribeToAuthState: jest.fn((cb: (u: null) => void) => { cb(null); return jest.fn(); }),
+  signInWithEmail:      jest.fn(),
+  createAccount:        jest.fn(),
+  signOut:              jest.fn(),
+  resetPassword:        jest.fn().mockResolvedValue(undefined),
+}));
 
+describe('LoginScreen', () => {
   it('renders email and password inputs', () => {
     render(<LoginScreen />);
     expect(screen.getByPlaceholderText('you@example.com')).toBeTruthy();
@@ -20,16 +24,14 @@ describe('LoginScreen', () => {
     expect(screen.getByText('Continue')).toBeTruthy();
   });
 
-  it('renders toggle to switch between sign-in and create account', () => {
+  it('renders Forgot password button', () => {
     render(<LoginScreen />);
-    expect(screen.getByText("New here? Create an account")).toBeTruthy();
+    expect(screen.getByText('Forgot password?')).toBeTruthy();
   });
 
-  it('toggles to "Create account" mode', () => {
+  it('renders the tagline in the hero', () => {
     render(<LoginScreen />);
-    fireEvent.press(screen.getByText("New here? Create an account"));
-    expect(screen.getAllByText('Create account').length).toBeGreaterThan(0);
-    expect(screen.getByText('Already have an account? Sign in')).toBeTruthy();
+    expect(screen.getByText('School bus safety platform')).toBeTruthy();
   });
 
   it('accepts email input', () => {
@@ -59,23 +61,6 @@ describe('LoginScreen', () => {
     });
   });
 
-  it('calls createAccount in create-account mode', async () => {
-    (firebaseAuth.createAccount as jest.Mock).mockResolvedValueOnce({});
-    render(<LoginScreen />);
-
-    // Switch to create mode
-    fireEvent.press(screen.getByText("New here? Create an account"));
-    fireEvent.changeText(screen.getByPlaceholderText('you@example.com'), 'new@example.com');
-    fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'newpass123');
-    // Press the button (last "Create account" element is the button)
-    const createBtns = screen.getAllByText('Create account');
-    fireEvent.press(createBtns[createBtns.length - 1]);
-
-    await waitFor(() => {
-      expect(firebaseAuth.createAccount).toHaveBeenCalledWith('new@example.com', 'newpass123');
-    });
-  });
-
   it('does not call signIn when fields are empty', async () => {
     render(<LoginScreen />);
     fireEvent.press(screen.getByText('Continue'));
@@ -88,5 +73,73 @@ describe('LoginScreen', () => {
     render(<LoginScreen />);
     const pwInput = screen.getByPlaceholderText('••••••••');
     expect(pwInput.props.secureTextEntry).toBe(true);
+  });
+
+  it('email field has email keyboard type', () => {
+    render(<LoginScreen />);
+    const emailInput = screen.getByPlaceholderText('you@example.com');
+    expect(emailInput.props.keyboardType).toBe('email-address');
+  });
+
+  it('email field auto-capitalizes none', () => {
+    render(<LoginScreen />);
+    const emailInput = screen.getByPlaceholderText('you@example.com');
+    expect(emailInput.props.autoCapitalize).toBe('none');
+  });
+
+  it('shows error alert when signInWithEmail throws', async () => {
+    (firebaseAuth.signInWithEmail as jest.Mock).mockRejectedValueOnce(new Error('Invalid credentials'));
+    const alertSpy = jest.spyOn(require('react-native').Alert, 'alert');
+    render(<LoginScreen />);
+
+    fireEvent.changeText(screen.getByPlaceholderText('you@example.com'), 'bad@example.com');
+    fireEvent.changeText(screen.getByPlaceholderText('••••••••'), 'wrongpass');
+    fireEvent.press(screen.getByText('Continue'));
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('Invalid credentials'),
+      );
+    });
+  });
+
+  it('shows enter-email alert when Forgot password pressed with empty email', async () => {
+    const alertSpy = jest.spyOn(require('react-native').Alert, 'alert');
+    render(<LoginScreen />);
+    fireEvent.press(screen.getByText('Forgot password?'));
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalled();
+    });
+  });
+
+  it('calls resetPassword and shows success alert when email is present', async () => {
+    (firebaseAuth.resetPassword as jest.Mock).mockResolvedValueOnce(undefined);
+    const alertSpy = jest.spyOn(require('react-native').Alert, 'alert');
+    render(<LoginScreen />);
+
+    fireEvent.changeText(screen.getByPlaceholderText('you@example.com'), 'priya@example.com');
+    fireEvent.press(screen.getByText('Forgot password?'));
+
+    await waitFor(() => {
+      expect(firebaseAuth.resetPassword).toHaveBeenCalledWith('priya@example.com');
+      expect(alertSpy).toHaveBeenCalled();
+    });
+  });
+
+  it('shows error alert when resetPassword throws', async () => {
+    (firebaseAuth.resetPassword as jest.Mock).mockRejectedValueOnce(new Error('Not found'));
+    const alertSpy = jest.spyOn(require('react-native').Alert, 'alert');
+    render(<LoginScreen />);
+
+    fireEvent.changeText(screen.getByPlaceholderText('you@example.com'), 'priya@example.com');
+    fireEvent.press(screen.getByText('Forgot password?'));
+
+    await waitFor(() => {
+      expect(alertSpy).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('Not found'),
+      );
+    });
   });
 });

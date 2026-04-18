@@ -28,9 +28,9 @@ beforeEach(() => {
 });
 
 describe('Index routing', () => {
-  it('redirects to login when not authenticated', () => {
+  it('redirects to welcome when not authenticated', () => {
     render(<IndexScreen />);
-    expect(mockReplace).toHaveBeenCalledWith('/(auth)/login');
+    expect(mockReplace).toHaveBeenCalledWith('/(auth)/welcome');
   });
 
   it('redirects to onboarding when authenticated but no role', () => {
