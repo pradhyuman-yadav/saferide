@@ -37,11 +37,11 @@ export class AuthController {
     const input  = CreateInviteInputSchema.parse(req.body);
     const invite = await service.createInvite(input);
     auditLog({
-      action:      'INVITE_CREATED',
-      actorId:     req.user.uid,
-      targetEmail: input.email,
-      role:        input.role,
-      tenantId:    input.tenantId ?? null,
+      action:    'INVITE_CREATED',
+      actorId:   req.user.uid,
+      actorRole: 'super_admin',
+      tenantId:  input.tenantId ?? null,
+      meta:      { targetEmail: input.email, role: input.role },
     });
     res.status(201).json({ success: true, data: invite });
   }
