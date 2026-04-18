@@ -212,15 +212,13 @@ const config = {
       },
     ],
     'expo-secure-store',
-    [
-      '@sentry/react-native/expo',
-      {
-        organization: 'saferide',
-        project:      'saferide-mobile',
-        // Upload source maps on every production EAS build so stack traces are readable.
-        // Sentry DSN is stored as an EAS Secret and read via EXPO_PUBLIC_SENTRY_DSN.
-      },
-    ],
+    // @sentry/react-native/expo plugin INTENTIONALLY OMITTED until Sentry project is created.
+    // The plugin injects sentry.gradle which runs sentry-cli at build time to upload source maps.
+    // Without SENTRY_AUTH_TOKEN set as an EAS secret, sentry-cli exits 1 and breaks the Gradle build.
+    // Re-add this block once SENTRY_AUTH_TOKEN is added to EAS secrets:
+    //   ['@sentry/react-native/expo', { organization: 'saferide', project: 'saferide-mobile' }]
+    // The JS SDK (Sentry.init in _layout.tsx) still initialises at runtime — crash reports will
+    // be captured as soon as EXPO_PUBLIC_SENTRY_DSN is set as an EAS secret.
     [
       'expo-notifications',
       {
