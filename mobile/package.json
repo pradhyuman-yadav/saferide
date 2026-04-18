@@ -33,6 +33,7 @@
     "firebase": "^12.11.0",
     "i18next": "^24.2.3",
     "lucide-react-native": "^0.577.0",
+    "promise": "^8.3.0",
     "react": "19.2.0",
     "react-dom": "^19.2.0",
     "react-i18next": "^15.7.4",
