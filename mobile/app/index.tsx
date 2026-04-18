@@ -53,12 +53,13 @@ export default function Index() {
 
       // Permissions already handled — route straight to role screen
       switch (role) {
-        case 'parent':       router.replace('/(parent)/');  break;
-        case 'driver':       router.replace('/(driver)/');  break;
-        case 'manager':      router.replace('/(manager)/'); break;
-        case 'school_admin': router.replace('/(admin)/');   break;
-        // super_admin uses the web dashboard — redirect to login on mobile
-        default:             router.replace('/(auth)/login'); break;
+        case 'parent':       router.replace('/(parent)/');         break;
+        case 'driver':       router.replace('/(driver)/');         break;
+        case 'manager':      router.replace('/(manager)/');        break;
+        case 'school_admin': router.replace('/(admin)/');          break;
+        // super_admin uses the web dashboard — show a dedicated "use the web" screen
+        // instead of bouncing back to login (which would cause an infinite loop).
+        default:             router.replace('/(auth)/web-only');   break;
       }
     })();
   }, [isLoading, user, role]);

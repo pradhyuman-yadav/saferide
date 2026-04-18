@@ -8,6 +8,7 @@
 
 import { Component, type ReactNode, type ErrorInfo } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import * as Sentry from '@sentry/react-native';
 import { SRText } from '@/components/ui/SRText';
 import { colors, spacing, radius } from '@/theme';
 
@@ -35,7 +36,9 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    // In production this would ship to a crash reporting service (Sentry etc.)
+    Sentry.captureException(error, {
+      extra: { componentStack: info.componentStack },
+    });
     if (__DEV__) {
       console.error('[ErrorBoundary] Caught render error:', error, info.componentStack);
     }

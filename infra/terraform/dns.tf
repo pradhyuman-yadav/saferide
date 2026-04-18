@@ -189,6 +189,34 @@ resource "aws_lb_listener_rule" "trysaferide_redirect" {
   }
 }
 
+# ─── WEBSOCKET SUBDOMAIN — livetrack-gateway ─────────────────────────────────
+# ws.saferide.co.in is used by the mobile parent app's live-track WebSocket.
+# Traffic is proxied by nginx (location /ws/) to the livetrack-gateway on port 4005.
+
+resource "aws_route53_record" "ws" {
+  zone_id = data.aws_route53_zone.saferide_co_in.zone_id
+  name    = "ws.saferide.co.in"
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.saferide_alb.dns_name
+    zone_id                = aws_lb.saferide_alb.zone_id
+    evaluate_target_health = true
+  }
+}
+
+resource "aws_route53_record" "ws_dev" {
+  zone_id = data.aws_route53_zone.saferide_co_in.zone_id
+  name    = "ws-dev.saferide.co.in"
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.saferide_alb.dns_name
+    zone_id                = aws_lb.saferide_alb.zone_id
+    evaluate_target_health = true
+  }
+}
+
 # ─── DEV DNS + ALB ROUTING ───────────────────────────────────────────────────
 
 resource "aws_route53_record" "dev" {
@@ -221,6 +249,11 @@ resource "aws_lb_listener_rule" "dev" {
 }
 
 # ─── OUTPUTS ─────────────────────────────────────────────────────────────────
+
+output "ws_url" {
+  description = "WebSocket URL for livetrack-gateway (mobile parent app)"
+  value       = "wss://ws.saferide.co.in/ws/"
+}
 
 output "app_url" {
   description = "Web admin + API base URL"

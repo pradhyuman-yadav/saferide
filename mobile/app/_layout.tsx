@@ -1,4 +1,5 @@
 import '../src/i18n';
+import * as Sentry from '@sentry/react-native';
 import { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
@@ -18,10 +19,23 @@ import { colors } from '@/theme';
 // before the app renders or any navigation occurs.
 import '@/tasks/location.task';
 
-import { setupNotificationHandler, registerForPushNotifications } from '@/notifications/push';
+import { setupNotificationHandler, setupNotificationChannels, registerForPushNotifications } from '@/notifications/push';
+
+// ── Sentry — initialise before anything else renders ─────────────────────────
+Sentry.init({
+  dsn:              process.env['EXPO_PUBLIC_SENTRY_DSN'] ?? '',
+  enabled:          !__DEV__,
+  tracesSampleRate: 0.2,   // 20% of transactions — adjust after launch
+  debug:            false,
+});
 
 // Configure foreground notification display before any notification can arrive
 setupNotificationHandler();
+
+// Create Android notification channels unconditionally at startup.
+// Must NOT be gated on permission grant — channels must exist before any
+// notification can arrive, even if the user later denies notification permission.
+void setupNotificationChannels();
 
 // Null-rendering component — mounts notification listeners once at root level
 function NotificationListeners() {

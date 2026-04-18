@@ -10,6 +10,7 @@
  * The `tripId` is stored in `expo-secure-store` so the background task can
  * read it without a closure (background tasks run in a separate JS context).
  */
+import { Alert, Platform } from 'react-native';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import * as SecureStore from 'expo-secure-store';
@@ -111,6 +112,30 @@ export function registerLocationTask(): void {
 }
 
 /**
+ * Google Play policy: a prominent in-app disclosure must appear before
+ * `requestBackgroundPermissionsAsync` so the user understands WHY the app
+ * needs "Allow all the time" location access.  An Alert dialog satisfies
+ * "prominent disclosure" per the Play Location Permissions policy.
+ *
+ * Returns true if the user acknowledges the disclosure, false if they dismiss.
+ */
+function showBackgroundLocationDisclosure(): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    Alert.alert(
+      'Background location access',
+      'SafeRide needs to access your location at all times during an active trip ' +
+      'so parents can see where the bus is, even when your screen is locked.\n\n' +
+      'Your location is only shared while a trip is active. End the trip to stop sharing.',
+      [
+        { text: 'Not now',  style: 'cancel', onPress: () => resolve(false) },
+        { text: 'Continue', style: 'default', onPress: () => resolve(true)  },
+      ],
+      { cancelable: false },
+    );
+  });
+}
+
+/**
  * Requests location permissions and starts the background task.
  * Stores `tripId` in SecureStore so the task can reference it.
  * Returns `true` if tracking started, `false` if permissions were denied.
@@ -118,6 +143,18 @@ export function registerLocationTask(): void {
 export async function startLocationTracking(tripId: string): Promise<boolean> {
   const { status: fg } = await Location.requestForegroundPermissionsAsync();
   if (fg !== 'granted') return false;
+
+  // Show prominent disclosure before requesting "Always" background location.
+  // Required by Google Play Location Permissions policy.
+  // On iOS, skip disclosure — iOS already shows a separate OS-level dialog explaining
+  // "Always" access and does not require an additional in-app disclosure.
+  if (Platform.OS === 'android') {
+    const { status: existing } = await Location.getBackgroundPermissionsAsync();
+    if (existing !== 'granted') {
+      const disclosed = await showBackgroundLocationDisclosure();
+      if (!disclosed) return false;
+    }
+  }
 
   const { status: bg } = await Location.requestBackgroundPermissionsAsync();
   if (bg !== 'granted') return false;

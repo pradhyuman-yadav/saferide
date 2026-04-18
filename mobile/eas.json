@@ -23,11 +23,18 @@
       }
     },
     "production": {
+      "distribution": "store",
       "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_TRIP_SERVICE_URL": "https://api.saferide.co.in",
+        "EXPO_PUBLIC_ROUTE_SERVICE_URL": "https://api.saferide.co.in"
+      },
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "app-bundle",
+        "credentialsSource": "remote"
       },
       "ios": {
+        "image": "latest",
         "credentialsSource": "remote"
       }
     }

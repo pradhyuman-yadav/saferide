@@ -5,7 +5,9 @@
  */
 import { getAuth } from 'firebase/auth';
 
-const BASE_URL = process.env['EXPO_PUBLIC_ROUTE_SERVICE_URL'] ?? 'http://localhost:4003';
+const BASE_URL    = process.env['EXPO_PUBLIC_ROUTE_SERVICE_URL'] ?? 'http://localhost:4003';
+const TIMEOUT_MS  = 15_000;   // abort after 15 s — covers slow 3G
+const MAX_RETRIES = 2;        // retry up to 2× on network / timeout errors only
 
 async function getIdToken(): Promise<string> {
   const user = getAuth().currentUser;
@@ -13,25 +15,56 @@ async function getIdToken(): Promise<string> {
   return user.getIdToken();
 }
 
-async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = await getIdToken();
-  const res   = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      ...options.headers,
-    },
-  });
-
-  if (res.status === 204) return undefined as T;
-
-  const json = await res.json() as { success: boolean; data?: T; error?: { code: string; message: string } };
-  if (!json.success) {
-    const msg = json.error?.message ?? 'An unexpected error occurred.';
-    throw Object.assign(new Error(msg), { code: json.error?.code });
+/** Wraps fetch with an AbortController timeout. */
+async function fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
   }
-  return json.data as T;
+}
+
+/**
+ * Retries `fn` up to `retries` times on transient network or timeout errors.
+ * Business-logic errors (4xx with success:false) are NOT retried.
+ */
+async function withRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    const isNetwork = err instanceof TypeError;          // "Network request failed"
+    const isTimeout = err instanceof Error && err.name === 'AbortError';
+    if ((isNetwork || isTimeout) && retries > 0) {
+      await new Promise<void>((resolve) => setTimeout(resolve, 1_000));
+      return withRetry(fn, retries - 1);
+    }
+    throw err;
+  }
+}
+
+async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  return withRetry(async () => {
+    const token = await getIdToken();
+    const res   = await fetchWithTimeout(`${BASE_URL}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        ...options.headers,
+      },
+    });
+
+    if (res.status === 204) return undefined as T;
+
+    const json = await res.json() as { success: boolean; data?: T; error?: { code: string; message: string } };
+    if (!json.success) {
+      const msg = json.error?.message ?? 'An unexpected error occurred.';
+      throw Object.assign(new Error(msg), { code: json.error?.code });
+    }
+    return json.data as T;
+  });
 }
 
 // ── Types (mirror packages/types — kept local so mobile stays independent) ───

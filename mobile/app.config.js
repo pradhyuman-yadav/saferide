@@ -56,6 +56,14 @@ const config = {
   ios: {
     supportsTablet:   false,
     bundleIdentifier: 'in.saferide.app',
+    buildNumber: '1',   // floor — EAS autoIncrement overrides this on every store build
+
+    // Explicit UIBackgroundModes so expo-location plugin doesn't need to infer it.
+    // Required by App Store Review for apps that use location in the background.
+    infoPlist: {
+      UIBackgroundModes: ['location'],
+    },
+
 
     // ── Apple Privacy Manifest (required since May 2024) ─────────────────────
     // Apple rejects apps without this. Declare every data type we collect and
@@ -140,10 +148,12 @@ const config = {
           ],
         },
         {
-          // Disk space — used by Expo modules and Firebase offline cache
+          // Disk space — used by Expo modules and Firebase offline cache for cache management.
+          // Reason 85F4.1: write or delete file to manage disk space of the app — correct for cache use.
+          // E174.1 (display disk space to user) would be incorrect here.
           NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryDiskSpace',
           NSPrivacyAccessedAPITypeReasons: [
-            'E174.1', // Display disk space to user (storage management)
+            '85F4.1', // Cache app data to disk — correct reason for SDK cache management
           ],
         },
       ],
@@ -153,6 +163,7 @@ const config = {
   android: {
     package:             'in.saferide.app',
     googleServicesFile:  './google-services.json',
+    versionCode: 1,      // floor — EAS autoIncrement overrides this on every store build
     minSdkVersion: 24,   // Android 7.0 (2016) — covers ~97% of active devices
     targetSdkVersion: 35,
     compileSdkVersion: 35,
@@ -192,9 +203,32 @@ const config = {
         locationWhenInUsePermission:
           'SafeRide uses your location to show parents where the bus is.',
         isAndroidBackgroundLocationEnabled: true,
+        // CRITICAL: without this, expo-location does NOT add UIBackgroundModes: ['location']
+        // to Info.plist, and background GPS silently stops on iOS when the driver locks the screen.
+        isIosBackgroundLocationEnabled: true,
       },
     ],
     'expo-secure-store',
+    [
+      '@sentry/react-native/expo',
+      {
+        organization: 'saferide',
+        project:      'saferide-mobile',
+        // Upload source maps on every production EAS build so stack traces are readable.
+        // Sentry DSN is stored as an EAS Secret and read via EXPO_PUBLIC_SENTRY_DSN.
+      },
+    ],
+    [
+      'expo-notifications',
+      {
+        // White monochrome icon at 96 × 96 px on a transparent background.
+        // Android 13+ requires a monochrome small icon — the launcher icon cannot be used.
+        // TODO: replace with a properly designed monochrome icon before final App Store submission.
+        icon:           './assets/images/notification-icon.png',
+        color:          '#404E3B',   // forest — shown as the notification accent colour
+        defaultChannel: 'saferide-general',
+      },
+    ],
   ],
 
   experiments: {
