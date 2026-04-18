@@ -23,6 +23,7 @@ import { InviteAdminPage }    from '@/pages/InviteAdminPage';
 import { SetupAccountPage }    from '@/pages/SetupAccountPage';
 import { PrivacyPage }         from '@/pages/PrivacyPage';
 import { TermsPage }           from '@/pages/TermsPage';
+import { NotFoundPage }        from '@/pages/NotFoundPage';
 
 // ── Smart catch-all redirect based on role ────────────────────────────────
 
@@ -88,8 +89,8 @@ export default function App() {
           </Route>
         </Route>
 
-        {/* Catch-all → smart redirect based on role */}
-        <Route path="*" element={<SmartRedirect />} />
+        {/* Catch-all → 404 */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
