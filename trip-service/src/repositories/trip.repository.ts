@@ -1,5 +1,4 @@
-import { FieldValue } from 'firebase-admin/firestore';
-import { getDb } from '@saferide/firebase-admin';
+import { FieldValue, getDb } from '@saferide/firebase-admin';
 import { TripSchema } from '@saferide/types';
 import type { Trip } from '@saferide/types';
 

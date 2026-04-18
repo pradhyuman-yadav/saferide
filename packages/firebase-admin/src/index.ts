@@ -3,6 +3,9 @@ import type { Firestore } from 'firebase-admin/firestore';
 import type { Auth } from 'firebase-admin/auth';
 import type { Database } from 'firebase-admin/database';
 
+// Re-export firestore utilities so services don't need firebase-admin as a direct dep
+export { FieldValue, Timestamp } from 'firebase-admin/firestore';
+
 let _app:  admin.app.App | null = null;
 let _db:   Firestore            | null = null;
 let _auth: Auth                 | null = null;
