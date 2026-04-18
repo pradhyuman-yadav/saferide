@@ -27,6 +27,10 @@ credentials.json
 token.json
 google-services.json
 GoogleService-Info.plist
+# Allow mobile Firebase config files — they contain only project identifiers, not secrets.
+# The actual API keys are restricted by package name in Google Cloud Console.
+!mobile/google-services.json
+!mobile/GoogleService-Info.plist
 
 # ── Logs ──────────────────────────────────────────────────────────────────────
 logs/

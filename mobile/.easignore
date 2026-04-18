@@ -1,0 +1,23 @@
+# EAS Build ignore — keeps the upload archive small.
+# EAS installs dependencies on its build servers, so node_modules is never needed.
+# Generated native directories are rebuilt from app.config.js by expo prebuild.
+
+node_modules/
+android/
+ios/
+.expo/
+coverage/
+*.log
+__tests__/
+
+# Workspace packages — not needed for mobile build
+../auth-service/
+../route-service/
+../trip-service/
+../tenant-service/
+../livetrack-gateway/
+../web-admin/
+../packages/
+../infra/
+../nginx/
+../docs/

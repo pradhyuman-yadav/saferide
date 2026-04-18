@@ -62,6 +62,10 @@ const config = {
     // Required by App Store Review for apps that use location in the background.
     infoPlist: {
       UIBackgroundModes: ['location'],
+      // Declare encryption usage for App Store export compliance.
+      // The app uses only standard iOS HTTPS/TLS networking (exempt from US export regs).
+      // Set to false to avoid manual export compliance step on every TestFlight upload.
+      ITSAppUsesNonExemptEncryption: false,
     },
 
 
