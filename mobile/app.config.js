@@ -56,7 +56,7 @@ const config = {
   ios: {
     supportsTablet:   false,
     bundleIdentifier: 'in.saferide.app',
-    buildNumber: '1',   // floor — EAS autoIncrement overrides this on every store build
+    // buildNumber managed by EAS autoIncrement — do not hardcode here
 
     // Explicit UIBackgroundModes so expo-location plugin doesn't need to infer it.
     // Required by App Store Review for apps that use location in the background.
@@ -167,10 +167,9 @@ const config = {
   android: {
     package:             'in.saferide.app',
     googleServicesFile:  './google-services.json',
-    versionCode: 1,      // floor — EAS autoIncrement overrides this on every store build
-    minSdkVersion: 24,   // Android 7.0 (2016) — covers ~97% of active devices
-    targetSdkVersion: 35,
-    compileSdkVersion: 35,
+    // versionCode managed by EAS autoIncrement (written to app.json) — do not hardcode here
+    // minSdkVersion / targetSdkVersion / compileSdkVersion are NOT valid Expo config keys;
+    // Expo SDK 55 sets these automatically. Setting them here causes Gradle build failures.
     // Adaptive icon: foreground has safe-zone padding so the mark isn't clipped
     adaptiveIcon: {
       foregroundImage: './assets/images/icon-foreground.png',
