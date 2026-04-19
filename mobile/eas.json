@@ -43,7 +43,16 @@
   "submit": {
     "production": {
       "android": {
-        "track": "internal"
+        "serviceAccountKeyPath": "$GOOGLE_SERVICE_ACCOUNT_KEY",
+        "track": "internal",
+        "releaseStatus": "draft"
+      },
+      "ios": {
+        "ascAppId": "FILL_IN_APP_STORE_CONNECT_APPLE_ID",
+        "appleTeamId": "FILL_IN_APPLE_TEAM_ID",
+        "ascApiKeyId": "TSX4BM8R9C",
+        "ascApiKeyIssuerId": "cd00b3c7-3116-4d48-ac56-8c9f49d063d6",
+        "language": "en-IN"
       }
     }
   }
