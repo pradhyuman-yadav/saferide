@@ -50,6 +50,7 @@
       "ios": {
         "ascAppId": "6762541264",
         "appleTeamId": "WN89JM4NLS",
+        "ascApiKeyPath": "./secrets/apple-api-key.p8",
         "ascApiKeyId": "FDGVH8607ZSY",
         "ascApiKeyIssuerId": "cd00b3c7-3116-4d48-ac56-8c9f49d063d6",
         "language": "en-IN"
