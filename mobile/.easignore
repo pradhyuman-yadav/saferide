@@ -2,6 +2,7 @@
 # EAS installs dependencies on its build servers, so node_modules is never needed.
 # Generated native directories are rebuilt from app.config.js by expo prebuild.
 
+secrets/
 node_modules/
 android/
 ios/

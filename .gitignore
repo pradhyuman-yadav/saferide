@@ -72,3 +72,6 @@ mobile/.env.local
 # ── prod ───────────────────────────────────────────────────────
 prod/
 prod/.
+
+# ── Submit credentials (never commit) ──────────────────────────
+mobile/secrets/
