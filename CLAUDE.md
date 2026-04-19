@@ -2,6 +2,23 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⛔ Approval Required Before Adding Anything New
+
+**These actions require explicit user approval BEFORE doing them — no exceptions:**
+
+- Installing a new npm/pnpm package (`npm install`, `pnpm add`)
+- Adding a new external service or API (Sentry, Stripe, Twilio, SendGrid, analytics, etc.)
+- Adding new environment variables to `.env.example` or any config
+- Adding new Firebase projects, Google Cloud APIs, or AWS services
+- Creating new Firestore collections or RTDB paths not already in the plan
+- Adding any third-party SDK, library, or integration not explicitly requested
+
+**How to ask:** Describe the service, why it's needed, what it costs, and what the alternative is. Wait for a "yes" before touching any file.
+
+**If something already exists in the codebase that was added without approval** (e.g. `@sentry/react-native`), flag it and ask whether to keep or remove it — do not silently leave it.
+
+---
+
 ## Project Overview
 
 SafeRide is a school bus tracking and parent notification platform — a multi-tenant SaaS monorepo built with TypeScript, React Native, and microservices.

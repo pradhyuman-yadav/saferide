@@ -1,5 +1,4 @@
 import '../src/i18n';
-import * as Sentry from '@sentry/react-native';
 import { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
@@ -20,14 +19,6 @@ import { colors } from '@/theme';
 import '@/tasks/location.task';
 
 import { setupNotificationHandler, setupNotificationChannels, registerForPushNotifications } from '@/notifications/push';
-
-// ── Sentry — initialise before anything else renders ─────────────────────────
-Sentry.init({
-  dsn:              process.env['EXPO_PUBLIC_SENTRY_DSN'] ?? '',
-  enabled:          !__DEV__,
-  tracesSampleRate: 0.2,   // 20% of transactions — adjust after launch
-  debug:            false,
-});
 
 // Configure foreground notification display before any notification can arrive
 setupNotificationHandler();

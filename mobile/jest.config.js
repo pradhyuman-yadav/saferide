@@ -22,7 +22,7 @@ module.exports = {
       '|react-navigation' +
       '|@react-navigation(/.*)?'  +
       '|@unimodules(/.*)?'  +
-      '|sentry-expo' +
+
       '|native-base' +
       '|react-native-svg' +
       '|lucide-react-native' +
