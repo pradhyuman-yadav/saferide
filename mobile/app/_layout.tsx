@@ -1,6 +1,32 @@
 import '../src/i18n';
 import { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
+
+// ── Global error handler ───────────────────────────────────────────────────────
+// React Native's default production handler surfaces raw error messages via
+// Alert.alert() — confusing and alarming for end users. Replace it with a
+// silent handler that logs in dev only. The ErrorBoundary catches render
+// errors; this catches unhandled Promise rejections and native exceptions.
+//
+// ErrorUtils is a React Native runtime global — NOT a reliable named export
+// from 'react-native' in production Hermes builds. Access via global directly.
+const _ErrorUtils = (global as typeof globalThis & {
+  ErrorUtils?: {
+    getGlobalHandler: () => (error: Error, isFatal?: boolean) => void;
+    setGlobalHandler: (handler: (error: Error, isFatal?: boolean) => void) => void;
+  };
+}).ErrorUtils;
+
+if (_ErrorUtils) {
+  const previousHandler = _ErrorUtils.getGlobalHandler();
+  _ErrorUtils.setGlobalHandler((error: Error, isFatal?: boolean) => {
+    if (__DEV__) {
+      previousHandler(error, isFatal);
+    } else {
+      console.error('[GlobalErrorHandler]', error?.message, isFatal ? '(fatal)' : '');
+    }
+  });
+}
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';

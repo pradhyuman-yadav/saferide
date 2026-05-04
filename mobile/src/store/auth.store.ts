@@ -23,7 +23,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: true,
 
   initialize: () => {
+    // Safety net: if Firebase Auth never calls back (network issue, auth provider
+    // not enabled in Firebase Console, App Check enforcement, etc.) ensure the
+    // splash screen clears after 8 s so the user always reaches the login screen.
+    const timeoutId = setTimeout(() => {
+      if (get().isLoading) {
+        set({ isLoading: false });
+      }
+    }, 8000);
+
     const unsubscribe = subscribeToAuthState(async (firebaseUser) => {
+      clearTimeout(timeoutId);
+
       if (!firebaseUser) {
         // No session — ensure any stale background location task is stopped
         // (covers token expiry, force sign-out from another device, etc.)
@@ -63,7 +74,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     });
 
-    return unsubscribe;
+    return () => {
+      clearTimeout(timeoutId);
+      unsubscribe();
+    };
   },
 
   setProfile: (profile) => {

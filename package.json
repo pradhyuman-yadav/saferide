@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "scripts": {
     "seed": "tsx --env-file=.env scripts/seed.ts",
+    "create-superadmin": "tsx --env-file=scripts/.env scripts/create-superadmin.ts",
     "dev": "pnpm --parallel --filter saferide-auth-service --filter saferide-tenant-service --filter saferide-route-service --filter saferide-trip-service --filter saferide-livetrack-gateway run dev",
     "build": "pnpm run --recursive --filter './packages/*' build && pnpm run --recursive --filter !web-admin --filter !mobile build",
     "typecheck": "pnpm run --recursive typecheck",

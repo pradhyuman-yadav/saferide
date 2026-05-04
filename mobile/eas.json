@@ -26,10 +26,6 @@
     "production": {
       "distribution": "store",
       "autoIncrement": true,
-      "env": {
-        "EXPO_PUBLIC_TRIP_SERVICE_URL": "https://api.saferide.co.in",
-        "EXPO_PUBLIC_ROUTE_SERVICE_URL": "https://api.saferide.co.in"
-      },
       "android": {
         "buildType": "app-bundle",
         "credentialsSource": "remote"
@@ -53,7 +49,7 @@
         "ascApiKeyPath": "./secrets/apple-api-key.p8",
         "ascApiKeyId": "FDGVH8607ZSY",
         "ascApiKeyIssuerId": "cd00b3c7-3116-4d48-ac56-8c9f49d063d6",
-        "language": "en-IN"
+        "language": "en-US"
       }
     }
   }

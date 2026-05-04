@@ -75,3 +75,14 @@ prod/.
 
 # ── Submit credentials (never commit) ──────────────────────────
 mobile/secrets/
+mobile/credentials/
+
+# ── Terraform ─────────────────────────────────────────────────
+infra/terraform/.terraform/
+infra/terraform/.terraform.lock.hcl
+infra/terraform/tfplan
+infra/terraform/tfplan.out
+*.tfplan
+
+# ── Claude Code local settings ─────────────────────────────────
+.claude/settings.local.json

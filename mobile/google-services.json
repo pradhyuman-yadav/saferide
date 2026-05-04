@@ -1,14 +1,14 @@
 {
   "project_info": {
-    "project_number": "159007589979",
-    "firebase_url": "https://saferide-c3870-default-rtdb.asia-southeast1.firebasedatabase.app",
-    "project_id": "saferide-c3870",
-    "storage_bucket": "saferide-c3870.firebasestorage.app"
+    "project_number": "557205115466",
+    "firebase_url": "https://saferide-prod-a4336-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "saferide-prod-a4336",
+    "storage_bucket": "saferide-prod-a4336.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:159007589979:android:3c5f2fc69d762dccb1217e",
+        "mobilesdk_app_id": "1:557205115466:android:fa6372e8017dc83e434cb3",
         "android_client_info": {
           "package_name": "in.saferide.app"
         }
@@ -16,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCHSxt8pLZvnPHb49bFR3k8QpJ0nQ5-cXs"
+          "current_key": "AIzaSyDG7Tkc1EMNHzEZvWf4ordxYaJEoFqo0Yo"
         }
       ],
       "services": {
